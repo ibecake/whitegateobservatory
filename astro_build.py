@@ -229,10 +229,9 @@ def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
 def render_html_card(payload: dict) -> str:
-    nights = payload["nights"]
+    nights = sorted(payload["nights"], key=lambda n: n["start"])  # defensive sort
     updated = payload["generated_at_local"]
 
-    # Styles (no f-strings here, so braces are safe)
     css = """
 <style>
   :root{
@@ -242,11 +241,9 @@ def render_html_card(payload: dict) -> str:
     --astro-sub: #64748b;
     --astro-border: #e5e7eb;
     --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
-    --astro-accent: #4f46e5; /* default accent (indigo) */
+    --astro-accent: #4f46e5;
     --astro-radius: 12px;
-    --badge-great: #16a34a;
-    --badge-ok:    #ca8a04;
-    --badge-poor:  #dc2626;
+    --badge-great: #16a34a; --badge-ok: #ca8a04; --badge-poor: #dc2626;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -255,85 +252,75 @@ def render_html_card(payload: dict) -> str:
     }
   }
   .astro-wrap{font-family:var(--astro-font); background:transparent;}
-  .astro-card{max-width:780px;border:1px solid var(--astro-border);border-radius:var(--astro-radius);
-              padding:16px;background:var(--astro-bg);box-shadow:var(--astro-shadow); color:var(--astro-fg);}
-  .astro-h{font-weight:700;font-size:18px;margin:0 0 6px}
-  .astro-sub{color:var(--astro-sub);font-size:12px;margin-bottom:12px}
-  .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--astro-border);padding:10px 0}
-  .row:first-of-type{border-top:none}
-  .badge{border-radius:999px;padding:2px 8px;font-size:12px;color:#fff}
+  .astro-card{max-width: 980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
+              padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+  .astro-h{font-weight:700; font-size:18px; margin:0 0 6px}
+  .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
+  .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
+
+  .table-wrap{overflow:auto}
+  table{width:100%; border-collapse:collapse; min-width: 820px;}
+  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
+  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:top; font-size:14px}
+  thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
+  td.num, th.num{text-align:right}
+  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
-  .meta{color:var(--astro-sub);font-size:12px}
-  .best{font-size:12px;color:var(--astro-fg)}
-  .credit{margin-top:8px;color:var(--astro-sub);font-size:11px}
+  .dim{color:var(--astro-sub)}
   /* compact mode (optional) */
   .compact .astro-card{padding:12px}
-  .compact .row{padding:8px 0}
+  .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
 </style>
 """
 
-    # Build rows (safe to use f-strings here)
-    rows_html = []
+    # Build table rows
+    rows = []
     for n in nights:
-        badge = f'<span class="badge {n["class"]}">{n["class"]} {int(round(n["score"]))}</span>'
-        best = f'<div class="best">Best 2h: {n["best2h"]}</div>' if n.get("best2h") else ""
-        row = (
-            '<div class="row"><div>'
-            f'<div><strong>{n["label"]}</strong> {badge}</div>'
-            f'{best}'
-            f'<div class="meta">{n["notes"]}</div>'
-            '</div>'
-            f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div>'
-            '</div>'
+        cls = n["class"]
+        badge = f'<span class="badge {cls}">{cls}</span>'
+        score = f'{int(round(n["score"]))}'
+        date_label = n["label"]  # e.g., "2025-10-13 night"
+        start_local = n["start_local"]
+        end_local   = n["end_local"]
+        best2h = n.get("best2h", "—") or "—"
+        limits = n.get("worst", n.get("notes", ""))
+        notes = n.get("notes", "")
+        row_html = (
+            "<tr>"
+            f"<td>{date_label}</td>"
+            f"<td class='dim'>{start_local}</td>"
+            f"<td class='dim'>→ {end_local}</td>"
+            f"<td class='num'><strong>{score}</strong></td>"
+            f"<td>{badge}</td>"
+            f"<td>{best2h}</td>"
+            f"<td class='dim'>{limits}</td>"
+            f"<td class='dim'>{notes}</td>"
+            "</tr>"
         )
-        rows_html.append(row)
+        rows.append(row_html)
 
-    # Runtime theming + auto-resize (all inside a single string)
     js = """
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
-
-  // Theme override: ?theme=light|dark (default = system auto via prefers)
   var theme = p.get("theme");
   if (theme === "light") { document.documentElement.classList.remove("dark"); }
   else if (theme === "dark") { document.documentElement.classList.add("dark"); }
-
-  // Accent color: ?accent=%234f46e5
-  var acc = p.get("accent");
-  if (acc) { document.documentElement.style.setProperty("--astro-accent", acc); }
-
-  // Use accent for badges: ?useAccentBadges=1
+  var acc = p.get("accent"); if (acc) { document.documentElement.style.setProperty("--astro-accent", acc); }
   if (p.get("useAccentBadges") === "1") {
     var accVal = getComputedStyle(document.documentElement).getPropertyValue("--astro-accent");
     document.documentElement.style.setProperty("--badge-great", accVal);
     document.documentElement.style.setProperty("--badge-ok", accVal);
     document.documentElement.style.setProperty("--badge-poor", accVal);
   }
-
-  // Corner radius: ?radius=12
-  var r = p.get("radius");
-  if (r) { document.documentElement.style.setProperty("--astro-radius", r.endsWith("px") ? r : (r + "px")); }
-
-  // Font stack: ?font=Inter, Arial, sans-serif
-  var f = p.get("font");
-  if (f) { document.documentElement.style.setProperty("--astro-font", f); }
-
-  // Compact mode: ?compact=1
+  var r = p.get("radius"); if (r) { document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }
+  var f = p.get("font"); if (f) { document.documentElement.style.setProperty("--astro-font", f); }
   if (p.get("compact") === "1") { document.getElementById("astro-root").classList.add("compact"); }
-
-  // Transparent background: ?transparent=1
   if (p.get("transparent") === "1") { document.body.style.background = "transparent"; }
 
-  // Auto-resize iframe height
-  function send(){
-    try { parent.postMessage({ type:"astro-card-size", height: document.documentElement.scrollHeight }, "*"); }
-    catch(e){}
-  }
-  window.addEventListener("load", send);
-  setTimeout(send, 60);
-  setTimeout(send, 300);
+  function send(){ try { parent.postMessage({type:"astro-card-size", height: document.documentElement.scrollHeight}, "*"); } catch(e){} }
+  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
 })();
 </script>
 """
@@ -342,13 +329,19 @@ def render_html_card(payload: dict) -> str:
         css +
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
         '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
-        f'<div class="astro-sub">Updated {updated}</div>' +
-        "".join(rows_html) +
+        f'<div class="astro-sub">Updated {updated}</div>'
+        '<div class="table-wrap"><table>'
+        '<thead><tr>'
+        '<th>Date</th><th>Start</th><th>End</th><th class="num">Score</th><th>Class</th><th>Best 2h</th><th>Limits</th><th>Notes</th>'
+        '</tr></thead><tbody>' +
+        "".join(rows) +
+        '</tbody></table></div>'
         '<div class="credit">Weather data © Meteosource</div>'
         '</div></div>' +
         js
     )
     return html
+
 
 
 def main():
@@ -412,10 +405,12 @@ def main():
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
         "location": "Whitegate, Co. Cork, IE",
-        "nights": sorted(nights_out, key=lambda x: x["score"], reverse=True),
+        # ⬇️ sort by start datetime (ISO string sorts correctly)
+        "nights": sorted(nights_out, key=lambda x: x["start"]),
         "baseline_sqm": BASELINE_SQM,
         "target": {"ra": TARGET_RA, "dec": TARGET_DEC} if (TARGET_RA and TARGET_DEC) else None,
     }
+
 
     # Write JSON (atomic)
     json_tmp = os.path.join(outdir, "astro.tmp.json")
