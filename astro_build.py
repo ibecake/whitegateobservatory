@@ -231,94 +231,124 @@ def classify(score: float) -> str:
 def render_html_card(payload: dict) -> str:
     nights = payload["nights"]
     updated = payload["generated_at_local"]
+
+    # Styles (no f-strings here, so braces are safe)
     css = """
-    <style>
-      :root{
-        --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-        --astro-bg: #ffffff;
-        --astro-fg: #0f172a;
-        --astro-sub: #64748b;
-        --astro-border: #e5e7eb;
-        --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
-        --astro-accent: #4f46e5; /* default accent (indigo) */
-        --astro-radius: 12px;
-        --badge-great: #16a34a;
-        --badge-ok:    #ca8a04;
-        --badge-poor:  #dc2626;
-      }
-      @media (prefers-color-scheme: dark){
-        :root{
-          --astro-bg:#0b1020; --astro-fg:#e5e7eb; --astro-sub:#9aa4b2; --astro-border:#1f2937;
-          --astro-shadow: 0 8px 30px rgba(0,0,0,.45);
-        }
-      }
-      .astro-wrap{font-family:var(--astro-font); background:transparent;}
-      .astro-card{max-width:780px;border:1px solid var(--astro-border);border-radius:var(--astro-radius);
-                  padding:16px;background:var(--astro-bg);box-shadow:var(--astro-shadow); color:var(--astro-fg);}
-      .astro-h{font-weight:700;font-size:18px;margin:0 0 6px}
-      .astro-sub{color:var(--astro-sub);font-size:12px;margin-bottom:12px}
-      .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--astro-border);padding:10px 0}
-      .row:first-of-type{border-top:none}
-      .badge{border-radius:999px;padding:2px 8px;font-size:12px;color:#fff}
-      .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
-      .meta{color:var(--astro-sub);font-size:12px}
-      .best{font-size:12px;color:var(--astro-fg)}
-      .credit{margin-top:8px;color:var(--astro-sub);font-size:11px}
-      /* compact mode (optional) */
-      .compact .astro-card{padding:12px}
-      .compact .row{padding:8px 0}
-      .compact .astro-h{font-size:16px}
-    </style>
-    """
-    # Build rows
-    rows = []
+<style>
+  :root{
+    --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    --astro-bg: #ffffff;
+    --astro-fg: #0f172a;
+    --astro-sub: #64748b;
+    --astro-border: #e5e7eb;
+    --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
+    --astro-accent: #4f46e5; /* default accent (indigo) */
+    --astro-radius: 12px;
+    --badge-great: #16a34a;
+    --badge-ok:    #ca8a04;
+    --badge-poor:  #dc2626;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --astro-bg:#0b1020; --astro-fg:#e5e7eb; --astro-sub:#9aa4b2; --astro-border:#1f2937;
+      --astro-shadow: 0 8px 30px rgba(0,0,0,.45);
+    }
+  }
+  .astro-wrap{font-family:var(--astro-font); background:transparent;}
+  .astro-card{max-width:780px;border:1px solid var(--astro-border);border-radius:var(--astro-radius);
+              padding:16px;background:var(--astro-bg);box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+  .astro-h{font-weight:700;font-size:18px;margin:0 0 6px}
+  .astro-sub{color:var(--astro-sub);font-size:12px;margin-bottom:12px}
+  .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--astro-border);padding:10px 0}
+  .row:first-of-type{border-top:none}
+  .badge{border-radius:999px;padding:2px 8px;font-size:12px;color:#fff}
+  .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
+  .meta{color:var(--astro-sub);font-size:12px}
+  .best{font-size:12px;color:var(--astro-fg)}
+  .credit{margin-top:8px;color:var(--astro-sub);font-size:11px}
+  /* compact mode (optional) */
+  .compact .astro-card{padding:12px}
+  .compact .row{padding:8px 0}
+  .compact .astro-h{font-size:16px}
+</style>
+"""
+
+    # Build rows (safe to use f-strings here)
+    rows_html = []
     for n in nights:
         badge = f'<span class="badge {n["class"]}">{n["class"]} {int(round(n["score"]))}</span>'
-        best = f'<div class="best">Best 2h: {n.get("best2h","—")}</div>' if n.get("best2h") else ""
+        best = f'<div class="best">Best 2h: {n["best2h"]}</div>' if n.get("best2h") else ""
         row = (
-          f'<div class="row"><div>'
-          f'<div><strong>{n["label"]}</strong> {badge}</div>'
-          f'{best}'
-          f'<div class="meta">{n["notes"]}</div>'
-          f'</div>'
-          f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div>'
-          f'</div>'
+            '<div class="row"><div>'
+            f'<div><strong>{n["label"]}</strong> {badge}</div>'
+            f'{best}'
+            f'<div class="meta">{n["notes"]}</div>'
+            '</div>'
+            f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div>'
+            '</div>'
         )
-        rows.append(row)
-    body = (
-      '<div id="astro-root" class="astro-wrap">'
-      '<div class="astro-card">'
-      '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
-      f'<div class="astro-sub">Updated {updated}</div>'
-      + "".join(rows) +
-      '<div class="credit">Weather data © Meteosource</div>'
-      '</div></div>'
-      # Runtime theming + auto-resize
-      '<script>(function(){'
-      'var p=new URLSearchParams(location.search);'
-      // theme: auto (default via prefers), force light/dark with ?theme=light|dark
-      'var theme=p.get("theme"); if(theme==="light"){document.documentElement.classList.remove("dark");}'
-      'else if(theme==="dark"){document.documentElement.classList.add("dark");}'
-      // accent color
-      'var acc=p.get("accent"); if(acc){document.documentElement.style.setProperty("--astro-accent",acc);}'
-      // override badge colors via single accent (optional)
-      'if(p.get("useAccentBadges")==="1"){'
-      'document.documentElement.style.setProperty("--badge-great",getComputedStyle(document.documentElement).getPropertyValue("--astro-accent"));'
-      '}'
-      // radius (px)
-      'var r=p.get("radius"); if(r){document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+"px"));}'
-      // font
-      'var f=p.get("font"); if(f){document.documentElement.style.setProperty("--astro-font", f);}'
-      // compact mode
-      'if(p.get("compact")==="1"){document.getElementById("astro-root").classList.add("compact");}'
-      // transparent background
-      'if(p.get("transparent")==="1"){document.body.style.background="transparent";}'
-      // auto-resize iframe height
-      'function send(){try{parent.postMessage({type:"astro-card-size",height:document.documentElement.scrollHeight}, "*");}catch(e){}}'
-      'window.addEventListener("load",send); setTimeout(send,60); setTimeout(send,300);'
-      '})();</script>'
+        rows_html.append(row)
+
+    # Runtime theming + auto-resize (all inside a single string)
+    js = """
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+
+  // Theme override: ?theme=light|dark (default = system auto via prefers)
+  var theme = p.get("theme");
+  if (theme === "light") { document.documentElement.classList.remove("dark"); }
+  else if (theme === "dark") { document.documentElement.classList.add("dark"); }
+
+  // Accent color: ?accent=%234f46e5
+  var acc = p.get("accent");
+  if (acc) { document.documentElement.style.setProperty("--astro-accent", acc); }
+
+  // Use accent for badges: ?useAccentBadges=1
+  if (p.get("useAccentBadges") === "1") {
+    var accVal = getComputedStyle(document.documentElement).getPropertyValue("--astro-accent");
+    document.documentElement.style.setProperty("--badge-great", accVal);
+    document.documentElement.style.setProperty("--badge-ok", accVal);
+    document.documentElement.style.setProperty("--badge-poor", accVal);
+  }
+
+  // Corner radius: ?radius=12
+  var r = p.get("radius");
+  if (r) { document.documentElement.style.setProperty("--astro-radius", r.endsWith("px") ? r : (r + "px")); }
+
+  // Font stack: ?font=Inter, Arial, sans-serif
+  var f = p.get("font");
+  if (f) { document.documentElement.style.setProperty("--astro-font", f); }
+
+  // Compact mode: ?compact=1
+  if (p.get("compact") === "1") { document.getElementById("astro-root").classList.add("compact"); }
+
+  // Transparent background: ?transparent=1
+  if (p.get("transparent") === "1") { document.body.style.background = "transparent"; }
+
+  // Auto-resize iframe height
+  function send(){
+    try { parent.postMessage({ type:"astro-card-size", height: document.documentElement.scrollHeight }, "*"); }
+    catch(e){}
+  }
+  window.addEventListener("load", send);
+  setTimeout(send, 60);
+  setTimeout(send, 300);
+})();
+</script>
+"""
+
+    html = (
+        css +
+        '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
+        '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
+        f'<div class="astro-sub">Updated {updated}</div>' +
+        "".join(rows_html) +
+        '<div class="credit">Weather data © Meteosource</div>'
+        '</div></div>' +
+        js
     )
-    return css + body
+    return html
 
 
 def main():
