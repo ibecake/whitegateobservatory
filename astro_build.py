@@ -229,33 +229,97 @@ def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
 def render_html_card(payload: dict) -> str:
-    # lightweight, self-contained card; tweak styles to taste
     nights = payload["nights"]
     updated = payload["generated_at_local"]
     css = """
     <style>
-    .astro-card{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;max-width:750px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-    .astro-h{font-weight:700;font-size:18px;margin:0 0 6px}
-    .astro-sub{color:#6b7280;font-size:12px;margin-bottom:12px}
-    .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f1f5f9;padding:10px 0}
-    .row:first-of-type{border-top:none}
-    .badge{border-radius:999px;padding:2px 8px;font-size:12px;color:#fff}
-    .GREAT{background:#16a34a}.OK{background:#ca8a04}.POOR{background:#dc2626}
-    .meta{color:#475569;font-size:12px}
-    .credit{margin-top:8px;color:#94a3b8;font-size:11px}
-    .best{font-size:12px;color:#0f172a}
+      :root{
+        --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+        --astro-bg: #ffffff;
+        --astro-fg: #0f172a;
+        --astro-sub: #64748b;
+        --astro-border: #e5e7eb;
+        --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
+        --astro-accent: #4f46e5; /* default accent (indigo) */
+        --astro-radius: 12px;
+        --badge-great: #16a34a;
+        --badge-ok:    #ca8a04;
+        --badge-poor:  #dc2626;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --astro-bg:#0b1020; --astro-fg:#e5e7eb; --astro-sub:#9aa4b2; --astro-border:#1f2937;
+          --astro-shadow: 0 8px 30px rgba(0,0,0,.45);
+        }
+      }
+      .astro-wrap{font-family:var(--astro-font); background:transparent;}
+      .astro-card{max-width:780px;border:1px solid var(--astro-border);border-radius:var(--astro-radius);
+                  padding:16px;background:var(--astro-bg);box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+      .astro-h{font-weight:700;font-size:18px;margin:0 0 6px}
+      .astro-sub{color:var(--astro-sub);font-size:12px;margin-bottom:12px}
+      .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--astro-border);padding:10px 0}
+      .row:first-of-type{border-top:none}
+      .badge{border-radius:999px;padding:2px 8px;font-size:12px;color:#fff}
+      .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
+      .meta{color:var(--astro-sub);font-size:12px}
+      .best{font-size:12px;color:var(--astro-fg)}
+      .credit{margin-top:8px;color:var(--astro-sub);font-size:11px}
+      /* compact mode (optional) */
+      .compact .astro-card{padding:12px}
+      .compact .row{padding:8px 0}
+      .compact .astro-h{font-size:16px}
     </style>
     """
-    body = f'<div class="astro-card"><div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
-    body+= f'<div class="astro-sub">Updated {updated}</div>'
+    # Build rows
+    rows = []
     for n in nights:
         badge = f'<span class="badge {n["class"]}">{n["class"]} {int(round(n["score"]))}</span>'
-        body+= f'<div class="row"><div><div><strong>{n["label"]}</strong> {badge}</div>'
-        if n.get("best2h"): body+= f'<div class="best">Best 2h: {n["best2h"]}</div>'
-        body+= f'<div class="meta">{n["notes"]}</div></div>'
-        body+= f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div></div>'
-    body+= '<div class="credit">Weather data © Meteosource</div></div>'
+        best = f'<div class="best">Best 2h: {n.get("best2h","—")}</div>' if n.get("best2h") else ""
+        row = (
+          f'<div class="row"><div>'
+          f'<div><strong>{n["label"]}</strong> {badge}</div>'
+          f'{best}'
+          f'<div class="meta">{n["notes"]}</div>'
+          f'</div>'
+          f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div>'
+          f'</div>'
+        )
+        rows.append(row)
+    body = (
+      '<div id="astro-root" class="astro-wrap">'
+      '<div class="astro-card">'
+      '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
+      f'<div class="astro-sub">Updated {updated}</div>'
+      + "".join(rows) +
+      '<div class="credit">Weather data © Meteosource</div>'
+      '</div></div>'
+      # Runtime theming + auto-resize
+      '<script>(function(){'
+      'var p=new URLSearchParams(location.search);'
+      // theme: auto (default via prefers), force light/dark with ?theme=light|dark
+      'var theme=p.get("theme"); if(theme==="light"){document.documentElement.classList.remove("dark");}'
+      'else if(theme==="dark"){document.documentElement.classList.add("dark");}'
+      // accent color
+      'var acc=p.get("accent"); if(acc){document.documentElement.style.setProperty("--astro-accent",acc);}'
+      // override badge colors via single accent (optional)
+      'if(p.get("useAccentBadges")==="1"){'
+      'document.documentElement.style.setProperty("--badge-great",getComputedStyle(document.documentElement).getPropertyValue("--astro-accent"));'
+      '}'
+      // radius (px)
+      'var r=p.get("radius"); if(r){document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+"px"));}'
+      // font
+      'var f=p.get("font"); if(f){document.documentElement.style.setProperty("--astro-font", f);}'
+      // compact mode
+      'if(p.get("compact")==="1"){document.getElementById("astro-root").classList.add("compact");}'
+      // transparent background
+      'if(p.get("transparent")==="1"){document.body.style.background="transparent";}'
+      // auto-resize iframe height
+      'function send(){try{parent.postMessage({type:"astro-card-size",height:document.documentElement.scrollHeight}, "*");}catch(e){}}'
+      'window.addEventListener("load",send); setTimeout(send,60); setTimeout(send,300);'
+      '})();</script>'
+    )
     return css + body
+
 
 def main():
     ap = argparse.ArgumentParser(description="Build astro JSON + HTML card.")
