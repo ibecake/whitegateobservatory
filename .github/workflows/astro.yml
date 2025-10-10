@@ -5,14 +5,13 @@ on:
     - cron: "0 */4 * * *"        # every 4 hours
   workflow_dispatch:
   push:
-    branches: [ "main" ]         # optional, deploy when you change files
+    branches: [ "main" ]         # optional: publish on pushes
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Prevent overlapping runs from colliding
 concurrency:
   group: "pages"
   cancel-in-progress: true
@@ -43,8 +42,17 @@ jobs:
         run: |
           mkdir -p dist/astro
           python astro_build.py --out dist/astro
+          # >>> ensure we have a homepage at the root of the artifact
+          cp index.html dist/index.html
 
-      # >>> Only ONE upload step in the entire workflow run <<<
+          # (Optional) If you’ve already pointed your custom domain at Pages:
+          # echo 'whitegateobservatory.com' > dist/CNAME
+
+          echo "=== Dist contents ==="
+          ls -la dist
+          echo "=== Dist/astro contents ==="
+          ls -la dist/astro
+
       - name: Upload artifact (dist/)
         uses: actions/upload-pages-artifact@v3
         with:
