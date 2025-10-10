@@ -290,7 +290,7 @@ def render_html_card(payload: dict) -> str:
     }
   }
   .astro-wrap{font-family:var(--astro-font); background:transparent;}
-  .astro-card{max-width: 980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
+  .astro-card{max-width: 1080px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
               padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
   .astro-h{font-weight:700; font-size:18px; margin:0 0 6px}
   .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
