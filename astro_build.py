@@ -309,6 +309,17 @@ def render_html_card(payload: dict) -> str:
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
+  /* Make Date (col 1), Score (col 4), and Best 2h (col 6) lighter */
+  tbody td:nth-child(1),
+  tbody td:nth-child(4),
+  tbody td:nth-child(6) { color: var(--astro-sub); }
+
+  /* Ensure the bold number in Score also uses the lighter tone */
+  tbody td:nth-child(4) strong {
+  color: var(--astro-sub);
+  font-weight: 600; /* slightly bold, not heavy black */
+}
+
 </style>
 """
     # Build table rows
