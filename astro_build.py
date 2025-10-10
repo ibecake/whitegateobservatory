@@ -276,7 +276,7 @@ def render_html_card(payload: dict) -> str:
     --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
     --astro-bg: #ffffff;
     --astro-fg: #0f172a;
-    --astro-sub: #64748b;
+    --astro-sub: #94a3b8;
     --astro-border: #e5e7eb;
     --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
     --astro-accent: #4f46e5;
