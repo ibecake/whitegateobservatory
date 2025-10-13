@@ -327,7 +327,7 @@ def render_html_card(payload: dict) -> str:
             "<tr>"
             f"<td>{date_label}</td>"
             f"<td class='dim'>{start_local}</td>"
-            f"<td class='dim'>→ {end_local}</td>"
+            f"<td class='dim'>{end_local}</td>"
             f"<td class='num'><strong>{score}</strong></td>"
             f"<td>{badge}</td>"
             f"<td class='dim'>{best2h}</td>"
