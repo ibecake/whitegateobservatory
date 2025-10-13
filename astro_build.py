@@ -1,26 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# astro_build.py  —  Build static JSON + HTML *table* (date-sorted) for your site
+# astro_build.py — Build static JSON + HTML cards:
+#   1) Astrophotography nights (hourly-based astronomical nights)
+#   2) 7-day Weather forecast (Whitegate + Cork)
 #
-# What it does
-#   • Fetches HOURLY Meteosource data for Whitegate, Co. Cork
-#   • Builds *astronomical-night* windows directly from hourly Sun altitude (≤ -18°)
-#   • Scores each hour (clouds, visibility, dewspread, wind/gusts, precip, moon brightness)
-#   • Aggregates nights, then writes:
-#       - <out>/astro.json
-#       - <out>/card.html  (table layout with headers, sorted by date)
+# Usage:
+#   METEOSOURCE_API_KEY=...  python astro_build.py --out dist/astro
 #
-# Usage
-#   METEOSOURCE_API_KEY=...  python astro_build.py --out ./astro
-#
-# Requirements
+# Deps:
 #   pip install pymeteosource ephem
-#
-# Notes
-#   • The card supports theming via URL params: ?theme=auto|light|dark&transparent=1&radius=12&compact=0
-#   • It auto-resizes its height if embedded in an <iframe> (posts message to parent).
-#
 
 from __future__ import annotations
 import os, json, argparse
@@ -38,20 +27,22 @@ from pymeteosource.types import tiers, sections, langs, units
 API_KEY  = os.environ.get("METEOSOURCE_API_KEY", "PASTE-YOUR-API-KEY-HERE")
 TIER     = tiers.FLEXI
 LAT, LON = 51.8268, -8.2321     # Whitegate, Co. Cork
-ELEV_M   = 20                   # site elevation (m) — tweak if known
+ELEV_M   = 20
 TZ       = "Europe/Dublin"
 
-SUNSET_BUFFER_H  = 1.0          # start scoring 1h after astronomical night begins
-SUNRISE_BUFFER_H = 1.0          # stop scoring 1h before it ends
+# Cork City centre (approx)
+CORK_LAT, CORK_LON = 51.8985, -8.4756
 
-# Optional target (improves brightness model with airmass + moon separation). Leave None if generic.
+SUNSET_BUFFER_H  = 1.0
+SUNRISE_BUFFER_H = 1.0
+
+# Optional target for astro card (leave None if generic)
 TARGET_RA  = None               # e.g. "05:35:17"
 TARGET_DEC = None               # e.g. "-05:23:28"
 
-# Site baseline darkness (no moon) in mag/arcsec^2 (typical suburban–rural)
 BASELINE_SQM = 20.8
 
-# Weights for hourly quality score (0..100)
+# Hourly score weights
 W_CLOUDS, W_VIS, W_DEWSPREAD, W_WIND, W_PRECIP, W_BRIGHT = 0.40, 0.10, 0.15, 0.10, 0.05, 0.20
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -89,7 +80,7 @@ def _c(x):
     try: return float(x)
     except: return None
 
-# Airmass (Kasten & Young 1989) for altitude (deg)
+# Airmass (Kasten & Young 1989)
 def airmass(alt_deg: float) -> float:
     z = max(0.0, 90.0 - alt_deg)
     if z >= 90.0: return 38.0
@@ -112,7 +103,7 @@ class Geo:
             star.compute(self.obs)
         return sun, moon, star
 
-# ── Scores & derived features ─────────────────────────────────────────────────
+# ── Scores & derived features (Astro) ─────────────────────────────────────────
 def clouds_score(h):
     low, mid, high, total = _pct(_get(h,"cloud_cover.low")), _pct(_get(h,"cloud_cover.middle")), _pct(_get(h,"cloud_cover.high")), _pct(_get(h,"cloud_cover.total"))
     if low is not None or mid is not None or high is not None:
@@ -169,13 +160,12 @@ def brightness_model(moon_phase_frac, moon_alt_deg, sep_deg, target_airmass):
     if moon_alt_deg <= 0:
         est_sqm = BASELINE_SQM
     else:
-        f   = moon_phase_frac           # 0..1
-        alt = max(0.0, sin(radians(moon_alt_deg)))  # 0..1
+        f   = moon_phase_frac
+        alt = max(0.0, sin(radians(moon_alt_deg)))
         sep_term = 1.0 if sep_deg is None else 1.0/(1.0 + (sep_deg/40.0)**2)
         X = max(1.0, target_airmass)
-        delta_mag = 2.5 * min(1.0, f * alt * sep_term / (X**0.7))          # cap ~2.5 mag
+        delta_mag = 2.5 * min(1.0, f * alt * sep_term / (X**0.7))
         est_sqm = max(17.0, min(22.0, BASELINE_SQM - delta_mag))
-    # Map SQM to 0..100 quality
     knots = [(17.5,10),(18.5,35),(19.5,60),(20.5,85),(21.5,100)]
     def interp(xv):
         if xv <= knots[0][0]: return knots[0][1]
@@ -188,7 +178,7 @@ def brightness_model(moon_phase_frac, moon_alt_deg, sep_deg, target_airmass):
     score = float(interp(est_sqm))
     return est_sqm, score, f"SQM≈{est_sqm:.2f}"
 
-# ── Astronomical-night windows from HOURLY (Sun alt ≤ -18°) ───────────────────
+# ── Astronomical-night windows (Sun alt ≤ -18°) ───────────────────────────────
 @dataclass
 class NightWindow:
     start: object
@@ -218,7 +208,6 @@ def build_night_windows_from_hourly(hourly_section, geo: Geo) -> List[NightWindo
             in_dark = False; start_dt = None
         prev_dt = dt_local
 
-    # trailing dark at end of series
     if in_dark and start_dt and prev_dt:
         start = start_dt + timedelta(hours=SUNSET_BUFFER_H)
         end   = prev_dt   - timedelta(hours=SUNRISE_BUFFER_H)
@@ -227,7 +216,7 @@ def build_night_windows_from_hourly(hourly_section, geo: Geo) -> List[NightWindo
 
     return wins
 
-# ── Per-hour quality ──────────────────────────────────────────────────────────
+# ── Per-hour quality (Astro) ─────────────────────────────────────────────────
 def hour_quality(h, geo: Geo, target_ra_dec):
     s_clouds, r_clouds = clouds_score(h)
     s_vis,    r_vis    = visibility_score(h)
@@ -265,23 +254,18 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── HTML card (TABLE layout, sorted by DATE) ──────────────────────────────────
+# ── HTML for Astro card (table layout) ────────────────────────────────────────
 def render_html_card(payload: dict) -> str:
-    nights = sorted(payload["nights"], key=lambda n: n["start"])  # ensure date sort
+    nights = sorted(payload["nights"], key=lambda n: n["start"])
     updated = payload["generated_at_local"]
 
     css = """
 <style>
   :root{
     --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-    --astro-bg: #ffffff;
-    --astro-fg: #0f172a;
-    --astro-sub: #94a3b8;
-    --astro-border: #e5e7eb;
-    --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
-    --astro-accent: #4f46e5;
-    --astro-radius: 12px;
-    --badge-great: #16a34a; --badge-ok: #ca8a04; --badge-poor: #dc2626;
+    --astro-bg: #ffffff; --astro-fg: #0f172a; --astro-sub: #64748b;
+    --astro-border: #e5e7eb; --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
+    --astro-radius: 12px; --badge-great: #16a34a; --badge-ok: #ca8a04; --badge-poor: #dc2626;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -290,7 +274,7 @@ def render_html_card(payload: dict) -> str:
     }
   }
   .astro-wrap{font-family:var(--astro-font); background:transparent;}
-  .astro-card{border:1px solid var(--astro-border); border-radius:var(--astro-radius);
+  .astro-card{max-width: 980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
               padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
   .astro-h{font-weight:700; font-size:18px; margin:0 0 6px}
   .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
@@ -305,30 +289,24 @@ def render_html_card(payload: dict) -> str:
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
-  /* compact mode */
-  .compact .astro-card{padding:12px}
-  .compact th, .compact td{padding:8px}
-  .compact .astro-h{font-size:16px}
-  /* Make Date (col 1), Score (col 4), and Best 2h (col 6) lighter */
+
+  /* lighten Date, Score, Best 2h columns if desired */
   tbody td:nth-child(1),
   tbody td:nth-child(4),
   tbody td:nth-child(6) { color: var(--astro-sub); }
+  tbody td:nth-child(4) strong { color: var(--astro-sub); font-weight:600; }
 
-  /* Ensure the bold number in Score also uses the lighter tone */
-  tbody td:nth-child(4) strong {
-  color: var(--astro-sub);
-  font-weight: 600; /* slightly bold, not heavy black */
-}
-
+  .compact .astro-card{padding:12px}
+  .compact th, .compact td{padding:8px}
+  .compact .astro-h{font-size:16px}
 </style>
 """
-    # Build table rows
     rows = []
     for n in nights:
         cls = n["class"]
         badge = f'<span class="badge {cls}">{cls}</span>'
         score = f'{int(round(n["score"]))}'
-        date_label   = n["label"]      # e.g., "2025-10-13 night"
+        date_label   = n["label"]
         start_local  = n["start_local"]
         end_local    = n["end_local"]
         best2h       = n.get("best2h", "—") or "—"
@@ -347,7 +325,6 @@ def render_html_card(payload: dict) -> str:
             "</tr>"
         )
 
-    # Client-side theming & auto-resize
     js = """
 <script>
 (function(){
@@ -355,18 +332,10 @@ def render_html_card(payload: dict) -> str:
   var theme = p.get("theme");
   if (theme === "light") { document.documentElement.classList.remove("dark"); }
   else if (theme === "dark") { document.documentElement.classList.add("dark"); }
-  var acc = p.get("accent"); if (acc) { document.documentElement.style.setProperty("--astro-accent", acc); }
-  if (p.get("useAccentBadges") === "1") {
-    var accVal = getComputedStyle(document.documentElement).getPropertyValue("--astro-accent");
-    document.documentElement.style.setProperty("--badge-great", accVal);
-    document.documentElement.style.setProperty("--badge-ok", accVal);
-    document.documentElement.style.setProperty("--badge-poor", accVal);
-  }
   var r = p.get("radius"); if (r) { document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }
   var f = p.get("font"); if (f) { document.documentElement.style.setProperty("--astro-font", f); }
   if (p.get("compact") === "1") { document.getElementById("astro-root").classList.add("compact"); }
   if (p.get("transparent") === "1") { document.body.style.background = "transparent"; }
-
   function send(){ try { parent.postMessage({type:"astro-card-size", height: document.documentElement.scrollHeight}, "*"); } catch(e){} }
   window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
 })();
@@ -389,19 +358,178 @@ def render_html_card(payload: dict) -> str:
     )
     return html
 
+# ── WEATHER: 7-day forecast payload & card (Whitegate + Cork) ─────────────────
+def icon_to_emoji(name: Optional[str]) -> str:
+    if not name: return "·"
+    n = name.lower()
+    if "clear" in n or "sun" in n: return "☀️"
+    if "partly" in n or "few" in n: return "🌤️"
+    if "cloud" in n: return "☁️"
+    if "rain" in n or "drizzle" in n: return "🌧️"
+    if "thunder" in n or "storm" in n: return "⛈️"
+    if "snow" in n or "sleet" in n: return "🌨️"
+    if "fog" in n or "mist" in n or "haze" in n: return "🌫️"
+    return "·"
+
+def build_weather_payload(ms: Meteosource) -> dict:
+    # Fetch DAILY for both locations
+    whitegate = ms.get_point_forecast(
+        lat=LAT, lon=LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
+        sections=(sections.DAILY,)
+    )
+    cork = ms.get_point_forecast(
+        lat=CORK_LAT, lon=CORK_LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
+        sections=(sections.DAILY,)
+    )
+
+    def extract_daily(daily_section, limit=7):
+        out = []
+        for d in (daily_section.data or [])[:limit]:
+            day = _get(d, "day")
+            date_str = day.strftime("%a %d %b") if hasattr(day, "strftime") else str(day)
+            ad = _get(d, "all_day")
+            tmin = _c(_get(d, "all_day.temperature_min"))
+            tmax = _c(_get(d, "all_day.temperature_max"))
+            cloud = _pct(_get(d, "all_day.cloud_cover.total"))
+            precip = _mm(_get(d, "all_day.precipitation.total"))
+            wind_ms = _ms(_get(d, "all_day.wind.speed"))
+            wind_kmh = round(wind_ms * 3.6) if wind_ms is not None else None
+            icon = _get(d, "all_day.icon") or _get(d, "icon")
+            emoji = icon_to_emoji(icon)
+            summary = _get(d, "summary") or _get(d, "all_day.weather")
+            out.append({
+                "date": date_str,
+                "tmin": None if tmin is None else round(tmin, 1),
+                "tmax": None if tmax is None else round(tmax, 1),
+                "cloud": None if cloud is None else int(round(cloud)),
+                "precip": None if precip is None else round(precip, 1),
+                "wind_kmh": wind_kmh,
+                "icon": icon,
+                "emoji": emoji,
+                "summary": summary or "",
+            })
+        return out
+
+    return {
+        "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
+        "whitegate": extract_daily(whitegate.daily, 7),
+        "cork": extract_daily(cork.daily, 7),
+        "location_names": {"whitegate": "Whitegate, Co. Cork", "cork": "Cork City"},
+        "units": {"temp": "°C", "wind": "km/h", "precip": "mm"},
+    }
+
+def render_weather_card(payload: dict) -> str:
+    updated = payload["generated_at_local"]
+    wg = payload["whitegate"]
+    ck = payload["cork"]
+
+    css = """
+<style>
+  :root{
+    --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+    --astro-bg: #ffffff; --astro-fg: #0f172a; --astro-sub: #64748b;
+    --astro-border: #e5e7eb; --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
+    --astro-radius: 12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --astro-bg:#0b1020; --astro-fg:#e5e7eb; --astro-sub:#9aa4b2; --astro-border:#1f2937;
+      --astro-shadow: 0 8px 30px rgba(0,0,0,.45);
+    }
+  }
+  .wrap{font-family:var(--astro-font); background:transparent;}
+  .card{max-width: 980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
+        padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+  .h{font-weight:700; font-size:18px; margin:0 0 6px}
+  .sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
+  .grid{display:grid; grid-template-columns: 1fr; gap:16px}
+  @media (min-width: 900px){ .grid{grid-template-columns: 1fr 1fr} }
+  .tblwrap{overflow:auto}
+  table{width:100%; border-collapse:collapse; min-width: 560px;}
+  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
+  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; font-size:14px}
+  thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
+  td.num, th.num{text-align:right}
+  .dim{color:var(--astro-sub)}
+  .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
+</style>
+"""
+    def table_for(title, rows):
+        tr_html = []
+        for r in rows:
+            tmin = "—" if r["tmin"] is None else f'{r["tmin"]}°'
+            tmax = "—" if r["tmax"] is None else f'{r["tmax"]}°'
+            cloud = "—" if r["cloud"] is None else f'{r["cloud"]}%'
+            precip = "—" if r["precip"] is None else f'{r["precip"]}'
+            wind = "—" if r["wind_kmh"] is None else f'{r["wind_kmh"]}'
+            tr_html.append(
+                "<tr>"
+                f"<td>{r['date']}</td>"
+                f"<td>{r['emoji']}</td>"
+                f"<td>{tmin}</td>"
+                f"<td>{tmax}</td>"
+                f"<td class='num'>{cloud}</td>"
+                f"<td class='num'>{precip}</td>"
+                f"<td class='num'>{wind}</td>"
+                f"<td class='dim'>{r['summary']}</td>"
+                "</tr>"
+            )
+        return (
+            f'<div class="tblwrap"><table>'
+            f'<thead><tr><th colspan="8">{title}</th></tr>'
+            f'<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th><th>Summary</th></tr></thead>'
+            f'<tbody>{"".join(tr_html)}</tbody></table></div>'
+        )
+
+    js = """
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  var theme = p.get("theme");
+  if (theme === "light") { document.documentElement.classList.remove("dark"); }
+  else if (theme === "dark") { document.documentElement.classList.add("dark"); }
+  var r = p.get("radius"); if (r) { document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }
+  var f = p.get("font"); if (f) { document.documentElement.style.setProperty("--astro-font", f); }
+  if (p.get("transparent") === "1") { document.body.style.background = "transparent"; }
+  function send(){ try { parent.postMessage({type:"astro-card-size", height: document.documentElement.scrollHeight}, "*"); } catch(e){} }
+  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
+})();
+</script>
+"""
+    html = (
+        css +
+        '<div class="wrap"><div class="card">'
+        '<div class="h">7-Day Weather Forecast — Whitegate & Cork</div>'
+        f'<div class="sub">Updated {updated}</div>'
+        '<div class="grid">' +
+        table_for("Whitegate, Co. Cork", wg) +
+        table_for("Cork City", ck) +
+        '</div>'
+        '<div class="credit">Weather data © Meteosource</div>'
+        '</div></div>' +
+        js
+    )
+    return html
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    ap = argparse.ArgumentParser(description="Build astro JSON + HTML card (table, date-sorted).")
-    ap.add_argument("--out", default="./astro", help="Output folder (served by your website or Pages)")
+    ap = argparse.ArgumentParser(description="Build astro + weather JSON/HTML cards.")
+    ap.add_argument("--out", default="./astro", help="Output folder for ASTRO card (e.g., dist/astro)")
     args = ap.parse_args()
-    outdir = os.path.abspath(args.out); os.makedirs(outdir, exist_ok=True)
+    astro_out = os.path.abspath(args.out)
+    os.makedirs(astro_out, exist_ok=True)
+    # Weather goes next to astro (sibling folder)
+    out_base = os.path.dirname(astro_out)
+    weather_out = os.path.join(out_base, "weather")
+    os.makedirs(weather_out, exist_ok=True)
 
     ms = Meteosource(API_KEY, TIER)
+
+    # ── ASTRO CARD ──
     fc = ms.get_point_forecast(
         lat=LAT, lon=LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
         sections=(sections.HOURLY,)
     )
-
     geo = Geo(LAT, LON, ELEV_M)
     target_ra_dec = (TARGET_RA, TARGET_DEC) if (TARGET_RA and TARGET_DEC) else None
     windows = build_night_windows_from_hourly(fc.hourly, geo)
@@ -411,21 +539,15 @@ def main():
     for w in windows:
         hrs = [h for h in hourly if _get(h,"date") and w.start <= _get(h,"date") <= w.end]
         if not hrs: continue
-
         per_hour = []
         for h in hrs:
             s, comps, notes = hour_quality(h, geo, target_ra_dec)
             per_hour.append((h, s, comps, notes))
-
         night_score = round(mean([x[1] for x in per_hour]), 1)
         klass = classify(night_score)
-
-        # Limiting factors (avg component scores -> lowest three)
         comp_names = ["clouds","brightness","dewspread","visibility","wind","precip"]
         comp_avg = {k: mean([x[2][k] for x in per_hour]) for k in comp_names}
         worst3 = ", ".join(f"{k}:{round(v)}" for k,v in sorted(comp_avg.items(), key=lambda kv: kv[1])[:3])
-
-        # best 2h (rolling)
         best2h = None; best2h_score = -1
         for i in range(len(per_hour)-1):
             seg = per_hour[i:i+2]
@@ -435,11 +557,9 @@ def main():
                 t0 = _get(seg[0][0],"date").strftime("%Y-%m-%d %H:%M")
                 t1 = _get(seg[-1][0],"date").strftime("%Y-%m-%d %H:%M")
                 best2h = f"{t0} → {t1} (avg {best2h_score:.1f})"
-
         fog_peak   = max(x[2]["_fogp"] for x in per_hour)
         sqm_med    = round(mean(x[2]["_sqm"] for x in per_hour), 2)
         airmass_md = round(mean(x[2]["_airmass"] for x in per_hour), 2)
-
         nights_out.append({
             "label": w.label,
             "start": w.start.isoformat(),
@@ -452,32 +572,34 @@ def main():
             "best2h": best2h,
             "notes": f"{worst3} • fog≤{fog_peak}%, SQM≈{sqm_med}, airmass≈{airmass_md}",
         })
-
-    # Payload (DATE-SORTED here)
-    payload = {
+    astro_payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
         "location": "Whitegate, Co. Cork, IE",
-        "nights": sorted(nights_out, key=lambda x: x["start"]),  # <<< sort by date
+        "nights": sorted(nights_out, key=lambda x: x["start"]),
         "baseline_sqm": BASELINE_SQM,
         "target": {"ra": TARGET_RA, "dec": TARGET_DEC} if (TARGET_RA and TARGET_DEC) else None,
     }
+    # Write ASTRO json/html
+    with open(os.path.join(astro_out, "astro.tmp.json"), "w", encoding="utf-8") as f:
+        json.dump(astro_payload, f, ensure_ascii=False, indent=2)
+    os.replace(os.path.join(astro_out, "astro.tmp.json"), os.path.join(astro_out, "astro.json"))
+    with open(os.path.join(astro_out, "card.tmp.html"), "w", encoding="utf-8") as f:
+        f.write(render_html_card(astro_payload))
+    os.replace(os.path.join(astro_out, "card.tmp.html"), os.path.join(astro_out, "card.html"))
 
-    # Write JSON (atomic)
-    json_tmp = os.path.join(outdir, "astro.tmp.json")
-    json_out = os.path.join(outdir, "astro.json")
-    with open(json_tmp, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
-    os.replace(json_tmp, json_out)
+    # ── WEATHER CARD ──
+    weather_payload = build_weather_payload(ms)
+    # Write WEATHER json/html
+    with open(os.path.join(weather_out, "weather.tmp.json"), "w", encoding="utf-8") as f:
+        json.dump(weather_payload, f, ensure_ascii=False, indent=2)
+    os.replace(os.path.join(weather_out, "weather.tmp.json"), os.path.join(weather_out, "weather.json"))
+    with open(os.path.join(weather_out, "card.tmp.html"), "w", encoding="utf-8") as f:
+        f.write(render_weather_card(weather_payload))
+    os.replace(os.path.join(weather_out, "card.tmp.html"), os.path.join(weather_out, "card.html"))
 
-    # Write HTML card (atomic)
-    html_tmp = os.path.join(outdir, "card.tmp.html")
-    html_out = os.path.join(outdir, "card.html")
-    with open(html_tmp, "w", encoding="utf-8") as f:
-        f.write(render_html_card(payload))
-    os.replace(html_tmp, html_out)
-
-    print(f"Wrote: {json_out} and {html_out}")
+    print(f"Wrote: {os.path.join(astro_out,'astro.json')} and {os.path.join(astro_out,'card.html')}")
+    print(f"Wrote: {os.path.join(weather_out,'weather.json')} and {os.path.join(weather_out,'card.html')}")
 
 if __name__ == "__main__":
     main()
