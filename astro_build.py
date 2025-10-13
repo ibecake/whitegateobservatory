@@ -246,7 +246,7 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS so cards match exactly (with mobile rules) ──────────────────
+# ── Shared CSS/JS so cards match exactly (with mobile + width control) ────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -270,14 +270,30 @@ def shared_card_css() -> str:
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
 
   .table-wrap,.tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg);}
-  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:top; font-size:14px}
-  thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
+  table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:560px;
+    background:var(--astro-bg);
+    color:var(--astro-fg);
+    table-layout: fixed;              /* key: enables <colgroup> widths */
+  }
+  th, td{
+    padding:10px; border-top:1px solid var(--astro-border);
+    text-align:left; vertical-align:top; font-size:14px;
+    overflow:hidden; text-overflow: ellipsis; /* prevent overflow in narrow cells */
+  }
+  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1;
+           border-bottom:1px solid var(--astro-border); color:var(--astro-sub);
+           font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
+
+  /* wrapping helpers */
+  .nowrap{ white-space: nowrap; }
+  .wrap{ white-space: normal; overflow-wrap:anywhere; text-overflow: clip; }
 
   /* same compact behavior for every card */
   .compact .astro-card{padding:12px}
@@ -316,8 +332,6 @@ def shared_card_css() -> str:
     .astro-card th, .astro-card td{ padding:8px; font-size:13px; }
     .astro-h{ font-size:16px; }
   }
-
-  .nowrap{ white-space:nowrap; }
 </style>
 """
 
@@ -346,6 +360,21 @@ def render_html_card(payload: dict) -> str:
     updated = payload["generated_at_local"]
 
     css = shared_card_css()
+
+    # column widths for astro: Date, Start, End, Score, Class, Best2h, Limits, Notes
+    colgroup = (
+        "<colgroup>"
+        "<col style='width:10ch'>"
+        "<col style='width:6ch'>"
+        "<col style='width:6ch'>"
+        "<col style='width:6ch'>"
+        "<col style='width:7ch'>"
+        "<col style='width:22ch'>"
+        "<col style='width:20ch'>"
+        "<col>"  # auto-fill for Notes
+        "</colgroup>"
+    )
+
     rows = []
     for n in nights:
         cls = n["class"]
@@ -359,14 +388,14 @@ def render_html_card(payload: dict) -> str:
         notes        = n.get("notes", "")
         rows.append(
             "<tr>"
-            f"<td>{date_label}</td>"
-            f"<td class='dim'>{start_local}</td>"
-            f"<td class='dim'>{end_local}</td>"
-            f"<td class='num'><strong>{score}</strong></td>"
-            f"<td>{badge}</td>"
-            f"<td class='dim'>{best2h}</td>"
-            f"<td class='dim'>{limits}</td>"
-            f"<td class='dim'>{notes}</td>"
+            f"<td class='nowrap'>{date_label}</td>"
+            f"<td class='dim nowrap'>{start_local}</td>"
+            f"<td class='dim nowrap'>{end_local}</td>"
+            f"<td class='num nowrap'><strong>{score}</strong></td>"
+            f"<td class='nowrap'>{badge}</td>"
+            f"<td class='dim wrap'>{best2h}</td>"
+            f"<td class='dim wrap'>{limits}</td>"
+            f"<td class='dim wrap'>{notes}</td>"
             "</tr>"
         )
 
@@ -377,6 +406,7 @@ def render_html_card(payload: dict) -> str:
         '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
         '<div class="table-wrap"><table class="astro-table">'
+        f"{colgroup}"
         '<thead><tr>'
         '<th>Date</th><th>Start</th><th>End</th><th class="num">Score</th><th>Class</th><th>Best 2h</th><th>Limits</th><th>Notes</th>'
         '</tr></thead><tbody>' +
@@ -436,6 +466,20 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
     css = shared_card_css()
     updated = datetime.now().strftime(FMT_DT)
 
+    # column widths for weather: Date, Icon, Min, Max, Cloud, Precip (mm), Wind (km/h), Summary
+    colgroup = (
+        "<colgroup>"
+        "<col style='width:10ch'>"
+        "<col style='width:3ch'>"
+        "<col style='width:6ch'>"
+        "<col style='width:6ch'>"
+        "<col style='width:7ch'>"
+        "<col style='width:9ch'>"
+        "<col style='width:8ch'>"
+        "<col>"  # auto-fill for Summary
+        "</colgroup>"
+    )
+
     if not rows:
         tbody = "<tr><td colspan='8' class='dim'>No data</td></tr>"
     else:
@@ -448,14 +492,14 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
             wind = "—" if r["wind_kmh"] is None else f'{r["wind_kmh"]}'
             rs.append(
                 "<tr>"
-                f"<td>{r['date']}</td>"
-                f"<td>{r['emoji']}</td>"
-                f"<td>{tmin}</td>"
-                f"<td>{tmax}</td>"
-                f"<td class='num'>{cloud}</td>"
-                f"<td class='num'>{precip}</td>"
-                f"<td class='num'>{wind}</td>"
-                f"<td class='dim'>{r['summary']}</td>"
+                f"<td class='nowrap'>{r['date']}</td>"
+                f"<td class='nowrap'>{r['emoji']}</td>"
+                f"<td class='num nowrap'>{tmin}</td>"
+                f"<td class='num nowrap'>{tmax}</td>"
+                f"<td class='num nowrap'>{cloud}</td>"
+                f"<td class='num nowrap'>{precip}</td>"
+                f"<td class='num nowrap'>{wind}</td>"
+                f"<td class='dim wrap'>{r['summary']}</td>"
                 "</tr>"
             )
         tbody = "".join(rs)
@@ -467,6 +511,7 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
         f'<div class="astro-h">{title}</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
         '<div class="tblwrap"><table class="weather-table">'
+        f"{colgroup}"
         '<thead>'
         '<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th><th>Summary</th></tr>'
         '</thead><tbody>' + tbody + '</tbody></table></div>'
