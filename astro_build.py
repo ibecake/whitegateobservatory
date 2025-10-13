@@ -341,17 +341,28 @@ def render_html_card(payload: dict) -> str:
     return html
 
 # ── WEATHER (7-day, Whitegate + Cork) ────────────────────────────────────────
-def icon_to_emoji(name: Optional[str]) -> str:
-    if not name: return "·"
-    n = name.lower()
-    if "clear" in n or "sun" in n: return "☀️"
-    if "partly" in n or "few" in n: return "🌤️"
-    if "cloud" in n: return "☁️"
-    if "rain" in n or "drizzle" in n: return "🌧️"
-    if "thunder" in n or "storm" in n: return "⛈️"
-    if "snow" in n or "sleet" in n: return "🌨️"
-    if "fog" in n or "mist" in n or "haze" in n: return "🌫️"
+def icon_to_emoji(name) -> str:
+    """Accepts str/int/None, picks a simple emoji."""
+    if name is None:
+        return "·"
+    s = str(name).lower()  # <-- normalize to string, fixes AttributeError
+    if "clear" in s or "sun" in s:
+        return "☀️"
+    if "partly" in s or "few" in s:
+        return "🌤️"
+    if "cloud" in s:
+        return "☁️"
+    if "rain" in s or "drizzle" in s:
+        return "🌧️"
+    if "thunder" in s or "storm" in s:
+        return "⛈️"
+    if "snow" in s or "sleet" in s:
+        return "🌨️"
+    if "fog" in s or "mist" in s or "haze" in s:
+        return "🌫️"
+    # numeric codes (e.g., "3", "10", etc.) will drop through to generic dot
     return "·"
+
 
 def build_weather_payload(ms: Meteosource) -> dict:
     whitegate = ms.get_point_forecast(lat=LAT, lon=LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC, sections=(sections.DAILY,))
@@ -370,8 +381,8 @@ def build_weather_payload(ms: Meteosource) -> dict:
             wind_ms = _ms(_get(d, "all_day.wind.speed"))
             wind_kmh = round(wind_ms * 3.6) if wind_ms is not None else None
             icon = _get(d, "all_day.icon") or _get(d, "icon") or ""
-            emoji = icon_to_emoji(icon)
-            summary = _get(d, "summary") or (_get(d, "all_day.weather") or "")
+            summary = _get(d, "summary") or _get(d, "all_day.weather") or ""
+            emoji = icon_to_emoji(summary or icon)  # use human text if available
             out.append({
                 "date": date_str,
                 "tmin": None if tmin is None else round(tmin, 1),
