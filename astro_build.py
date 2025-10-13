@@ -166,7 +166,7 @@ def brightness_model(moon_phase_frac, moon_alt_deg, sep_deg, target_airmass):
     score = float(interp(est_sqm))
     return est_sqm, score, f"SQM≈{est_sqm:.2f}"
 
-# ── Astronomical-night windows ────────────────────────────────────────────────
+# ── Night windows ─────────────────────────────────────────────────────────────
 @dataclass
 class NightWindow:
     start: object
@@ -242,12 +242,9 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── HTML: Astro (table) ───────────────────────────────────────────────────────
-def render_html_card(payload: dict) -> str:
-    nights = sorted(payload["nights"], key=lambda n: n["start"])
-    updated = payload["generated_at_local"]
-
-    css = """
+# ── Shared CSS/JS so cards match exactly ──────────────────────────────────────
+def shared_card_css() -> str:
+    return """
 <style>
   :root{
     --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
@@ -268,8 +265,8 @@ def render_html_card(payload: dict) -> str:
   .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
 
-  .table-wrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:880px;}
+  .table-wrap,.tblwrap{overflow:auto}
+  table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg);}
   thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
   th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:top; font-size:14px}
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
@@ -277,13 +274,39 @@ def render_html_card(payload: dict) -> str:
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
-  tbody td:nth-child(1), tbody td:nth-child(4), tbody td:nth-child(6){ color: var(--astro-sub); }
-  tbody td:nth-child(4) strong{ color: var(--astro-sub); font-weight:600; }
+
+  /* same compact behavior for every card */
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
 </style>
 """
+
+def shared_card_js(message_type: str) -> str:
+    return f"""
+<script>
+(function(){{
+  var p = new URLSearchParams(location.search);
+  var theme = p.get("theme");
+  if (theme === "light") {{ document.documentElement.classList.remove("dark"); }}
+  else if (theme === "dark") {{ document.documentElement.classList.add("dark"); }}
+  var r = p.get("radius"); if (r) {{ document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }}
+  var f = p.get("font"); if (f) {{ document.documentElement.style.setProperty("--astro-font", f); }}
+  if (p.get("compact") === "1") {{ document.getElementById("astro-root")?.classList.add("compact"); }}
+  if (p.get("transparent") === "1") {{ document.body.style.background = "transparent"; }}
+
+  function send(){{ try {{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }} catch(e){{}} }}
+  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
+}})();
+</script>
+"""
+
+# ── HTML: Astro card ──────────────────────────────────────────────────────────
+def render_html_card(payload: dict) -> str:
+    nights = sorted(payload["nights"], key=lambda n: n["start"])
+    updated = payload["generated_at_local"]
+
+    css = shared_card_css()
     rows = []
     for n in nights:
         cls = n["class"]
@@ -308,23 +331,7 @@ def render_html_card(payload: dict) -> str:
             "</tr>"
         )
 
-    js = """
-<script>
-(function(){
-  var p = new URLSearchParams(location.search);
-  var theme = p.get("theme");
-  if (theme === "light") { document.documentElement.classList.remove("dark"); }
-  else if (theme === "dark") { document.documentElement.classList.add("dark"); }
-  var r = p.get("radius"); if (r) { document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }
-  var f = p.get("font"); if (f) { document.documentElement.style.setProperty("--astro-font", f); }
-  if (p.get("compact") === "1") { document.getElementById("astro-root").classList.add("compact"); }
-  if (p.get("transparent") === "1") { document.body.style.background = "transparent"; }
-
-  function send(){ try { parent.postMessage({type:"astro-card-size", height: document.documentElement.scrollHeight}, "*"); } catch(e){} }
-  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
-})();
-</script>
-"""
+    js = shared_card_js("astro-card-size")
     html = (
         css +
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
@@ -342,11 +349,9 @@ def render_html_card(payload: dict) -> str:
     )
     return html
 
-# ── WEATHER (separate cards) ─────────────────────────────────────────────────
+# ── WEATHER (separate cards, matching astro styling) ──────────────────────────
 def icon_to_emoji(name) -> str:
-    """Accepts str/int/None, picks a simple emoji."""
-    if name is None:
-        return "·"
+    if name is None: return "·"
     s = str(name).lower()
     if "clear" in s or "sun" in s: return "☀️"
     if "partly" in s or "few" in s: return "🌤️"
@@ -389,38 +394,9 @@ def extract_daily(daily_section, limit=7):
     return out
 
 def render_weather_single_card(title: str, rows: List[dict], message_type: str) -> str:
-    """One location per card (same styling as astro)."""
+    css = shared_card_css()
     updated = datetime.now().strftime("%a %d %b %H:%M")
-    css = """
-<style>
-  :root{
-    --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-    --astro-bg: #ffffff; --astro-fg: #0f172a; --astro-sub: #64748b;
-    --astro-border: #e5e7eb; --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
-    --astro-radius: 12px;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --astro-bg:#0b1020; --astro-fg:#e5e7eb; --astro-sub:#9aa4b2; --astro-border:#1f2937;
-      --astro-shadow: 0 8px 30px rgba(0,0,0,.45);
-    }
-  }
-  .wrap{font-family:var(--astro-font); background:transparent;}
-  .card{max-width:980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
-        padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
-  .h{font-weight:700; font-size:18px; margin:0 0 6px}
-  .sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
-  .tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:560px;}
-  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; font-size:14px}
-  thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
-  td.num, th.num{text-align:right}
-  .dim{color:var(--astro-sub)}
-  .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
-</style>
-"""
-    # Build rows
+
     if not rows:
         tbody = "<tr><td colspan='8' class='dim'>No data</td></tr>"
     else:
@@ -445,27 +421,12 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
             )
         tbody = "".join(rs)
 
-    js = f"""
-<script>
-(function(){{
-  var p = new URLSearchParams(location.search);
-  var theme = p.get("theme");
-  if (theme === "light") {{ document.documentElement.classList.remove("dark"); }}
-  else if (theme === "dark") {{ document.documentElement.classList.add("dark"); }}
-  var r = p.get("radius"); if (r) {{ document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }}
-  var f = p.get("font"); if (f) {{ document.documentElement.style.setProperty("--astro-font", f); }}
-  if (p.get("transparent") === "1") {{ document.body.style.background = "transparent"; }}
-
-  function send(){{ try {{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }} catch(e){{}} }}
-  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
-}})();
-</script>
-"""
+    js = shared_card_js(message_type)
     html = (
         css +
-        '<div class="wrap"><div class="card">'
-        f'<div class="h">{title}</div>'
-        f'<div class="sub">Updated {updated}</div>'
+        '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
+        f'<div class="astro-h">{title}</div>'
+        f'<div class="astro-sub">Updated {updated}</div>'
         '<div class="tblwrap"><table>'
         '<thead>'
         '<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th><th>Summary</th></tr>'
@@ -551,7 +512,7 @@ def main():
         f.write(render_html_card(astro_payload))
     os.replace(os.path.join(astro_out, "card.tmp.html"), os.path.join(astro_out, "card.html"))
 
-    # ── WEATHER (separate cards) ──
+    # ── WEATHER CARDS ──
     wg = fetch_daily(ms, LAT, LON)
     ck = fetch_daily(ms, CORK_LAT, CORK_LON)
 
@@ -562,6 +523,9 @@ def main():
     ck_payload = {"generated_at_local": datetime.now().strftime("%a %d %b %H:%M"), "rows": ck_rows, "title": "Cork — 7-Day Weather"}
 
     # JSON
+    weather_out = os.path.join(os.path.dirname(astro_out), "weather")
+    os.makedirs(weather_out, exist_ok=True)
+
     with open(os.path.join(weather_out, "whitegate.tmp.json"), "w", encoding="utf-8") as f:
         json.dump(wg_payload, f, ensure_ascii=False, indent=2)
     os.replace(os.path.join(weather_out, "whitegate.tmp.json"), os.path.join(weather_out, "whitegate.json"))
