@@ -317,11 +317,11 @@ def shared_card_css() -> str:
 
   @media (max-width: 640px){
     /* Astro: also hide Start (2), End (3), and Best 2h (6) to keep rows single-line */
-    .astro-card table.astro-table thead th:nth-child(2),
     .astro-card table.astro-table thead th:nth-child(3),
+    .astro-card table.astro-table thead th:nth-child(4),
     .astro-card table.astro-table thead th:nth-child(6),
-    .astro-card table.astro-table tbody td:nth-child(2),
     .astro-card table.astro-table tbody td:nth-child(3),
+    .astro-card table.astro-table tbody td:nth-child(4),
     .astro-card table.astro-table tbody td:nth-child(6){ display:none; }
 
     /* Weather: hide Min (3), Precip (6), Wind (7) — keep Date, Icon, Max, Cloud */
