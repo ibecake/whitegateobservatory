@@ -246,7 +246,7 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS so cards match exactly (with mobile + width control) ────────
+# ── Shared CSS/JS so cards match exactly (tuned for mobile height) ────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -276,26 +276,28 @@ def shared_card_css() -> str:
     min-width:560px;
     background:var(--astro-bg);
     color:var(--astro-fg);
-    table-layout: fixed;              /* key: enables <colgroup> widths */
+    table-layout: fixed;
   }
   th, td{
     padding:10px; border-top:1px solid var(--astro-border);
-    text-align:left; vertical-align:top; font-size:14px;
-    overflow:hidden; text-overflow: ellipsis; /* prevent overflow in narrow cells */
+    text-align:left; vertical-align:middle; font-size:14px;   /* center vertically to reduce height */
+    overflow:hidden; text-overflow: ellipsis;
+    line-height: 1.25;                                        /* tighter line-height */
+    white-space: nowrap;                                      /* default: no wrapping */
   }
   thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1;
            border-bottom:1px solid var(--astro-border); color:var(--astro-sub);
            font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
-  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
+  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
 
-  /* wrapping helpers */
-  .nowrap{ white-space: nowrap; }
+  /* wrapping helpers for long text cells only */
   .wrap{ white-space: normal; overflow-wrap:anywhere; text-overflow: clip; }
+  .nowrap{ white-space: nowrap; }
 
-  /* same compact behavior for every card */
+  /* compact behavior */
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
@@ -314,11 +316,13 @@ def shared_card_css() -> str:
   }
 
   @media (max-width: 640px){
-    /* Astro: also hide Start (2) and End (3) */
+    /* Astro: also hide Start (2), End (3), and Best 2h (6) to keep rows single-line */
     .astro-card table.astro-table thead th:nth-child(2),
     .astro-card table.astro-table thead th:nth-child(3),
+    .astro-card table.astro-table thead th:nth-child(6),
     .astro-card table.astro-table tbody td:nth-child(2),
-    .astro-card table.astro-table tbody td:nth-child(3){ display:none; }
+    .astro-card table.astro-table tbody td:nth-child(3),
+    .astro-card table.astro-table tbody td:nth-child(6){ display:none; }
 
     /* Weather: hide Min (3), Precip (6), Wind (7) — keep Date, Icon, Max, Cloud */
     .astro-card table.weather-table thead th:nth-child(3),
@@ -328,9 +332,9 @@ def shared_card_css() -> str:
     .astro-card table.weather-table tbody td:nth-child(6),
     .astro-card table.weather-table tbody td:nth-child(7){ display:none; }
 
-    /* Tighten spacing on small screens */
-    .astro-card th, .astro-card td{ padding:8px; font-size:13px; }
-    .astro-h{ font-size:16px; }
+    /* Tighter spacing + smaller badges to reduce row height */
+    .astro-card th, .astro-card td{ padding:6px; font-size:12px; line-height:1.15; }
+    .badge{ padding:1px 6px; font-size:11px; }
   }
 </style>
 """
@@ -393,7 +397,7 @@ def render_html_card(payload: dict) -> str:
             f"<td class='dim nowrap'>{end_local}</td>"
             f"<td class='num nowrap'><strong>{score}</strong></td>"
             f"<td class='nowrap'>{badge}</td>"
-            f"<td class='dim wrap'>{best2h}</td>"
+            f"<td class='dim nowrap'>{best2h}</td>"   # changed to nowrap to avoid wrap at medium widths
             f"<td class='dim wrap'>{limits}</td>"
             f"<td class='dim wrap'>{notes}</td>"
             "</tr>"
@@ -466,7 +470,7 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
     css = shared_card_css()
     updated = datetime.now().strftime(FMT_DT)
 
-    # column widths for weather: Date, Icon, Min, Max, Cloud, Precip (mm), Wind (km/h), Summary
+    # column widths for weather: Date, Icon, Min, Max, Cloud, Precip, Wind, Summary
     colgroup = (
         "<colgroup>"
         "<col style='width:10ch'>"
@@ -476,7 +480,7 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
         "<col style='width:7ch'>"
         "<col style='width:9ch'>"
         "<col style='width:8ch'>"
-        "<col>"  # auto-fill for Summary
+        "<col>"
         "</colgroup>"
     )
 
