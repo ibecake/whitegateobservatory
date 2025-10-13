@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Whitegate Observatory</title>
 <body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px">
-  <h1>Whitegate Weather & Astro</h1>
+  <h1>Whitegate Observatory — Forecasts</h1>
   <p style="color:#64748b;margin-top:-6px">Updates every ~4 hours.</p>
 
   <!-- Astro outlook -->
@@ -13,10 +13,16 @@
           title="Astrophotography Outlook"
           style="width:100%;max-width:980px;border:0;overflow:hidden;border-radius:12px;"></iframe>
 
-  <!-- Weather forecast -->
-  <iframe id="wxFrame"
-          src="weather/card.html?theme=auto&transparent=1&radius=12"
-          title="7-Day Weather"
+  <!-- Weather: Whitegate -->
+  <iframe id="wxWG"
+          src="weather/whitegate.html?theme=auto&transparent=1&radius=12"
+          title="Whitegate 7-Day Weather"
+          style="width:100%;max-width:980px;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"></iframe>
+
+  <!-- Weather: Cork -->
+  <iframe id="wxCK"
+          src="weather/cork.html?theme=auto&transparent=1&radius=12"
+          title="Cork 7-Day Weather"
           style="width:100%;max-width:980px;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"></iframe>
 
   <script>
@@ -26,9 +32,13 @@
         var f = document.getElementById('astroFrame');
         if (f) f.style.height = e.data.height + 'px';
       }
-      if (e.data.type === 'weather-card-size') {
-        var w = document.getElementById('wxFrame');
+      if (e.data.type === 'weather-whitegate-size') {
+        var w = document.getElementById('wxWG');
         if (w) w.style.height = e.data.height + 'px';
+      }
+      if (e.data.type === 'weather-cork-size') {
+        var c = document.getElementById('wxCK');
+        if (c) c.style.height = e.data.height + 'px';
       }
     });
   </script>
