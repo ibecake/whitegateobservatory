@@ -365,17 +365,17 @@ def render_html_card(payload: dict) -> str:
 
     css = shared_card_css()
 
-    # column widths for astro: Date, Start, End, Score, Class, Best2h, Limits, Notes
+    # New column order: 1 Date, 2 Class, 3 Start, 4 End, 5 Score, 6 Best2h, 7 Limits, 8 Notes
     colgroup = (
         "<colgroup>"
-        "<col style='width:10ch'>"
-        "<col style='width:6ch'>"
-        "<col style='width:6ch'>"
-        "<col style='width:6ch'>"
-        "<col style='width:7ch'>"
-        "<col style='width:22ch'>"
-        "<col style='width:20ch'>"
-        "<col>"  # auto-fill for Notes
+        "<col style='width:10ch'>"  # Date
+        "<col style='width:7ch'>"   # Class (badge)
+        "<col style='width:6ch'>"   # Start
+        "<col style='width:6ch'>"   # End
+        "<col style='width:6ch'>"   # Score
+        "<col style='width:22ch'>"  # Best 2h
+        "<col style='width:20ch'>"  # Limits
+        "<col>"                     # Notes (flex)
         "</colgroup>"
     )
 
@@ -390,16 +390,17 @@ def render_html_card(payload: dict) -> str:
         best2h       = n.get("best2h", "—") or "—"
         limits       = n.get("worst", "")
         notes        = n.get("notes", "")
+
         rows.append(
             "<tr>"
-            f"<td class='nowrap'>{date_label}</td>"
-            f"<td class='dim nowrap'>{start_local}</td>"
-            f"<td class='dim nowrap'>{end_local}</td>"
-            f"<td class='num nowrap'><strong>{score}</strong></td>"
-            f"<td class='nowrap'>{badge}</td>"
-            f"<td class='dim nowrap'>{best2h}</td>"   # changed to nowrap to avoid wrap at medium widths
-            f"<td class='dim wrap'>{limits}</td>"
-            f"<td class='dim wrap'>{notes}</td>"
+            f"<td class='nowrap'>{date_label}</td>"          # 1 Date
+            f"<td class='nowrap'>{badge}</td>"               # 2 Class
+            f"<td class='dim nowrap'>{start_local}</td>"     # 3 Start
+            f"<td class='dim nowrap'>{end_local}</td>"       # 4 End
+            f"<td class='num nowrap'><strong>{score}</strong></td>"  # 5 Score
+            f"<td class='dim nowrap'>{best2h}</td>"          # 6 Best 2h (nowrap to keep row tight)
+            f"<td class='dim wrap'>{limits}</td>"            # 7 Limits
+            f"<td class='dim wrap'>{notes}</td>"             # 8 Notes
             "</tr>"
         )
 
@@ -412,7 +413,7 @@ def render_html_card(payload: dict) -> str:
         '<div class="table-wrap"><table class="astro-table">'
         f"{colgroup}"
         '<thead><tr>'
-        '<th>Date</th><th>Start</th><th>End</th><th class="num">Score</th><th>Class</th><th>Best 2h</th><th>Limits</th><th>Notes</th>'
+        '<th>Date</th><th>Class</th><th>Start</th><th>End</th><th class="num">Score</th><th>Best 2h</th><th>Limits</th><th>Notes</th>'
         '</tr></thead><tbody>' +
         "".join(rows) +
         '</tbody></table></div>'
