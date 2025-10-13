@@ -205,8 +205,7 @@ def build_night_windows_from_hourly(hourly_section, geo: Geo) -> List[NightWindo
         start = start_dt + timedelta(hours=SUNSET_BUFFER_H)
         end   = prev_dt   - timedelta(hours=SUNRISE_BUFFER_H)
         if start < end:
-            wins.append(NightWindow(start, end, f"{start.date()} night"))
-
+            wins.append(NightWindow(start, end, start.strftime(FMT_DAY)))
     return wins
 
 # ── Per-hour quality ──────────────────────────────────────────────────────────
@@ -247,7 +246,7 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS so cards match exactly ──────────────────────────────────────
+# ── Shared CSS/JS so cards match exactly (with mobile rules) ──────────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -284,6 +283,41 @@ def shared_card_css() -> str:
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
+
+  /* === Responsive column hiding === */
+  @media (max-width: 900px){
+    /* Astro: hide Limits (7) and Notes (8) */
+    .astro-card table.astro-table thead th:nth-child(7),
+    .astro-card table.astro-table thead th:nth-child(8),
+    .astro-card table.astro-table tbody td:nth-child(7),
+    .astro-card table.astro-table tbody td:nth-child(8){ display:none; }
+
+    /* Weather: hide Summary (8) */
+    .astro-card table.weather-table thead th:nth-child(8),
+    .astro-card table.weather-table tbody td:nth-child(8){ display:none; }
+  }
+
+  @media (max-width: 640px){
+    /* Astro: also hide Start (2) and End (3) */
+    .astro-card table.astro-table thead th:nth-child(2),
+    .astro-card table.astro-table thead th:nth-child(3),
+    .astro-card table.astro-table tbody td:nth-child(2),
+    .astro-card table.astro-table tbody td:nth-child(3){ display:none; }
+
+    /* Weather: hide Min (3), Precip (6), Wind (7) — keep Date, Icon, Max, Cloud */
+    .astro-card table.weather-table thead th:nth-child(3),
+    .astro-card table.weather-table thead th:nth-child(6),
+    .astro-card table.weather-table thead th:nth-child(7),
+    .astro-card table.weather-table tbody td:nth-child(3),
+    .astro-card table.weather-table tbody td:nth-child(6),
+    .astro-card table.weather-table tbody td:nth-child(7){ display:none; }
+
+    /* Tighten spacing on small screens */
+    .astro-card th, .astro-card td{ padding:8px; font-size:13px; }
+    .astro-h{ font-size:16px; }
+  }
+
+  .nowrap{ white-space:nowrap; }
 </style>
 """
 
@@ -342,7 +376,7 @@ def render_html_card(payload: dict) -> str:
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
         '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
-        '<div class="table-wrap"><table>'
+        '<div class="table-wrap"><table class="astro-table">'
         '<thead><tr>'
         '<th>Date</th><th>Start</th><th>End</th><th class="num">Score</th><th>Class</th><th>Best 2h</th><th>Limits</th><th>Notes</th>'
         '</tr></thead><tbody>' +
@@ -375,7 +409,7 @@ def extract_daily(daily_section, limit=7):
     days = getattr(daily_section, "data", None) or []
     for d in days[:limit]:
         day = _get(d, "day")
-        date_str = day.strftime("%a %d %b") if hasattr(day, "strftime") else str(day)
+        date_str = day.strftime(FMT_DAY) if hasattr(day, "strftime") else str(day)
         tmin = _c(_get(d, "all_day.temperature_min"))
         tmax = _c(_get(d, "all_day.temperature_max"))
         cloud = _pct(_get(d, "all_day.cloud_cover.total"))
@@ -400,7 +434,7 @@ def extract_daily(daily_section, limit=7):
 
 def render_weather_single_card(title: str, rows: List[dict], message_type: str) -> str:
     css = shared_card_css()
-    updated = datetime.now().strftime("%a %d %b %H:%M")
+    updated = datetime.now().strftime(FMT_DT)
 
     if not rows:
         tbody = "<tr><td colspan='8' class='dim'>No data</td></tr>"
@@ -432,7 +466,7 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
         f'<div class="astro-h">{title}</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
-        '<div class="tblwrap"><table>'
+        '<div class="tblwrap"><table class="weather-table">'
         '<thead>'
         '<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th><th>Summary</th></tr>'
         '</thead><tbody>' + tbody + '</tbody></table></div>'
@@ -502,7 +536,7 @@ def main():
 
     astro_payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
+        "generated_at_local": datetime.now().strftime(FMT_DT),
         "location": "Whitegate, Co. Cork, IE",
         "nights": sorted(nights_out, key=lambda x: x["start"]),
         "baseline_sqm": BASELINE_SQM,
@@ -524,8 +558,8 @@ def main():
     wg_rows = extract_daily(getattr(wg, "daily", None), 7)
     ck_rows = extract_daily(getattr(ck, "daily", None), 7)
 
-    wg_payload = {"generated_at_local": datetime.now().strftime("%a %d %b %H:%M"), "rows": wg_rows, "title": "Whitegate — 7-Day Weather"}
-    ck_payload = {"generated_at_local": datetime.now().strftime("%a %d %b %H:%M"), "rows": ck_rows, "title": "Cork — 7-Day Weather"}
+    wg_payload = {"generated_at_local": datetime.now().strftime(FMT_DT), "rows": wg_rows, "title": "Whitegate — 7-Day Weather"}
+    ck_payload = {"generated_at_local": datetime.now().strftime(FMT_DT), "rows": ck_rows, "title": "Cork — 7-Day Weather"}
 
     # JSON
     weather_out = os.path.join(os.path.dirname(astro_out), "weather")
