@@ -20,6 +20,11 @@ LAT, LON = 51.8268, -8.2321
 ELEV_M   = 20
 TZ       = "Europe/Dublin"
 
+# ── Formatting helpers ────────────────────────────────────────────────────────
+FMT_DAY  = "%a %d %b"        # e.g., Mon 13 Oct
+FMT_DT   = "%a %d %b %H:%M"  # e.g., Mon 13 Oct 19:45
+FMT_TIME = "%H:%M"           # e.g., 19:45
+
 # Cork City centre (approx)
 CORK_LAT, CORK_LON = 51.8985, -8.4756
 
@@ -192,7 +197,7 @@ def build_night_windows_from_hourly(hourly_section, geo: Geo) -> List[NightWindo
             start = start_dt + timedelta(hours=SUNSET_BUFFER_H)
             end   = end_dt   - timedelta(hours=SUNRISE_BUFFER_H)
             if start < end:
-                wins.append(NightWindow(start, end, f"{start.date()} night"))
+                wins.append(NightWindow(start, end, start.strftime(FMT_DAY)))
             in_dark = False; start_dt = None
         prev_dt = dt_local
 
@@ -486,8 +491,8 @@ def main():
             "label": w.label,
             "start": w.start.isoformat(),
             "end": w.end.isoformat(),
-            "start_local": w.start.strftime("%a %d %b %H:%M"),
-            "end_local": w.end.strftime("%a %d %b %H:%M"),
+            "start_local": w.start.strftime(FMT_TIME),
+            "end_local": w.end.strftime(FMT_TIME),
             "score": night_score,
             "class": klass,
             "worst": worst3,
