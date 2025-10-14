@@ -31,10 +31,12 @@ OVERRIDE_SEA_T  = os.environ.get("SEA_TEMP") # °C
 
 OUT_DIR   = "dist/fishing"
 
-# ── Card styling (full-width + working tooltips) ──────────────────────────────
+# ── Card styling (no inner scrollbars; tooltips OK) ───────────────────────────
 def shared_card_css() -> str:
     return """
 <style>
+  html,body{margin:0;padding:0;overflow-x:hidden}
+
   :root{
     --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
     --astro-bg: #ffffff; --astro-fg: #0f172a; --astro-sub: #64748b;
@@ -56,11 +58,14 @@ def shared_card_css() -> str:
   .h{font-weight:700; font-size:18px; margin:0 0 6px}
   .sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
-  .tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:820px; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
+
+  .tblwrap{overflow:visible}
+  table{width:100%; border-collapse:collapse; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
   thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
-  /* allow overflow so tooltips can escape the cell */
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; font-size:14px; overflow:visible; white-space:nowrap; vertical-align:middle}
+  th, td{
+    padding:10px; border-top:1px solid var(--astro-border);
+    text-align:left; font-size:14px; overflow:visible; white-space:nowrap; vertical-align:middle; text-overflow:ellipsis;
+  }
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
@@ -79,11 +84,12 @@ def shared_card_css() -> str:
   }
   .tip:focus .tip-bubble, .tip:hover .tip-bubble{display:block}
 
+  /* Mobile: hide Targets to avoid squish */
   @media (max-width: 640px){
-    /* Hide Targets on phones (keep Tides + Info) */
-    .card table thead th:nth-child(6), .card table tbody td:nth-child(6){ display:none; }
-    .card th, .card td{ padding:6px; font-size:12px; line-height:1.15 }
+    .card table thead th:nth-child(6),
+    .card table tbody td:nth-child(6){ display:none; }
     .badge{ padding:1px 6px; font-size:11px }
+    th, td{ padding:6px; font-size:12px; line-height:1.15 }
   }
 </style>
 """
@@ -94,8 +100,24 @@ def shared_card_js(message_type: str) -> str:
 (function(){{
   var p = new URLSearchParams(location.search);
   if (p.get("transparent")==="1") document.body.style.background="transparent";
-  function send(){{ try{{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }}catch(e){{}} }}
-  window.addEventListener("load", send); setTimeout(send,60); setTimeout(send,300);
+
+  function postH(){{
+    try {{
+      var h = Math.ceil(document.documentElement.scrollHeight) + 12; // small buffer
+      parent.postMessage({{type:"{message_type}", height:h}}, "*");
+    }} catch(e) {{}}
+  }}
+
+  window.addEventListener("load", postH);
+  window.addEventListener("resize", postH);
+
+  if ("ResizeObserver" in window) {{
+    new ResizeObserver(postH).observe(document.body);
+  }}
+
+  setTimeout(postH,60);
+  setTimeout(postH,300);
+  setTimeout(postH,1000);
 }})();
 </script>
 """
