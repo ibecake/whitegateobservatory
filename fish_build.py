@@ -31,7 +31,7 @@ OVERRIDE_SEA_T  = os.environ.get("SEA_TEMP") # °C
 
 OUT_DIR   = "dist/fishing"
 
-# ── Card styling (full-width + tooltips) ──────────────────────────────────────
+# ── Card styling (full-width + working tooltips) ──────────────────────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -58,7 +58,9 @@ def shared_card_css() -> str:
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
   .tblwrap{overflow:auto}
   table{width:100%; border-collapse:collapse; min-width:820px; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
+  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
+  /* allow overflow so tooltips can escape the cell */
+  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; font-size:14px; overflow:visible; white-space:nowrap; vertical-align:middle}
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
@@ -73,10 +75,9 @@ def shared_card_css() -> str:
     display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px);
     background:var(--astro-fg); color:var(--astro-bg); padding:10px 12px; border-radius:8px;
     box-shadow:0 8px 30px rgba(0,0,0,.25); border:1px solid var(--astro-border);
-    max-width:min(80vw, 48ch); white-space:pre-wrap; z-index:10;
+    max-width:min(80vw, 48ch); white-space:pre-wrap; z-index:20; pointer-events:none;
   }
   .tip:focus .tip-bubble, .tip:hover .tip-bubble{display:block}
-  .tip-bubble b{display:block; margin-bottom:4px}
 
   @media (max-width: 640px){
     /* Hide Targets on phones (keep Tides + Info) */
@@ -168,7 +169,7 @@ def score_wave(height_m: Optional[float], period_s: Optional[float], ws: Optiona
     return s, f"wave={h:.1f}m/{t:.0f}s"
 
 def score_sea_temp(tC: Optional[float], month:int):
-    if tC is None: 
+    if tC is None:
         return 70, "SST:?"
     s = 85 if 10<=tC<=17 else 95 if tC>17 else 60 if 8<=tC<10 else 45
     return s, f"SST={tC:.1f}°C"
@@ -264,7 +265,7 @@ def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, ste
     extremes.sort(key=lambda x: x["dt"])
     return dict(heights=heights, extremes=extremes)
 
-# ── Build (fetch + score + windows + tides per day) ───────────────────────────
+# ── Build (fetch + score + one best window per day + tides) ───────────────────
 def build_payload():
     ms = Meteosource(MS_API_KEY, MS_TIER)
     fc = ms.get_point_forecast(lat=LAT, lon=LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
@@ -311,6 +312,7 @@ def build_payload():
         wave_t = float(OVERRIDE_WAVE_T) if OVERRIDE_WAVE_T else None
         sst    = float(OVERRIDE_SEA_T)  if OVERRIDE_SEA_T  else None
 
+        # component scores
         s_w,   n_w   = score_wind(ws, gust)
         s_c,   n_c   = score_cloud(cloud)
         s_r,   n_r   = score_precip(rain)
@@ -335,7 +337,7 @@ def build_payload():
             notes="; ".join([n_w,n_c,n_r,n_p,n_wav,n_sst,n_tide]),
         ))
 
-    # 2h windows per day + tides string for that date
+    # Group by day; pick only the single best 2-hour window per day
     by_day: Dict[str, List[dict]] = {}
     for r in rows:
         key = r["t"].date().isoformat()  # local date
@@ -344,16 +346,19 @@ def build_payload():
     windows = []
     for day, hrs in sorted(by_day.items()):
         hrs = sorted(hrs, key=lambda x: x["t"])
-        best = []
+        best = None
         for i in range(len(hrs)-1):
             win = hrs[i:i+2]
             s = mean([w["score"] for w in win])
             t0, t1 = win[0]["t"], win[-1]["t"] + timedelta(minutes=59)
-            best.append((s, t0, t1, "; ".join(w["notes"] for w in win)))
-        best.sort(key=lambda x: x[0], reverse=True)
-        top = best[:3]
+            note = "; ".join(w["notes"] for w in win)
+            if (best is None) or (s > best[0]):
+                best = (s, t0, t1, note)
+        if best is None:
+            continue
+        s, t0, t1, note = best
 
-        month = hrs[0]["t"].month
+        month = t0.month
         targets = ", ".join(SPECIES_BY_MONTH.get(month, [])) or "—"
 
         tide_e = extremes_by_day.get(day, [])
@@ -362,41 +367,39 @@ def build_payload():
             for e in tide_e
         ) or "—"
 
-        for s, t0, t1, note in top:
-            cls = "GOOD" if s>=75 else "FAIR" if s>=60 else "POOR"
-            windows.append(dict(
-                day_label = t0.strftime("%a %d %b"),
-                start = t0.strftime("%H:%M"),
-                end   = t1.strftime("%H:%M"),
-                score = int(round(s)),
-                cls   = cls,
-                tides = tide_str,
-                targets = targets,
-                details = note
-            ))
+        cls = "GOOD" if s>=75 else "FAIR" if s>=60 else "POOR"
+        windows.append(dict(
+            day_label = t0.strftime("%a %d %b"),
+            start = t0.strftime("%H:%M"),
+            end   = t1.strftime("%H:%M"),
+            score = int(round(s)),
+            cls   = cls,
+            tides = tide_str,
+            targets = targets,
+            details = note
+        ))
 
     return {
         "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
         "windows": windows
     }
 
-# ── Render HTML card (Details moved to tooltip) ───────────────────────────────
+# ── Render HTML card (Details → tooltip; one row per day) ─────────────────────
 def render_card(payload: dict) -> str:
     css = shared_card_css()
     js  = shared_card_js("fishing-card-size")
     updated = payload["generated_at_local"]
     wins = payload["windows"]
 
-    # columns: Date, Window, Score, Class, Tides, Targets, Info
     colgroup = (
         "<colgroup>"
-        "<col style='width:11ch'>"
-        "<col style='width:18ch'>"
-        "<col style='width:6ch'>"
-        "<col style='width:7ch'>"
-        "<col style='width:22ch'>"
-        "<col style='width:26ch'>"
-        "<col style='width:3ch'>"
+        "<col style='width:11ch'>"  # Date
+        "<col style='width:18ch'>"  # Window
+        "<col style='width:6ch'>"   # Score
+        "<col style='width:7ch'>"   # Class
+        "<col style='width:22ch'>"  # Tides
+        "<col style='width:26ch'>"  # Targets
+        "<col style='width:3ch'>"   # Info
         "</colgroup>"
     )
 
