@@ -4,7 +4,7 @@
 from __future__ import annotations
 import os, json, argparse
 from dataclasses import dataclass
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict
 from statistics import mean
 from datetime import timedelta, datetime, timezone
 from math import sin, cos, radians
@@ -16,23 +16,24 @@ from pymeteosource.types import tiers, sections, langs, units
 # ── Config ────────────────────────────────────────────────────────────────────
 API_KEY  = os.environ.get("METEOSOURCE_API_KEY", "PASTE-YOUR-API-KEY-HERE")
 TIER     = tiers.FLEXI
-LAT, LON = 51.8268, -8.2321
+LAT, LON = 51.8268, -8.2321     # Whitegate, Co. Cork
 ELEV_M   = 20
 TZ       = "Europe/Dublin"
-
-# ── Formatting helpers ────────────────────────────────────────────────────────
-FMT_DAY  = "%a %d %b"        # e.g., Mon 13 Oct
-FMT_DT   = "%a %d %b %H:%M"  # e.g., Mon 13 Oct 19:45
-FMT_TIME = "%H:%M"           # e.g., 19:45
 
 # Cork City centre (approx)
 CORK_LAT, CORK_LON = 51.8985, -8.4756
 
+# Format helpers (consistent across cards)
+FMT_DAY  = "%a %d %b"        # e.g., Tue 14 Oct
+FMT_DT   = "%a %d %b %H:%M"  # e.g., Tue 14 Oct 19:45
+FMT_TIME = "%H:%M"
+
 SUNSET_BUFFER_H  = 1.0
 SUNRISE_BUFFER_H = 1.0
 
-TARGET_RA  = None
-TARGET_DEC = None
+# Optional astro target (set both to enable airmass calc against target)
+TARGET_RA  = None   # e.g. "05:35:17"
+TARGET_DEC = None   # e.g. "-05:23:28"
 
 BASELINE_SQM = 20.8
 
@@ -74,12 +75,13 @@ def _c(x):
     try: return float(x)
     except: return None
 
+# Airmass (Kasten & Young 1989)
 def airmass(alt_deg: float) -> float:
     z = max(0.0, 90.0 - alt_deg)
     if z >= 90.0: return 38.0
     return 1.0 / (cos(radians(z)) + 0.50572 * ((96.07995 - z) ** -1.6364))
 
-# ── Geometry ──────────────────────────────────────────────────────────────────
+# ── Geometry via PyEphem ──────────────────────────────────────────────────────
 class Geo:
     def __init__(self, lat, lon, elev_m):
         self.obs = ephem.Observer()
@@ -139,16 +141,6 @@ def precip_score(h):
     if p <= 0.2:  return 50.0, f"precip={p:.2f}mm"
     return 10.0, f"precip={p:.2f}mm"
 
-def fog_probability(spread_C, wind_ms, vis_km) -> int:
-    risk = 0.0
-    if spread_C is not None:
-        risk += 0.6 if spread_C <= 1 else 0.35 if spread_C <= 3 else 0.15 if spread_C <= 5 else 0.0
-    if wind_ms is not None:
-        risk += 0.25 if wind_ms <= 1.5 else 0.10 if wind_ms <= 3.0 else 0.0
-    if vis_km is not None:
-        risk += 0.25 if vis_km < 5 else 0.10 if vis_km < 10 else 0.0
-    return int(round(min(1.0, risk) * 100))
-
 def brightness_model(moon_phase_frac, moon_alt_deg, sep_deg, target_airmass):
     if moon_alt_deg <= 0:
         est_sqm = BASELINE_SQM
@@ -171,7 +163,17 @@ def brightness_model(moon_phase_frac, moon_alt_deg, sep_deg, target_airmass):
     score = float(interp(est_sqm))
     return est_sqm, score, f"SQM≈{est_sqm:.2f}"
 
-# ── Night windows ─────────────────────────────────────────────────────────────
+def fog_probability(spread_C, wind_ms, vis_km) -> int:
+    risk = 0.0
+    if spread_C is not None:
+        risk += 0.6 if spread_C <= 1 else 0.35 if spread_C <= 3 else 0.15 if spread_C <= 5 else 0.0
+    if wind_ms is not None:
+        risk += 0.25 if wind_ms <= 1.5 else 0.10 if wind_ms <= 3.0 else 0.0
+    if vis_km is not None:
+        risk += 0.25 if vis_km < 5 else 0.10 if vis_km < 10 else 0.0
+    return int(round(min(1.0, risk) * 100))
+
+# ── Astronomical-night windows (Sun alt ≤ -18°) ───────────────────────────────
 @dataclass
 class NightWindow:
     start: object
@@ -206,9 +208,10 @@ def build_night_windows_from_hourly(hourly_section, geo: Geo) -> List[NightWindo
         end   = prev_dt   - timedelta(hours=SUNRISE_BUFFER_H)
         if start < end:
             wins.append(NightWindow(start, end, start.strftime(FMT_DAY)))
+
     return wins
 
-# ── Per-hour quality ──────────────────────────────────────────────────────────
+# ── Per-hour quality (Astro) ─────────────────────────────────────────────────
 def hour_quality(h, geo: Geo, target_ra_dec):
     s_clouds, r_clouds = clouds_score(h)
     s_vis,    r_vis    = visibility_score(h)
@@ -246,7 +249,7 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS so cards match exactly (tuned for mobile height) ────────────
+# ── Shared CSS/JS (full width + tooltips) ─────────────────────────────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -263,69 +266,42 @@ def shared_card_css() -> str:
     }
   }
   .astro-wrap{font-family:var(--astro-font); background:transparent;}
-  /* was: max-width:980px;  →  now full width of the iframe */
   .astro-card{
-    width:100%;
-    max-width:none;
-    border:1px solid var(--astro-border);
-    border-radius:var(--astro-radius);
-    padding:16px;
-    background:var(--astro-bg);
-    box-shadow:var(--astro-shadow);
-    color:var(--astro-fg);
+    width:100%; max-width:none;
+    border:1px solid var(--astro-border); border-radius:var(--astro-radius);
+    padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);
   }
   .astro-h{font-weight:700; font-size:18px; margin:0 0 6px}
   .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
 
   .table-wrap,.tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg);}
+  table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
   thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:top; font-size:14px}
+  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:middle; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
 
+  /* info bubble + tooltip */
+  td.info{width:2.5rem; text-align:center}
+  .tip{position:relative; display:inline-block; cursor:help; outline:none}
+  .info-dot{display:inline-block; width:1.35em; height:1.35em; line-height:1.35em; border-radius:999px; background:var(--astro-sub); color:#fff; font-weight:700; font-size:12px; text-align:center}
+  .tip-bubble{
+    display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px);
+    background:var(--astro-fg); color:var(--astro-bg); padding:10px 12px; border-radius:8px;
+    box-shadow:0 8px 30px rgba(0,0,0,.25); border:1px solid var(--astro-border);
+    max-width:min(80vw, 48ch); white-space:pre-wrap; z-index:10;
+  }
+  .tip:focus .tip-bubble, .tip:hover .tip-bubble{display:block}
+  .tip-bubble b{display:block; margin-bottom:4px}
+
+  /* compact mode */
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
-
-  /* === Responsive column hiding === */
-  @media (max-width: 900px){
-    /* Astro: hide Limits (7) and Notes (8) */
-    .astro-card table.astro-table thead th:nth-child(7),
-    .astro-card table.astro-table thead th:nth-child(8),
-    .astro-card table.astro-table tbody td:nth-child(7),
-    .astro-card table.astro-table tbody td:nth-child(8){ display:none; }
-
-    /* Weather: hide Summary (8) */
-    .astro-card table.weather-table thead th:nth-child(8),
-    .astro-card table.weather-table tbody td:nth-child(8){ display:none; }
-  }
-
-  @media (max-width: 640px){
-    /* Astro: also hide Start (2), End (3), and Best 2h (6) to keep rows single-line */
-    .astro-card table.astro-table thead th:nth-child(3),
-    .astro-card table.astro-table thead th:nth-child(4),
-    .astro-card table.astro-table thead th:nth-child(6),
-    .astro-card table.astro-table tbody td:nth-child(3),
-    .astro-card table.astro-table tbody td:nth-child(4),
-    .astro-card table.astro-table tbody td:nth-child(6){ display:none; }
-
-    /* Weather: hide Min (3), Precip (6), Wind (7) — keep Date, Icon, Max, Cloud */
-    .astro-card table.weather-table thead th:nth-child(3),
-    .astro-card table.weather-table thead th:nth-child(6),
-    .astro-card table.weather-table thead th:nth-child(7),
-    .astro-card table.weather-table tbody td:nth-child(3),
-    .astro-card table.weather-table tbody td:nth-child(6),
-    .astro-card table.weather-table tbody td:nth-child(7){ display:none; }
-
-    /* Tighter spacing + smaller badges to reduce row height */
-    .astro-card th, .astro-card td{ padding:6px; font-size:12px; line-height:1.15; }
-    .badge{ padding:1px 6px; font-size:11px; }
-  }
 </style>
 """
 
@@ -334,63 +310,48 @@ def shared_card_js(message_type: str) -> str:
 <script>
 (function(){{
   var p = new URLSearchParams(location.search);
-  var theme = p.get("theme");
-  if (theme === "light") {{ document.documentElement.classList.remove("dark"); }}
-  else if (theme === "dark") {{ document.documentElement.classList.add("dark"); }}
-  var r = p.get("radius"); if (r) {{ document.documentElement.style.setProperty("--astro-radius", r.endsWith("px")?r:(r+'px')); }}
-  var f = p.get("font"); if (f) {{ document.documentElement.style.setProperty("--astro-font", f); }}
-  if (p.get("compact") === "1") {{ document.getElementById("astro-root")?.classList.add("compact"); }}
-  if (p.get("transparent") === "1") {{ document.body.style.background = "transparent"; }}
-
-  function send(){{ try {{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }} catch(e){{}} }}
+  if (p.get("transparent")==="1") document.body.style.background="transparent";
+  function send(){{ try{{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }}catch(e){{}} }}
   window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
 }})();
 </script>
 """
 
-# ── HTML: Astro card ──────────────────────────────────────────────────────────
+# ── HTML: Astro card (Class moved to column 2; info tooltip) ──────────────────
 def render_html_card(payload: dict) -> str:
     nights = sorted(payload["nights"], key=lambda n: n["start"])
     updated = payload["generated_at_local"]
-
     css = shared_card_css()
-
-    # New column order: 1 Date, 2 Class, 3 Start, 4 End, 5 Score, 6 Best2h, 7 Limits, 8 Notes
-    colgroup = (
-        "<colgroup>"
-        "<col style='width:10ch'>"  # Date
-        "<col style='width:7ch'>"   # Class (badge)
-        "<col style='width:6ch'>"   # Start
-        "<col style='width:6ch'>"   # End
-        "<col style='width:6ch'>"   # Score
-        "<col style='width:22ch'>"  # Best 2h
-        "<col style='width:20ch'>"  # Limits
-        "<col>"                     # Notes (flex)
-        "</colgroup>"
-    )
 
     rows = []
     for n in nights:
         cls = n["class"]
         badge = f'<span class="badge {cls}">{cls}</span>'
         score = f'{int(round(n["score"]))}'
-        date_label   = n["label"]
-        start_local  = n["start_local"]
-        end_local    = n["end_local"]
-        best2h       = n.get("best2h", "—") or "—"
-        limits       = n.get("worst", "")
-        notes        = n.get("notes", "")
+        date_label = n["label"]
+        start_local = n["start_local"]
+        end_local   = n["end_local"]
+        best2h      = n.get("best2h", "—") or "—"
+        limits      = n.get("worst", "")
+        notes       = n.get("notes", "")
 
+        tip_html = (
+            f'<div class="tip-bubble"><b>{date_label}</b>'
+            f'Score: {score}\n'
+            f'Best 2h: {best2h}\n'
+            + (f'Limits: {limits}\n' if limits else '')
+            + (f'Notes: {notes}' if notes else '')
+            + '</div>'
+        )
         rows.append(
             "<tr>"
-            f"<td class='nowrap'>{date_label}</td>"          # 1 Date
-            f"<td class='nowrap'>{badge}</td>"               # 2 Class
-            f"<td class='dim nowrap'>{start_local}</td>"     # 3 Start
-            f"<td class='dim nowrap'>{end_local}</td>"       # 4 End
-            f"<td class='num nowrap'><strong>{score}</strong></td>"  # 5 Score
-            f"<td class='dim nowrap'>{best2h}</td>"          # 6 Best 2h (nowrap to keep row tight)
-            f"<td class='dim wrap'>{limits}</td>"            # 7 Limits
-            f"<td class='dim wrap'>{notes}</td>"             # 8 Notes
+            f"<td>{date_label}</td>"
+            f"<td>{badge}</td>"
+            f"<td class='dim'>{start_local}</td>"
+            f"<td class='dim'>{end_local}</td>"
+            f"<td class='num'><strong>{score}</strong></td>"
+            f"<td class='dim'>{best2h}</td>"
+            f"<td class='info'><span class='tip' tabindex='0' aria-label='More info'><span class='info-dot'>i</span>{tip_html}</span></td>"
             "</tr>"
         )
 
@@ -400,20 +361,16 @@ def render_html_card(payload: dict) -> str:
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
         '<div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
-        '<div class="table-wrap"><table class="astro-table">'
-        f"{colgroup}"
+        '<div class="table-wrap"><table>'
         '<thead><tr>'
-        '<th>Date</th><th>Class</th><th>Start</th><th>End</th><th class="num">Score</th><th>Best 2h</th><th>Limits</th><th>Notes</th>'
-        '</tr></thead><tbody>' +
-        "".join(rows) +
-        '</tbody></table></div>'
+        '<th>Date</th><th>Class</th><th>Start</th><th>End</th><th class="num">Score</th><th>Best 2h</th><th>Info</th>'
+        '</tr></thead><tbody>' + "".join(rows) + '</tbody></table></div>'
         '<div class="credit">Weather data © Meteosource</div>'
-        '</div></div>' +
-        js
+        '</div></div>' + js
     )
     return html
 
-# ── WEATHER (separate cards, matching astro styling) ──────────────────────────
+# ── WEATHER (separate cards, matching styling; summary in tooltip) ────────────
 def icon_to_emoji(name) -> str:
     if name is None: return "·"
     s = str(name).lower()
@@ -451,9 +408,8 @@ def extract_daily(daily_section, limit=7):
             "cloud": None if cloud is None else int(round(cloud)),
             "precip": None if precip is None else round(precip, 1),
             "wind_kmh": wind_kmh,
-            "icon": icon,
             "emoji": emoji,
-            "summary": summary,
+            "summary": (summary or "").strip(),
         })
     return out
 
@@ -461,22 +417,8 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
     css = shared_card_css()
     updated = datetime.now().strftime(FMT_DT)
 
-    # column widths for weather: Date, Icon, Min, Max, Cloud, Precip, Wind, Summary
-    colgroup = (
-        "<colgroup>"
-        "<col style='width:10ch'>"
-        "<col style='width:3ch'>"
-        "<col style='width:6ch'>"
-        "<col style='width:6ch'>"
-        "<col style='width:7ch'>"
-        "<col style='width:9ch'>"
-        "<col style='width:8ch'>"
-        "<col>"
-        "</colgroup>"
-    )
-
     if not rows:
-        tbody = "<tr><td colspan='8' class='dim'>No data</td></tr>"
+        tbody = "<tr><td colspan='7' class='dim'>No data</td></tr>"
     else:
         rs = []
         for r in rows:
@@ -485,16 +427,22 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
             cloud = "—" if r["cloud"] is None else f'{r["cloud"]}%'
             precip = "—" if r["precip"] is None else f'{r["precip"]}'
             wind = "—" if r["wind_kmh"] is None else f'{r["wind_kmh"]}'
+            tip = (r["summary"] or "").strip() or "No summary"
+            emoji_html = (
+                f"<span class='tip' tabindex='0' aria-label='Summary'>"
+                f"<span>{r['emoji']}</span>"
+                f"<div class='tip-bubble'>{tip}</div>"
+                f"</span>"
+            )
             rs.append(
                 "<tr>"
-                f"<td class='nowrap'>{r['date']}</td>"
-                f"<td class='nowrap'>{r['emoji']}</td>"
-                f"<td class='num nowrap'>{tmin}</td>"
-                f"<td class='num nowrap'>{tmax}</td>"
-                f"<td class='num nowrap'>{cloud}</td>"
-                f"<td class='num nowrap'>{precip}</td>"
-                f"<td class='num nowrap'>{wind}</td>"
-                f"<td class='dim wrap'>{r['summary']}</td>"
+                f"<td>{r['date']}</td>"
+                f"<td>{emoji_html}</td>"
+                f"<td>{tmin}</td>"
+                f"<td>{tmax}</td>"
+                f"<td class='num'>{cloud}</td>"
+                f"<td class='num'>{precip}</td>"
+                f"<td class='num'>{wind}</td>"
                 "</tr>"
             )
         tbody = "".join(rs)
@@ -505,21 +453,19 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
         f'<div class="astro-h">{title}</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
-        '<div class="tblwrap"><table class="weather-table">'
-        f"{colgroup}"
+        '<div class="tblwrap"><table>'
         '<thead>'
-        '<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th><th>Summary</th></tr>'
+        '<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th></tr>'
         '</thead><tbody>' + tbody + '</tbody></table></div>'
         '<div class="credit">Weather data © Meteosource</div>'
-        '</div></div>' +
-        js
+        '</div></div>' + js
     )
     return html
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    ap = argparse.ArgumentParser(description="Build astro + weather (separate) JSON/HTML cards.")
-    ap.add_argument("--out", default="./astro", help="Output folder for ASTRO card (e.g., dist/astro)")
+    ap = argparse.ArgumentParser(description="Build astro + weather (separate) JSON/HTML cards with tooltips.")
+    ap.add_argument("--out", default="./dist/astro", help="Output folder for ASTRO card (e.g., dist/astro)")
     args = ap.parse_args()
     astro_out = os.path.abspath(args.out)
     os.makedirs(astro_out, exist_ok=True)
@@ -555,8 +501,8 @@ def main():
             sc = mean([x[1] for x in seg])
             if sc > best2h_score:
                 best2h_score = sc
-                t0 = _get(seg[0][0],"date").strftime("%Y-%m-%d %H:%M")
-                t1 = _get(seg[-1][0],"date").strftime("%Y-%m-%d %H:%M")
+                t0 = _get(seg[0][0],"date").strftime(FMT_DT)
+                t1 = _get(seg[-1][0],"date").strftime(FMT_DT)
                 best2h = f"{t0} → {t1} (avg {best2h_score:.1f})"
         fog_peak   = max(x[2]["_fogp"] for x in per_hour)
         sqm_med    = round(mean(x[2]["_sqm"] for x in per_hour), 2)
@@ -594,26 +540,9 @@ def main():
     # ── WEATHER CARDS ──
     wg = fetch_daily(ms, LAT, LON)
     ck = fetch_daily(ms, CORK_LAT, CORK_LON)
-
     wg_rows = extract_daily(getattr(wg, "daily", None), 7)
     ck_rows = extract_daily(getattr(ck, "daily", None), 7)
 
-    wg_payload = {"generated_at_local": datetime.now().strftime(FMT_DT), "rows": wg_rows, "title": "Whitegate — 7-Day Weather"}
-    ck_payload = {"generated_at_local": datetime.now().strftime(FMT_DT), "rows": ck_rows, "title": "Cork — 7-Day Weather"}
-
-    # JSON
-    weather_out = os.path.join(os.path.dirname(astro_out), "weather")
-    os.makedirs(weather_out, exist_ok=True)
-
-    with open(os.path.join(weather_out, "whitegate.tmp.json"), "w", encoding="utf-8") as f:
-        json.dump(wg_payload, f, ensure_ascii=False, indent=2)
-    os.replace(os.path.join(weather_out, "whitegate.tmp.json"), os.path.join(weather_out, "whitegate.json"))
-
-    with open(os.path.join(weather_out, "cork.tmp.json"), "w", encoding="utf-8") as f:
-        json.dump(ck_payload, f, ensure_ascii=False, indent=2)
-    os.replace(os.path.join(weather_out, "cork.tmp.json"), os.path.join(weather_out, "cork.json"))
-
-    # HTML cards (distinct message types so they auto-resize independently)
     with open(os.path.join(weather_out, "whitegate.tmp.html"), "w", encoding="utf-8") as f:
         f.write(render_weather_single_card("Whitegate — 7-Day Weather", wg_rows, "weather-whitegate-size"))
     os.replace(os.path.join(weather_out, "whitegate.tmp.html"), os.path.join(weather_out, "whitegate.html"))
@@ -623,8 +552,8 @@ def main():
     os.replace(os.path.join(weather_out, "cork.tmp.html"), os.path.join(weather_out, "cork.html"))
 
     print(f"Wrote ASTRO:   {os.path.join(astro_out,'astro.json')}  /  {os.path.join(astro_out,'card.html')}")
-    print(f"Wrote WEATHER: {os.path.join(weather_out,'whitegate.json')}  /  {os.path.join(weather_out,'whitegate.html')}")
-    print(f"Wrote WEATHER: {os.path.join(weather_out,'cork.json')}      /  {os.path.join(weather_out,'cork.html')}")
+    print(f"Wrote WEATHER: {os.path.join(weather_out,'whitegate.html')}")
+    print(f"Wrote WEATHER: {os.path.join(weather_out,'cork.html')}")
 
 if __name__ == "__main__":
     main()
