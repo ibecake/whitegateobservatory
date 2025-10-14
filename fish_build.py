@@ -48,8 +48,17 @@ def shared_card_css() -> str:
     }
   }
   .wrap{font-family:var(--astro-font); background:transparent;}
-  .card{max-width:980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
-        padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+  /* was: max-width:980px;  →  now full width of the iframe */
+  .card{
+    width:100%;
+    max-width:none;
+    border:1px solid var(--astro-border);
+    border-radius:var(--astro-radius);
+    padding:16px;
+    background:var(--astro-bg);
+    box-shadow:var(--astro-shadow);
+    color:var(--astro-fg);
+  }
   .h{font-weight:700; font-size:18px; margin:0 0 6px}
   .sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
@@ -62,12 +71,10 @@ def shared_card_css() -> str:
   .GOOD{background:var(--badge-good)} .FAIR{background:var(--badge-fair)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
   @media (max-width: 900px){
-    /* Hide Details column (now 7th) on smaller screens */
-    .card table thead th:nth-child(7), .card table tbody td:nth-child(7){ display:none; }
+    .card table thead th:nth-child(7), .card table tbody td:nth-child(7){ display:none; } /* Details */
   }
   @media (max-width: 640px){
-    /* Keep: Date, Window, Score, Class, Tides (Targets/Details are less critical on phones) */
-    .card table thead th:nth-child(5), .card table tbody td:nth-child(5){ display:none; } /* Targets */
+    .card table thead th:nth-child(6), .card table tbody td:nth-child(6){ display:none; } /* Targets */
     .card th, .card td{ padding:6px; font-size:12px; line-height:1.15 }
     .badge{ padding:1px 6px; font-size:11px }
   }
