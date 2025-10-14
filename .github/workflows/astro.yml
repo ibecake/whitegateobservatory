@@ -1,11 +1,8 @@
-name: Build Astro Card
-
+name: Deploy to GitHub Pages
 on:
-  schedule:
-    - cron: "0 */4 * * *"        # every 4 hours
-  workflow_dispatch:
   push:
-    branches: [ "main" ]         # optional: publish on pushes
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -26,48 +23,46 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
+          python-version: '3.11'
 
       - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Build astro outputs
+      - name: Build site (astro + weather + fishing)
         env:
           METEOSOURCE_API_KEY: ${{ secrets.METEOSOURCE_API_KEY }}
+          WORLD_TIDES_KEY: ${{ secrets.WORLD_TIDES_KEY }}
         run: |
-          mkdir -p dist/astro
+          rm -rf dist
+          mkdir -p dist
+          # Build cards
           python astro_build.py --out dist/astro
-          # 👇 add CNAME so Pages serves your custom domain correctly
-          echo 'whitegateobservatory.com' > dist/CNAME
-          
-          # >>> ensure we have a homepage at the root of the artifact
+          # If your astro_build also writes weather cards, they’ll be under dist/weather already
+          # Build fishing
+          python fish_build.py --out dist/fishing
+          # Copy site shell
           cp index.html dist/index.html
 
-          # (Optional) If you’ve already pointed your custom domain at Pages:
-          # echo 'whitegateobservatory.com' > dist/CNAME
-
-          echo "=== Dist contents ==="
-          ls -la dist
-          echo "=== Dist/astro contents ==="
-          ls -la dist/astro
-
-      - name: Upload artifact (dist/)
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+          name: github-pages
 
   deploy:
-    runs-on: ubuntu-latest
     needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages
