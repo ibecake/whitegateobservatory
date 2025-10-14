@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Optional, List, Tuple, Dict
 from datetime import datetime, timedelta, timezone
 from statistics import mean
-from math import sin, radians, copysign
+from math import sin, radians
 
 import requests
 import ephem
@@ -87,7 +87,7 @@ def shared_card_js(message_type: str) -> str:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def to_utc(dt):
-    try:    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    try:    return dt.astimezone(timezone.utc).replace(tzinfo=None)  # naive UTC
     except: return dt
 
 class Geo:
@@ -158,17 +158,18 @@ def score_sea_temp(tC: Optional[float], month:int):
     s = 85 if 10<=tC<=17 else 95 if tC>17 else 60 if 8<=tC<10 else 45
     return s, f"SST={tC:.1f}°C"
 
-# NEW: tide score
-def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) -> Tuple[float,str]:
-    """heights: [{'dt':datetime,'height':float}] step=1h
-       extremes: [{'dt':datetime,'type':'High'|'Low','height':float}]"""
+# NEW: tide score (expects dt in **naive UTC** to match WorldTides parsing)
+def score_tide(dt_utc: datetime, heights: List[Dict], extremes: List[Dict]) -> Tuple[float,str]:
+    """dt_utc: naive UTC datetime
+       heights: [{'dt':datetime(UTC-naive),'height':float}] step=1h
+       extremes: [{'dt':datetime(UTC-naive),'type':'High'|'Low','height':float}]"""
     if not heights:
         return 60.0, "tide:?"
 
     # find nearest heights around dt to estimate rate (m/h)
     idx = None
     for i, h in enumerate(heights):
-        if h["dt"] >= dt_local:
+        if h["dt"] >= dt_utc:
             idx = i
             break
     if idx is None: idx = len(heights)-1
@@ -181,27 +182,21 @@ def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) ->
     # distance to next extreme
     next_ext = None
     for ex in extremes:
-        if ex["dt"] >= dt_local:
+        if ex["dt"] >= dt_utc:
             next_ext = ex
-            break
-    prev_ext = None
-    for ex in reversed(extremes):
-        if ex["dt"] <= dt_local:
-            prev_ext = ex
             break
 
     def hours_to(ex):
-        return abs((ex["dt"] - dt_local).total_seconds())/3600.0 if ex else None
+        return abs((ex["dt"] - dt_utc).total_seconds())/3600.0 if ex else None
 
     h_next = hours_to(next_ext)
     next_lab = f"next {next_ext['type'].lower()} in {h_next:.1f}h" if next_ext and h_next is not None else "next:?"
 
-    # moving water is good; give bonus to flood (shore bass bias)
+    # moving water is good; bonus for flood; slack penalty
     s_move = min(100.0, 40.0 + min(60.0, abs(rate)*300.0))  # 0 m/h->40, 0.2 m/h->100
-    s_phase = 5.0 if rate>0.03 else 0.0  # small flood bias
+    s_phase = 5.0 if rate>0.03 else 0.0
     s_slack_pen = -15.0 if phase=="slack" else 0.0
 
-    # Near an extreme can be good; slightly favor just-after low
     timing_bonus = 0.0
     if h_next is not None:
         if next_ext["type"] == "High":
@@ -233,6 +228,10 @@ def wt_request(params: dict) -> Optional[dict]:
         return None
 
 def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, step_s: int=3600, key: Optional[str]=None):
+    """
+    Returns UTC-naive datetimes for both heights and extremes (using utcfromtimestamp),
+    so that we can compare against our own UTC-naive times (dt_utc).
+    """
     if not key:
         return dict(heights=[], extremes=[])
     start_ts = int(time.mktime(start_utc.timetuple()))
@@ -243,11 +242,10 @@ def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, ste
     j_ext = wt_request(p_ext) or {}
     extremes = []
     for ex in j_ext.get("extremes", []) or []:
-        # ex: {"dt": 1609459200, "date":"2021-01-01T00:00+00:00","height":3.12,"type":"High"}
-        ts = ex.get("dt") or ex.get("time")  # some payloads use "dt" or "time"
+        ts = ex.get("dt") or ex.get("time")
         if ts is None: continue
         extremes.append(dict(
-            dt=datetime.fromtimestamp(int(ts)),
+            dt=datetime.utcfromtimestamp(int(ts)),  # <-- UTC, naive
             type=ex.get("type",""),
             height=float(ex.get("height", 0.0))
         ))
@@ -260,7 +258,7 @@ def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, ste
         ts = h.get("dt") or h.get("time")
         if ts is None: continue
         heights.append(dict(
-            dt=datetime.fromtimestamp(int(ts)),
+            dt=datetime.utcfromtimestamp(int(ts)),  # <-- UTC, naive
             height=float(h.get("height", 0.0))
         ))
 
@@ -291,7 +289,7 @@ def build_payload():
     for h in hourly:
         dt_local = getattr(h, "date", None)
         if not dt_local: continue
-        dt_utc = to_utc(dt_local)
+        dt_utc = to_utc(dt_local)  # <-- naive UTC for all tide comparisons
 
         # weather vars
         ws   = getattr(getattr(h,"wind",None), "speed", None)
@@ -318,7 +316,7 @@ def build_payload():
         s_wav, n_wav = score_wave(wave_h, wave_t, ws)
         s_sst, n_sst = score_sea_temp(sst, month=dt_local.month)
 
-        s_tide, n_tide = score_tide(dt_local, heights, extremes) if WT_KEY else (60.0, "tide:? (no key)")
+        s_tide, n_tide = score_tide(dt_utc, heights, extremes) if WT_KEY else (60.0, "tide:? (no key)")
 
         # dawn/dusk bonus
         sun = geo.sun(dt_utc); alt = float(sun.alt)*180.0/3.141592653589793
