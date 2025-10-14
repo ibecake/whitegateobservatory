@@ -249,7 +249,7 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS (full width + tooltips) ─────────────────────────────────────
+# ── Shared CSS/JS (full width + working tooltips) ─────────────────────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -278,12 +278,16 @@ def shared_card_css() -> str:
   .table-wrap,.tblwrap{overflow:auto}
   table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
   thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:middle; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  /* IMPORTANT: allow overflow so tooltips are visible */
+  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:middle; font-size:14px; white-space:nowrap; overflow:visible}
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
+
+  /* clip helper when you want ellipsis inside a cell */
+  .clip{display:inline-block; max-width:32ch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
   /* info bubble + tooltip */
   td.info{width:2.5rem; text-align:center}
@@ -293,10 +297,9 @@ def shared_card_css() -> str:
     display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px);
     background:var(--astro-fg); color:var(--astro-bg); padding:10px 12px; border-radius:8px;
     box-shadow:0 8px 30px rgba(0,0,0,.25); border:1px solid var(--astro-border);
-    max-width:min(80vw, 48ch); white-space:pre-wrap; z-index:10;
+    max-width:min(80vw, 48ch); white-space:pre-wrap; z-index:20; pointer-events:none;
   }
   .tip:focus .tip-bubble, .tip:hover .tip-bubble{display:block}
-  .tip-bubble b{display:block; margin-bottom:4px}
 
   /* compact mode */
   .compact .astro-card{padding:12px}
@@ -317,7 +320,7 @@ def shared_card_js(message_type: str) -> str:
 </script>
 """
 
-# ── HTML: Astro card (Class moved to column 2; info tooltip) ──────────────────
+# ── HTML: Astro card (Class column #2; info tooltip) ──────────────────────────
 def render_html_card(payload: dict) -> str:
     nights = sorted(payload["nights"], key=lambda n: n["start"])
     updated = payload["generated_at_local"]
@@ -350,7 +353,7 @@ def render_html_card(payload: dict) -> str:
             f"<td class='dim'>{start_local}</td>"
             f"<td class='dim'>{end_local}</td>"
             f"<td class='num'><strong>{score}</strong></td>"
-            f"<td class='dim'>{best2h}</td>"
+            f"<td class='dim'><span class='clip'>{best2h}</span></td>"
             f"<td class='info'><span class='tip' tabindex='0' aria-label='More info'><span class='info-dot'>i</span>{tip_html}</span></td>"
             "</tr>"
         )
@@ -370,7 +373,7 @@ def render_html_card(payload: dict) -> str:
     )
     return html
 
-# ── WEATHER (separate cards, matching styling; summary in tooltip) ────────────
+# ── WEATHER (separate cards; summary in tooltip on emoji) ─────────────────────
 def icon_to_emoji(name) -> str:
     if name is None: return "·"
     s = str(name).lower()
@@ -413,6 +416,18 @@ def extract_daily(daily_section, limit=7):
         })
     return out
 
+def shared_card_js(message_type: str) -> str:
+    return f"""
+<script>
+(function(){{
+  var p = new URLSearchParams(location.search);
+  if (p.get("transparent")==="1") document.body.style.background="transparent";
+  function send(){{ try{{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }}catch(e){{}} }}
+  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
+}})();
+</script>
+"""
+
 def render_weather_single_card(title: str, rows: List[dict], message_type: str) -> str:
     css = shared_card_css()
     updated = datetime.now().strftime(FMT_DT)
@@ -437,7 +452,7 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
             rs.append(
                 "<tr>"
                 f"<td>{r['date']}</td>"
-                f"<td>{emoji_html}</td>"
+                f"<td class='tip-cell'>{emoji_html}</td>"
                 f"<td>{tmin}</td>"
                 f"<td>{tmax}</td>"
                 f"<td class='num'>{cloud}</td>"
