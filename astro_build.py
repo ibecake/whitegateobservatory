@@ -263,41 +263,31 @@ def shared_card_css() -> str:
     }
   }
   .astro-wrap{font-family:var(--astro-font); background:transparent;}
-  .astro-card{max-width:980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
-              padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+  /* was: max-width:980px;  →  now full width of the iframe */
+  .astro-card{
+    width:100%;
+    max-width:none;
+    border:1px solid var(--astro-border);
+    border-radius:var(--astro-radius);
+    padding:16px;
+    background:var(--astro-bg);
+    box-shadow:var(--astro-shadow);
+    color:var(--astro-fg);
+  }
   .astro-h{font-weight:700; font-size:18px; margin:0 0 6px}
   .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
 
   .table-wrap,.tblwrap{overflow:auto}
-  table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:560px;
-    background:var(--astro-bg);
-    color:var(--astro-fg);
-    table-layout: fixed;
-  }
-  th, td{
-    padding:10px; border-top:1px solid var(--astro-border);
-    text-align:left; vertical-align:middle; font-size:14px;   /* center vertically to reduce height */
-    overflow:hidden; text-overflow: ellipsis;
-    line-height: 1.25;                                        /* tighter line-height */
-    white-space: nowrap;                                      /* default: no wrapping */
-  }
-  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1;
-           border-bottom:1px solid var(--astro-border); color:var(--astro-sub);
-           font-size:12px; letter-spacing:.02em; text-transform:uppercase}
+  table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg);}
+  thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
+  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:top; font-size:14px}
+  thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
-  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
+  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
 
-  /* wrapping helpers for long text cells only */
-  .wrap{ white-space: normal; overflow-wrap:anywhere; text-overflow: clip; }
-  .nowrap{ white-space: nowrap; }
-
-  /* compact behavior */
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
