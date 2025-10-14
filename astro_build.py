@@ -249,7 +249,7 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS (no inner scrollbars; tooltips OK) ──────────────────────────
+# ── Shared CSS/JS (no scrollbars; safe height reporting) ──────────────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -287,7 +287,7 @@ def shared_card_css() -> str:
   }
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
-  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
+  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
   .clip{display:inline-block; max-width:32ch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
@@ -318,28 +318,38 @@ def shared_card_css() -> str:
 """
 
 def shared_card_js(message_type: str) -> str:
+    # NOTE: no +buffer, and only post when value changes
     return f"""
 <script>
 (function(){{
   var p = new URLSearchParams(location.search);
   if (p.get("transparent")==="1") document.body.style.background="transparent";
 
+  var lastH = 0;
+  function measure(){{
+    var b = document.body, d = document.documentElement;
+    return Math.max(
+      b ? b.scrollHeight : 0,
+      d ? d.scrollHeight : 0,
+      b ? b.offsetHeight  : 0,
+      d ? d.offsetHeight  : 0
+    );
+  }}
   function postH(){{
     try {{
-      var h = Math.ceil(document.documentElement.scrollHeight) + 12; // small buffer
-      parent.postMessage({{type:"{message_type}", height:h}}, "*");
+      var h = measure();
+      if (Math.abs(h - lastH) > 1) {{
+        parent.postMessage({{type:"{message_type}", height:h}}, "*");
+        lastH = h;
+      }}
     }} catch(e) {{}}
   }}
 
   window.addEventListener("load", postH);
   window.addEventListener("resize", postH);
-
-  if ("ResizeObserver" in window) {{
-    new ResizeObserver(postH).observe(document.body);
-  }}
-
-  setTimeout(postH, 60);
-  setTimeout(postH, 300);
+  if ("ResizeObserver" in window) new ResizeObserver(postH).observe(document.body);
+  setTimeout(postH, 50);
+  setTimeout(postH, 200);
   setTimeout(postH, 1000);
 }})();
 </script>
@@ -398,7 +408,7 @@ def render_html_card(payload: dict) -> str:
     )
     return html
 
-# ── WEATHER (separate cards; summary in tooltip on emoji) ─────────────────────
+# ── WEATHER (single-location cards; summary in emoji tooltip) ─────────────────
 def icon_to_emoji(name) -> str:
     if name is None: return "·"
     s = str(name).lower()
