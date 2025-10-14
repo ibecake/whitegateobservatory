@@ -249,15 +249,17 @@ def hour_quality(h, geo: Geo, target_ra_dec):
 def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
-# ── Shared CSS/JS (full width + working tooltips) ─────────────────────────────
+# ── Shared CSS/JS (no inner scrollbars; tooltips OK) ──────────────────────────
 def shared_card_css() -> str:
     return """
 <style>
+  html,body{margin:0;padding:0;overflow-x:hidden}
+
   :root{
     --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
     --astro-bg: #ffffff; --astro-fg: #0f172a; --astro-sub: #64748b;
     --astro-border: #e5e7eb; --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
-    --astro-radius: 12px; --badge-great: #16a34a; --badge-ok: #ca8a04; --badge-poor: #dc2626;
+    --astro-radius: 12px; --badge-great:#16a34a; --badge-ok:#ca8a04; --badge-poor:#dc2626;
   }
   @media (prefers-color-scheme: dark){
     :root{
@@ -275,18 +277,19 @@ def shared_card_css() -> str:
   .astro-sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
   .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
 
-  .table-wrap,.tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:560px; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
+  .table-wrap{overflow:visible}
+  table{width:100%; border-collapse:collapse; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
   thead th{position:sticky; top:0; background:var(--astro-bg); z-index:1}
-  /* IMPORTANT: allow overflow so tooltips are visible */
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; vertical-align:middle; font-size:14px; white-space:nowrap; overflow:visible}
+  th, td{
+    padding:10px; border-top:1px solid var(--astro-border);
+    text-align:left; vertical-align:middle; font-size:14px;
+    white-space:nowrap; overflow:visible; text-overflow:ellipsis;
+  }
   thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block}
   .GREAT{background:var(--badge-great)} .OK{background:var(--badge-ok)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
-
-  /* clip helper when you want ellipsis inside a cell */
   .clip{display:inline-block; max-width:32ch; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
 
   /* info bubble + tooltip */
@@ -301,7 +304,13 @@ def shared_card_css() -> str:
   }
   .tip:focus .tip-bubble, .tip:hover .tip-bubble{display:block}
 
-  /* compact mode */
+  /* Mobile: hide Best 2h (6th col) to avoid squish */
+  @media (max-width: 480px){
+    .astro-card table thead th:nth-child(6),
+    .astro-card table tbody td:nth-child(6){ display:none; }
+  }
+
+  /* Compact mode */
   .compact .astro-card{padding:12px}
   .compact th, .compact td{padding:8px}
   .compact .astro-h{font-size:16px}
@@ -314,13 +323,29 @@ def shared_card_js(message_type: str) -> str:
 (function(){{
   var p = new URLSearchParams(location.search);
   if (p.get("transparent")==="1") document.body.style.background="transparent";
-  function send(){{ try{{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }}catch(e){{}} }}
-  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
+
+  function postH(){{
+    try {{
+      var h = Math.ceil(document.documentElement.scrollHeight) + 12; // small buffer
+      parent.postMessage({{type:"{message_type}", height:h}}, "*");
+    }} catch(e) {{}}
+  }}
+
+  window.addEventListener("load", postH);
+  window.addEventListener("resize", postH);
+
+  if ("ResizeObserver" in window) {{
+    new ResizeObserver(postH).observe(document.body);
+  }}
+
+  setTimeout(postH, 60);
+  setTimeout(postH, 300);
+  setTimeout(postH, 1000);
 }})();
 </script>
 """
 
-# ── HTML: Astro card (Class column #2; info tooltip) ──────────────────────────
+# ── HTML: Astro card (Class in column #2; info tooltip) ───────────────────────
 def render_html_card(payload: dict) -> str:
     nights = sorted(payload["nights"], key=lambda n: n["start"])
     updated = payload["generated_at_local"]
@@ -416,18 +441,6 @@ def extract_daily(daily_section, limit=7):
         })
     return out
 
-def shared_card_js(message_type: str) -> str:
-    return f"""
-<script>
-(function(){{
-  var p = new URLSearchParams(location.search);
-  if (p.get("transparent")==="1") document.body.style.background="transparent";
-  function send(){{ try{{ parent.postMessage({{type:"{message_type}", height: document.documentElement.scrollHeight}}, "*"); }}catch(e){{}} }}
-  window.addEventListener("load", send); setTimeout(send, 60); setTimeout(send, 300);
-}})();
-</script>
-"""
-
 def render_weather_single_card(title: str, rows: List[dict], message_type: str) -> str:
     css = shared_card_css()
     updated = datetime.now().strftime(FMT_DT)
@@ -468,7 +481,7 @@ def render_weather_single_card(title: str, rows: List[dict], message_type: str) 
         '<div id="astro-root" class="astro-wrap"><div class="astro-card">'
         f'<div class="astro-h">{title}</div>'
         f'<div class="astro-sub">Updated {updated}</div>'
-        '<div class="tblwrap"><table>'
+        '<div class="table-wrap"><table>'
         '<thead>'
         '<tr><th>Date</th><th></th><th>Min</th><th>Max</th><th class="num">Cloud</th><th class="num">Precip (mm)</th><th class="num">Wind (km/h)</th></tr>'
         '</thead><tbody>' + tbody + '</tbody></table></div>'
