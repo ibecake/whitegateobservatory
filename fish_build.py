@@ -20,18 +20,18 @@ LAT, LON    = 51.8268, -8.2321    # Whitegate
 TZ          = "Europe/Dublin"
 ZLOCAL      = ZoneInfo(TZ)
 
-WT_KEY      = os.environ.get("WORLD_TIDES_KEY")  # required for tides
+WT_KEY      = os.environ.get("WORLD_TIDES_KEY")  # WorldTides API key
 WT_DAYS     = 7
 WT_STEP_S   = 3600  # 1h
 
-# Optional marine overrides
-OVERRIDE_WAVE_H = os.environ.get("WAVE_H")
-OVERRIDE_WAVE_T = os.environ.get("WAVE_T")
-OVERRIDE_SEA_T  = os.environ.get("SEA_TEMP")
+# Optional marine overrides until you wire a marine API
+OVERRIDE_WAVE_H = os.environ.get("WAVE_H")   # metres
+OVERRIDE_WAVE_T = os.environ.get("WAVE_T")   # seconds
+OVERRIDE_SEA_T  = os.environ.get("SEA_TEMP") # °C
 
 OUT_DIR   = "dist/fishing"
 
-# ── Card styling ──────────────────────────────────────────────────────────────
+# ── Card styling (full-width + tooltips) ──────────────────────────────────────
 def shared_card_css() -> str:
     return """
 <style>
@@ -48,16 +48,10 @@ def shared_card_css() -> str:
     }
   }
   .wrap{font-family:var(--astro-font); background:transparent;}
-  /* was: max-width:980px;  →  now full width of the iframe */
   .card{
-    width:100%;
-    max-width:none;
-    border:1px solid var(--astro-border);
-    border-radius:var(--astro-radius);
-    padding:16px;
-    background:var(--astro-bg);
-    box-shadow:var(--astro-shadow);
-    color:var(--astro-fg);
+    width:100%; max-width:none;
+    border:1px solid var(--astro-border); border-radius:var(--astro-radius);
+    padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);
   }
   .h{font-weight:700; font-size:18px; margin:0 0 6px}
   .sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
@@ -70,11 +64,23 @@ def shared_card_css() -> str:
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
   .GOOD{background:var(--badge-good)} .FAIR{background:var(--badge-fair)} .POOR{background:var(--badge-poor)}
   .dim{color:var(--astro-sub)}
-  @media (max-width: 900px){
-    .card table thead th:nth-child(7), .card table tbody td:nth-child(7){ display:none; } /* Details */
+
+  /* info bubble + tooltip */
+  td.info{width:2.5rem; text-align:center}
+  .tip{position:relative; display:inline-block; cursor:help; outline:none}
+  .info-dot{display:inline-block; width:1.35em; height:1.35em; line-height:1.35em; border-radius:999px; background:var(--astro-sub); color:#fff; font-weight:700; font-size:12px; text-align:center}
+  .tip-bubble{
+    display:none; position:absolute; left:50%; transform:translateX(-50%); bottom:calc(100% + 8px);
+    background:var(--astro-fg); color:var(--astro-bg); padding:10px 12px; border-radius:8px;
+    box-shadow:0 8px 30px rgba(0,0,0,.25); border:1px solid var(--astro-border);
+    max-width:min(80vw, 48ch); white-space:pre-wrap; z-index:10;
   }
+  .tip:focus .tip-bubble, .tip:hover .tip-bubble{display:block}
+  .tip-bubble b{display:block; margin-bottom:4px}
+
   @media (max-width: 640px){
-    .card table thead th:nth-child(6), .card table tbody td:nth-child(6){ display:none; } /* Targets */
+    /* Hide Targets on phones (keep Tides + Info) */
+    .card table thead th:nth-child(6), .card table tbody td:nth-child(6){ display:none; }
     .card th, .card td{ padding:6px; font-size:12px; line-height:1.15 }
     .badge{ padding:1px 6px; font-size:11px }
   }
@@ -120,7 +126,7 @@ SPECIES_BY_MONTH = {
     12:["flounder","bass (odd)","codling (boat)"],
 }
 
-# ── Component scoring (unchanged) ────────────────────────────────────────────
+# ── Component scoring ─────────────────────────────────────────────────────────
 def score_wind(ws, gust):
     if ws is None: return 60, "wind:?"
     base = 100 if ws<=2 else 90 if ws<=4 else 75 if ws<=6 else 55 if ws<=8 else 35 if ws<=12 else 15
@@ -350,7 +356,6 @@ def build_payload():
         month = hrs[0]["t"].month
         targets = ", ".join(SPECIES_BY_MONTH.get(month, [])) or "—"
 
-        # build tide string for this local day
         tide_e = extremes_by_day.get(day, [])
         tide_str = " ".join(
             f"{('H' if e['type'].lower().startswith('h') else 'L')} {e['local'].strftime('%H:%M')}"
@@ -375,23 +380,23 @@ def build_payload():
         "windows": windows
     }
 
-# ── Render HTML card ──────────────────────────────────────────────────────────
+# ── Render HTML card (Details moved to tooltip) ───────────────────────────────
 def render_card(payload: dict) -> str:
     css = shared_card_css()
     js  = shared_card_js("fishing-card-size")
     updated = payload["generated_at_local"]
     wins = payload["windows"]
 
-    # columns: Date, Window, Score, Class, Tides, Targets, Details
+    # columns: Date, Window, Score, Class, Tides, Targets, Info
     colgroup = (
         "<colgroup>"
-        "<col style='width:11ch'>"  # Date
-        "<col style='width:18ch'>"  # Window
-        "<col style='width:6ch'>"   # Score
-        "<col style='width:7ch'>"   # Class
-        "<col style='width:22ch'>"  # Tides
-        "<col style='width:26ch'>"  # Targets
-        "<col>"                     # Details (flex)
+        "<col style='width:11ch'>"
+        "<col style='width:18ch'>"
+        "<col style='width:6ch'>"
+        "<col style='width:7ch'>"
+        "<col style='width:22ch'>"
+        "<col style='width:26ch'>"
+        "<col style='width:3ch'>"
         "</colgroup>"
     )
 
@@ -400,15 +405,23 @@ def render_card(payload: dict) -> str:
     else:
         rows = ""
         for w in wins:
+            tip_html = (
+                f'<div class="tip-bubble"><b>{w["day_label"]} {w["start"]}–{w["end"]}</b>'
+                f'Score: {w["score"]} ({w["cls"]})\n'
+                f'Tides: {w.get("tides","—")}\n'
+                + (f'Targets: {w.get("targets","—")}\n' if w.get("targets") else "")
+                + (w.get("details","") or "")
+                + '</div>'
+            )
             rows += (
                 "<tr>"
                 f"<td>{w['day_label']}</td>"
                 f"<td>{w['start']}–{w['end']}</td>"
                 f"<td class='num'><strong>{w['score']}</strong></td>"
                 f"<td><span class='badge {w['cls']}'>{w['cls']}</span></td>"
-                f"<td class='dim'>{w['tides']}</td>"
-                f"<td class='dim'>{w['targets']}</td>"
-                f"<td class='dim' title='{w['details']}'>{w['details']}</td>"
+                f"<td class='dim'>{w.get('tides','—')}</td>"
+                f"<td class='dim'>{w.get('targets','—')}</td>"
+                f"<td class='info'><span class='tip' tabindex='0' aria-label='More info'><span class='info-dot'>i</span>{tip_html}</span></td>"
                 "</tr>"
             )
 
@@ -416,11 +429,10 @@ def render_card(payload: dict) -> str:
         css +
         '<div id="fish-root" class="wrap"><div class="card">'
         '<div class="h">Whitegate Fishing Forecast — Best Times & Targets</div>'
-        f'<div class="sub">Updated {updated}. Score blends wind, clouds, rain, pressure trend, humidity, waves, sea temp'
-        + (", tides via WorldTides" if WT_KEY else ", tides (no key)") + '.</div>'
+        f'<div class="sub">Updated {updated}. Score blends wind, clouds, rain, pressure trend, humidity, waves, sea temp, tides.</div>'
         '<div class="tblwrap"><table>'
         f"{colgroup}"
-        '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Tides</th><th>Suggested Targets</th><th>Details</th></tr></thead>'
+        '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Tides</th><th>Suggested Targets</th><th>Info</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
         '<div class="credit">Weather data © Meteosource • Tides © WorldTides • Check Irish regs before fishing.</div>'
         '</div></div>' + js
@@ -429,7 +441,7 @@ def render_card(payload: dict) -> str:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
-    ap = argparse.ArgumentParser(description="Build a fishing forecast card (Whitegate) with WorldTides.")
+    ap = argparse.ArgumentParser(description="Build a fishing forecast card (Whitegate) with WorldTides + tooltips.")
     ap.add_argument("--out", default=OUT_DIR, help="Output dir (e.g., dist/fishing)")
     args = ap.parse_args()
     out = os.path.abspath(args.out)
