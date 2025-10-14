@@ -32,22 +32,22 @@
         title="Fishing Forecast"></iframe>
 
 <script>
-  const typeToFrameId = {
+  const frameByType = {
     'astro-card-size': 'astroFrame',
-    'weather-whitegate-size': 'wxWgFrame',
-    'weather-cork-size': 'wxCorkFrame',
+    'weather-whitegate-size': 'wxFrame',
+    'weather-cork-size': 'wxCork',
     'fishing-card-size': 'fishFrame'
   };
-  window.addEventListener('message', (e) => {
-    const t = e.data && e.data.type;
-    const h = e.data && e.data.height;
-    if (!t || !h) return;
-    const id = typeToFrameId[t];
+
+  window.addEventListener('message', function(e){
+    if (!e.data || typeof e.data.height !== 'number' || !e.data.type) return;
+    const id = frameByType[e.data.type];
     if (!id) return;
     const f = document.getElementById(id);
-    if (f) f.style.height = h + 'px';
+    if (f) f.style.height = Math.max(80, e.data.height) + 'px';
   });
 </script>
+
 
   <p style="color:#94a3b8;font-size:12px">Weather data © Meteosource</p>
 </body>
