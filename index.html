@@ -25,23 +25,28 @@
           title="Cork 7-Day Weather"
           style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"></iframe>
 
-  <script>
-    window.addEventListener('message', function(e){
-      if (!e.data || !e.data.type) return;
-      if (e.data.type === 'astro-card-size') {
-        var f = document.getElementById('astroFrame');
-        if (f) f.style.height = e.data.height + 'px';
-      }
-      if (e.data.type === 'weather-whitegate-size') {
-        var w = document.getElementById('wxWG');
-        if (w) w.style.height = e.data.height + 'px';
-      }
-      if (e.data.type === 'weather-cork-size') {
-        var c = document.getElementById('wxCK');
-        if (c) c.style.height = e.data.height + 'px';
-      }
-    });
-  </script>
+  <!-- Fishing Forecast -->
+<iframe id="fishFrame"
+        src="fishing/card.html?transparent=1&radius=12"
+        style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"
+        title="Fishing Forecast"></iframe>
+
+<script>
+  function resizeFrame(e, id){
+    if (e.data && (e.data.type === 'astro-card-size'
+                || e.data.type === 'weather-whitegate-size'
+                || e.data.type === 'weather-cork-size'
+                || e.data.type === 'fishing-card-size')) {
+      var f = document.getElementById(id);
+      if (f) f.style.height = e.data.height + 'px';
+    }
+  }
+  window.addEventListener('message', function(e){
+    resizeFrame(e, 'astroFrame');
+    resizeFrame(e, 'wxFrame');      // if you still use a combined weather card, keep this
+    resizeFrame(e, 'fishFrame');    // NEW
+  });
+</script>
 
   <p style="color:#94a3b8;font-size:12px">Weather data © Meteosource</p>
 </body>
