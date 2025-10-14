@@ -7,44 +7,45 @@
   <h1>Whitegate Observatory — Forecasts</h1>
   <p style="color:#64748b;margin-top:-6px">Updates every ~4 hours.</p>
 
-  <!-- Astro outlook -->
-  <iframe id="astroFrame"
-          src="astro/card.html?theme=auto&transparent=1&compact=0&radius=12"
-          title="Astrophotography Outlook"
-          style="width:100%;border:0;overflow:hidden;border-radius:12px;"></iframe>
+ <!-- Astro -->
+<iframe id="astroFrame"
+        src="astro/card.html?transparent=1&radius=12"
+        style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"
+        title="Astrophotography Outlook"></iframe>
 
-  <!-- Weather: Whitegate -->
-  <iframe id="wxWG"
-          src="weather/whitegate.html?theme=auto&transparent=1&radius=12"
-          title="Whitegate 7-Day Weather"
-          style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"></iframe>
+<!-- Weather: Whitegate -->
+<iframe id="wxWgFrame"
+        src="weather/whitegate.html?transparent=1&radius=12"
+        style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"
+        title="Whitegate 7-Day Weather"></iframe>
 
-  <!-- Weather: Cork -->
-  <iframe id="wxCK"
-          src="weather/cork.html?theme=auto&transparent=1&radius=12"
-          title="Cork 7-Day Weather"
-          style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"></iframe>
+<!-- Weather: Cork -->
+<iframe id="wxCorkFrame"
+        src="weather/cork.html?transparent=1&radius=12"
+        style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"
+        title="Cork 7-Day Weather"></iframe>
 
-  <!-- Fishing Forecast -->
+<!-- Fishing -->
 <iframe id="fishFrame"
         src="fishing/card.html?transparent=1&radius=12"
         style="width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px;"
         title="Fishing Forecast"></iframe>
 
 <script>
-  function resizeFrame(e, id){
-    if (e.data && (e.data.type === 'astro-card-size'
-                || e.data.type === 'weather-whitegate-size'
-                || e.data.type === 'weather-cork-size'
-                || e.data.type === 'fishing-card-size')) {
-      var f = document.getElementById(id);
-      if (f) f.style.height = e.data.height + 'px';
-    }
-  }
-  window.addEventListener('message', function(e){
-    resizeFrame(e, 'astroFrame');
-    resizeFrame(e, 'wxFrame');      // if you still use a combined weather card, keep this
-    resizeFrame(e, 'fishFrame');    // NEW
+  const typeToFrameId = {
+    'astro-card-size': 'astroFrame',
+    'weather-whitegate-size': 'wxWgFrame',
+    'weather-cork-size': 'wxCorkFrame',
+    'fishing-card-size': 'fishFrame'
+  };
+  window.addEventListener('message', (e) => {
+    const t = e.data && e.data.type;
+    const h = e.data && e.data.height;
+    if (!t || !h) return;
+    const id = typeToFrameId[t];
+    if (!id) return;
+    const f = document.getElementById(id);
+    if (f) f.style.height = h + 'px';
   });
 </script>
 
