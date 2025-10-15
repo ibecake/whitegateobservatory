@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: WHITEGATE_OBS_WF
 on:
   push:
     branches: [ main ]
