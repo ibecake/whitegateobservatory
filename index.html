@@ -1,63 +1,189 @@
 <!doctype html>
 <html lang="en">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Whitegate Observatory</title>
-<body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px">
-  <h1>Whitegate Weather</h1>
-  <p style="color:#64748b;margin-top:-6px">Updates every ~4 hours.</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Whitegate Observatory</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+      integrity="sha384-/NfFBlYXOsReRM7Qf3M3WyDiP6yQdlqzTeWY5Avzkdxl3pNGdisz8Iky3Uczdlz7"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="assets/css/dashboard.css" />
+  </head>
+  <body data-nav-active="dashboard">
+    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="index.html">
+        Whitegate Observatory
+      </a>
+      <button
+        class="navbar-toggler position-absolute d-md-none collapsed ms-2"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#sidebarMenu"
+        aria-controls="sidebarMenu"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="navbar-nav flex-row flex-nowrap ms-auto">
+        <div class="nav-item text-nowrap">
+          <span class="nav-link px-3 text-light">Updated every ~4 hours</span>
+        </div>
+      </div>
+    </header>
 
-  <!-- Astro card -->
-  <iframe id="astroFrame"
-          src="astro/card.html?theme=auto&transparent=1&compact=0&radius=12"
-          title="Astrophotography Outlook"
-          scrolling="no"
-          style="display:block;width:100%;border:0;overflow:hidden;border-radius:12px; height:520px;"></iframe>
+    <div class="container-fluid">
+      <div class="row">
+        <nav
+          id="sidebarMenu"
+          class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse px-3 py-4"
+        >
+          <div class="position-sticky top-0 pt-md-4">
+            <p class="text-uppercase text-muted fw-semibold small mb-3">Forecasts</p>
+            <ul class="nav flex-column gap-1">
+              <li class="nav-item">
+                <a class="nav-link" data-nav-item="dashboard" href="index.html">
+                  <span class="icon-wrapper"><i class="bi bi-speedometer2"></i></span>
+                  Dashboard Overview
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-nav-item="astro" href="astro.html">
+                  <span class="icon-wrapper"><i class="bi bi-stars"></i></span>
+                  Astrophotography Outlook
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-nav-item="whitegate" href="whitegate-weather.html">
+                  <span class="icon-wrapper"><i class="bi bi-cloud-sun"></i></span>
+                  Whitegate 7-Day Weather
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-nav-item="cork" href="cork-weather.html">
+                  <span class="icon-wrapper"><i class="bi bi-cloud-rain"></i></span>
+                  Cork 7-Day Weather
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-nav-item="fishing" href="fishing.html">
+                  <span class="icon-wrapper"><i class="bi bi-water"></i></span>
+                  Fishing Forecast
+                </a>
+              </li>
+            </ul>
+          </div>
+        </nav>
 
-  <!-- Weather: Whitegate -->
-  <iframe id="wxWhitegate"
-          src="weather/whitegate.html?theme=auto&transparent=1&radius=12"
-          title="Whitegate 7-Day Weather"
-          scrolling="no"
-          style="display:block;width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px; height:520px;"></iframe>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 main-content">
+          <section class="overview-hero text-white bg-primary p-4 p-lg-5 mb-4">
+            <div class="row align-items-center g-4">
+              <div class="col-lg-7">
+                <h1 class="display-6 mb-3">Your observing window at a glance</h1>
+                <p class="lead mb-4">
+                  Explore atmospheric, astronomical, and marine conditions from a single dashboard. Use the
+                  menu to open each live forecast in a focused view without losing navigation.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                  <a class="btn btn-light text-primary fw-semibold" href="astro.html">
+                    Launch Astrophotography Outlook
+                  </a>
+                  <a class="btn btn-outline-light fw-semibold" href="whitegate-weather.html">
+                    Check Whitegate Weather
+                  </a>
+                </div>
+              </div>
+              <div class="col-lg-5">
+                <div class="bg-white text-primary rounded-4 shadow-sm p-4 h-100">
+                  <h2 class="h5 fw-semibold mb-3">Latest update</h2>
+                  <ul class="list-unstyled mb-0 small text-start text-secondary">
+                    <li class="mb-2"><i class="bi bi-check-circle me-2 text-primary"></i>Live widgets refresh automatically.</li>
+                    <li class="mb-2"><i class="bi bi-check-circle me-2 text-primary"></i>Menu links open full-size forecast pages.</li>
+                    <li class="mb-0"><i class="bi bi-check-circle me-2 text-primary"></i>Resize handling prevents truncated data.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
 
-  <!-- Weather: Cork -->
-  <iframe id="wxCork"
-          src="weather/cork.html?theme=auto&transparent=1&radius=12"
-          title="Cork 7-Day Weather"
-          scrolling="no"
-          style="display:block;width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px; height:520px;"></iframe>
+          <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+            <div class="col overview-card">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h2 class="card-title d-flex align-items-center gap-2">
+                    <i class="bi bi-stars text-primary"></i>
+                    Astrophotography Outlook
+                  </h2>
+                  <p class="text-secondary mb-3">
+                    Deep-sky seeing, cloud cover, and transparency to plan your imaging sessions.
+                  </p>
+                  <a class="btn btn-sm btn-primary" href="astro.html">Open forecast</a>
+                </div>
+              </div>
+            </div>
+            <div class="col overview-card">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h2 class="card-title d-flex align-items-center gap-2">
+                    <i class="bi bi-cloud-sun text-warning"></i>
+                    Whitegate 7-Day Weather
+                  </h2>
+                  <p class="text-secondary mb-3">
+                    Hourly and daily temperature, precipitation, and wind to prepare for local outings.
+                  </p>
+                  <a class="btn btn-sm btn-primary" href="whitegate-weather.html">Open forecast</a>
+                </div>
+              </div>
+            </div>
+            <div class="col overview-card">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h2 class="card-title d-flex align-items-center gap-2">
+                    <i class="bi bi-cloud-rain text-info"></i>
+                    Cork 7-Day Weather
+                  </h2>
+                  <p class="text-secondary mb-3">
+                    Compare trends across the broader region to decide where to travel.
+                  </p>
+                  <a class="btn btn-sm btn-primary" href="cork-weather.html">Open forecast</a>
+                </div>
+              </div>
+            </div>
+            <div class="col overview-card">
+              <div class="card h-100">
+                <div class="card-body">
+                  <h2 class="card-title d-flex align-items-center gap-2">
+                    <i class="bi bi-water text-primary"></i>
+                    Fishing Forecast
+                  </h2>
+                  <p class="text-secondary mb-3">
+                    Tides, moon phase, and bite predictions for Whitegate anglers.
+                  </p>
+                  <a class="btn btn-sm btn-primary" href="fishing.html">Open forecast</a>
+                </div>
+              </div>
+            </div>
+          </div>
 
-  <!-- Fishing forecast -->
-  <iframe id="fishFrame"
-          src="fishing/card.html?theme=auto&transparent=1&radius=12"
-          title="Fishing Forecast"
-          scrolling="no"
-          style="display:block;width:100%;border:0;overflow:hidden;border-radius:12px;margin-top:16px; height:520px;"></iframe>
+          <footer class="pt-4 small">Weather data © Meteosource • Tides © WorldTides</footer>
+        </main>
+      </div>
+    </div>
 
-  <script>
-    // Map each postMessage type to the correct iframe ID
-    const frameByType = {
-      'astro-card-size': 'astroFrame',
-      'weather-whitegate-size': 'wxWhitegate',
-      'weather-cork-size': 'wxCork',
-      'fishing-card-size': 'fishFrame'
-    };
-
-    // Only apply height to the intended iframe; ignore others.
-    window.addEventListener('message', function (e) {
-      if (!e.data || typeof e.data.height !== 'number' || !e.data.type) return;
-      const id = frameByType[e.data.type];
-      if (!id) return;
-      const f = document.getElementById(id);
-      if (f) {
-        // Clamp a bit so tiny cards don’t collapse
-        const h = Math.max(120, e.data.height);
-        if (f.style.height !== (h + 'px')) f.style.height = h + 'px';
-      }
-    });
-  </script>
-
-  <p style="color:#94a3b8;font-size:12px">Weather data © Meteosource • Tides © WorldTides</p>
-</body>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+    <script src="assets/js/dashboard.js"></script>
+  </body>
 </html>
