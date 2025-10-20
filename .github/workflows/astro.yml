@@ -44,6 +44,11 @@ jobs:
           python fish_build.py --out dist/fishing
           # Copy site shell
           cp index.html dist/index.html
+          cp astro.html dist/astro.html
+          cp whitegate-weather.html dist/whitegate-weather.html
+          cp cork-weather.html dist/cork-weather.html
+          cp fishing.html dist/fishing.html
+          cp -R assets dist/assets
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
