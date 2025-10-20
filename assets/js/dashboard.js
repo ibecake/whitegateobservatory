@@ -22,7 +22,7 @@
     const frame = frameByType[type];
     if (!frame) return;
 
-    const safeHeight = Math.max(480, Math.ceil(height) + 24);
+    const safeHeight = Math.max(360, Math.min(height, 2200));
     const nextValue = `${safeHeight}px`;
     if (frame.style.height !== nextValue) {
       frame.style.height = nextValue;
