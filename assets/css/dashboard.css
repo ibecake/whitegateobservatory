@@ -129,13 +129,34 @@ header.navbar {
   border-radius: 0 0 1.25rem 1.25rem;
 }
 
+.forecast-frame-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+}
+
+.forecast-frame-wrap::-webkit-scrollbar {
+  height: 0.6rem;
+}
+
+.forecast-frame-wrap::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 23, 42, 0.25);
+  border-radius: 999px;
+}
+
 .forecast-frame {
   width: 100%;
+  display: block;
   border: 0;
   border-radius: 1rem;
-  min-height: 600px;
+  min-height: clamp(640px, 100vh + 240px, 3200px);
   background-color: #ffffff;
   box-shadow: 0 1.5rem 3.5rem -2rem rgba(15, 23, 42, 0.3);
+}
+
+.forecast-frame-wrap .forecast-frame {
+  min-width: 1180px;
 }
 
 @media (max-width: 991.98px) {
