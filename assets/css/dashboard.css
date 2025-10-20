@@ -101,57 +101,62 @@ header.navbar {
   max-width: 1320px;
 }
 
+.forecast-card .card {
+  border: 0;
+  border-radius: 1.25rem;
+  box-shadow: 0 2rem 4rem -2rem rgba(15, 23, 42, 0.45);
+  overflow: visible;
+  background-color: transparent;
+}
+
+.forecast-card .card-header {
+  background: linear-gradient(135deg, rgba(13, 110, 253, 0.12), rgba(13, 202, 240, 0.22));
+  border-bottom: 0;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.forecast-card .card-header i {
+  font-size: 1.6rem;
+  color: #0d6efd;
+}
+
+.forecast-card .card-body {
+  padding: 1.75rem;
+  background-color: #ffffff;
+  border-radius: 0 0 1.25rem 1.25rem;
+}
+
+.forecast-frame-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+}
+
+.forecast-frame-wrap::-webkit-scrollbar {
+  height: 0.6rem;
+}
+
+.forecast-frame-wrap::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 23, 42, 0.25);
+  border-radius: 999px;
+}
+
 .forecast-frame {
   width: 100%;
-  min-width: 0;
   display: block;
   border: 0;
-  border-radius: 0.75rem;
-  min-height: 640px;
-  background-color: #ffffff;
-  box-shadow: 0 1.25rem 3rem -2rem rgba(15, 23, 42, 0.25);
-}
-
-.forecast-table-wrapper {
-  background-color: #ffffff;
   border-radius: 1rem;
-  box-shadow: 0 1.5rem 3.5rem -2rem rgba(15, 23, 42, 0.3);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.forecast-table {
-  margin-bottom: 0;
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-.forecast-table thead th {
-  border-bottom-width: 1px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: #6c757d;
-}
-
-.forecast-table th,
-.forecast-table td {
-  vertical-align: top;
-  padding: 1.25rem;
-}
-
-.forecast-table tbody th {
-  width: 220px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.forecast-table tbody td {
+  min-height: clamp(640px, 100vh + 240px, 3200px);
   background-color: #ffffff;
+  box-shadow: 0 1.5rem 3.5rem -2rem rgba(15, 23, 42, 0.3);
 }
 
-.forecast-table tbody tr + tr th,
-.forecast-table tbody tr + tr td {
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+.forecast-frame-wrap .forecast-frame {
+  min-width: 1180px;
 }
 
 @media (max-width: 991.98px) {
@@ -170,16 +175,8 @@ header.navbar {
     border-radius: 1rem;
   }
 
-  .forecast-table-wrapper {
-    border-radius: 0.75rem;
-  }
-
-  .forecast-table th,
-  .forecast-table td {
-    padding: 1rem;
-  }
-
-  .forecast-table tbody th {
-    width: 160px;
+  .forecast-card .card-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

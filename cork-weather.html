@@ -95,49 +95,32 @@
             </a>
           </div>
 
-          <section class="forecast-shell mx-auto px-2 px-lg-0">
-            <div class="table-responsive forecast-table-wrapper">
-              <table class="table table-striped table-bordered forecast-table align-middle">
-                <caption class="visually-hidden">Cork seven day weather data</caption>
-                <thead class="table-light">
-                  <tr>
-                    <th scope="col">Parameter</th>
-                    <th scope="col">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th scope="row">Location</th>
-                    <td class="text-secondary small">Cork City centre, Ireland</td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Live forecast</th>
-                    <td>
-                      <iframe
-                        id="corkWeatherFrame"
-                        class="forecast-frame"
-                        src="weather/cork.html?theme=auto&transparent=1&compact=0&radius=12"
-                        title="Cork 7-Day Weather"
-                        scrolling="no"
-                        loading="lazy"
-                        data-resize-type="weather-cork-size"
-                      ></iframe>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Usage notes</th>
-                    <td class="text-secondary small">
-                      Compare Cork with Whitegate quickly; the responsive table prevents horizontal growth while keeping data readable.
-                    </td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Data source</th>
-                    <td class="text-secondary small">Weather data © Meteosource</td>
-                  </tr>
-                </tbody>
-              </table>
+          <section class="forecast-shell mx-auto px-2 px-lg-0 forecast-card">
+            <div class="card">
+              <div class="card-header">
+                <i class="bi bi-cloud-rain"></i>
+                <div>
+                  <h2 class="h4 mb-1">Regional outlook</h2>
+                  <small class="text-muted">Automatic resizing ensures every column of data remains visible.</small>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="forecast-frame-wrap">
+                  <iframe
+                    id="corkWeatherFrame"
+                    class="forecast-frame"
+                    src="weather/cork.html?theme=auto&transparent=1&compact=0&radius=12"
+                    title="Cork 7-Day Weather"
+                    scrolling="no"
+                    loading="lazy"
+                    data-resize-type="weather-cork-size"
+                  ></iframe>
+                </div>
+              </div>
             </div>
           </section>
+
+          <footer class="pt-5 small text-muted">Weather data © Meteosource</footer>
         </main>
       </div>
     </div>
