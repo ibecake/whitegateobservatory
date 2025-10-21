@@ -26,7 +26,6 @@
     const nextValue = `${safeHeight}px`;
     if (frame.style.height !== nextValue) {
       frame.style.height = nextValue;
-      frame.setAttribute("height", safeHeight);
     }
   });
 })();
