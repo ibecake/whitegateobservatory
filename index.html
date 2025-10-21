@@ -115,63 +115,71 @@
             </div>
           </section>
 
-          <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-            <div class="col overview-card">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title d-flex align-items-center gap-2">
-                    <i class="bi bi-stars text-primary"></i>
-                    Astrophotography Outlook
-                  </h2>
-                  <p class="text-secondary mb-3">
-                    Deep-sky seeing, cloud cover, and transparency to plan your imaging sessions.
-                  </p>
-                  <a class="btn btn-sm btn-primary" href="astro.html">Open forecast</a>
-                </div>
-              </div>
-            </div>
-            <div class="col overview-card">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title d-flex align-items-center gap-2">
-                    <i class="bi bi-cloud-sun text-warning"></i>
-                    Whitegate 7-Day Weather
-                  </h2>
-                  <p class="text-secondary mb-3">
-                    Hourly and daily temperature, precipitation, and wind to prepare for local outings.
-                  </p>
-                  <a class="btn btn-sm btn-primary" href="whitegate-weather.html">Open forecast</a>
-                </div>
-              </div>
-            </div>
-            <div class="col overview-card">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title d-flex align-items-center gap-2">
-                    <i class="bi bi-cloud-rain text-info"></i>
-                    Cork 7-Day Weather
-                  </h2>
-                  <p class="text-secondary mb-3">
-                    Compare trends across the broader region to decide where to travel.
-                  </p>
-                  <a class="btn btn-sm btn-primary" href="cork-weather.html">Open forecast</a>
-                </div>
-              </div>
-            </div>
-            <div class="col overview-card">
-              <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title d-flex align-items-center gap-2">
-                    <i class="bi bi-water text-primary"></i>
-                    Fishing Forecast
-                  </h2>
-                  <p class="text-secondary mb-3">
-                    Tides, moon phase, and bite predictions for Whitegate anglers.
-                  </p>
-                  <a class="btn btn-sm btn-primary" href="fishing.html">Open forecast</a>
-                </div>
-              </div>
-            </div>
+          <!-- Replaced cards with a responsive table-like list (drop-in) -->
+          <div class="forecast-table-container">
+            <table class="forecast-table">
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="forecast-info-wrapper">
+                      <div class="forecast-info-icon"><i class="bi bi-stars"></i></div>
+                      <div class="forecast-info-content">
+                        <h3 class="forecast-info-title">Astrophotography Outlook</h3>
+                        <p class="forecast-info-description">Deep-sky seeing, cloud cover, and transparency to plan your imaging sessions.</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-end align-middle">
+                    <a class="btn btn-sm btn-primary" href="astro.html">Open forecast</a>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>
+                    <div class="forecast-info-wrapper">
+                      <div class="forecast-info-icon"><i class="bi bi-cloud-sun text-warning"></i></div>
+                      <div class="forecast-info-content">
+                        <h3 class="forecast-info-title">Whitegate 7-Day Weather</h3>
+                        <p class="forecast-info-description">Hourly and daily temperature, precipitation, and wind to prepare for local outings.</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-end align-middle">
+                    <a class="btn btn-sm btn-primary" href="whitegate-weather.html">Open forecast</a>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>
+                    <div class="forecast-info-wrapper">
+                      <div class="forecast-info-icon"><i class="bi bi-cloud-rain text-info"></i></div>
+                      <div class="forecast-info-content">
+                        <h3 class="forecast-info-title">Cork 7-Day Weather</h3>
+                        <p class="forecast-info-description">Compare trends across the broader region to decide where to travel.</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-end align-middle">
+                    <a class="btn btn-sm btn-primary" href="cork-weather.html">Open forecast</a>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td>
+                    <div class="forecast-info-wrapper">
+                      <div class="forecast-info-icon"><i class="bi bi-water text-primary"></i></div>
+                      <div class="forecast-info-content">
+                        <h3 class="forecast-info-title">Fishing Forecast</h3>
+                        <p class="forecast-info-description">Tides, moon phase, and bite predictions for Whitegate anglers.</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-end align-middle">
+                    <a class="btn btn-sm btn-primary" href="fishing.html">Open forecast</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
 
           <footer class="pt-4 small">Weather data © Meteosource • Tides © WorldTides</footer>
