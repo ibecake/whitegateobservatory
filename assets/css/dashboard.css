@@ -1,3 +1,6 @@
+/* Dashboard styles — updated to prevent ellipsis/truncation, enable dynamic column sizing,
+   keep responsive behavior, and make iframe containers flexible. */
+
 :root {
   color-scheme: light;
 }
@@ -8,10 +11,12 @@ body {
   min-height: 100vh;
 }
 
+/* Keep navbar above content */
 header.navbar {
   z-index: 1040;
 }
 
+/* Sidebar */
 .sidebar {
   min-height: 100vh;
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.05);
@@ -28,6 +33,7 @@ header.navbar {
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* icon wrapper stays as visual */
 .sidebar .nav-link .icon-wrapper {
   display: inline-flex;
   align-items: center;
@@ -40,30 +46,14 @@ header.navbar {
   font-size: 1.1rem;
 }
 
-.sidebar .nav-link:hover,
-.sidebar .nav-link:focus {
-  background-color: rgba(13, 110, 253, 0.08);
-  color: #0d6efd;
-  box-shadow: 0 0.8rem 2rem -1.5rem rgba(13, 110, 253, 0.45);
-}
-
-.sidebar .nav-link.active {
-  background-color: rgba(13, 110, 253, 0.16);
-  color: #0d6efd;
-  box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.4);
-}
-
-.sidebar .nav-link.active .icon-wrapper {
-  background: #0d6efd;
-  color: #ffffff;
-}
-
+/* main content container — prevent accidental X overflow hiding */
 .main-content {
   background-color: transparent;
   overflow-x: hidden;
   max-width: 100%;
 }
 
+/* Hero & headings */
 .page-heading {
   border-bottom: 1px solid rgba(15, 23, 42, 0.08);
 }
@@ -78,33 +68,52 @@ header.navbar {
   font-weight: 600;
 }
 
+/* Forecast shell (iframe container) */
 .forecast-shell {
   max-width: 1320px;
   margin: 0 auto;
 }
 
+/* Allow the frame wrapper to horizontally scroll when needed; don't hide overflow vertically */
 .forecast-frame-wrap {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: 1rem;
   background: #ffffff;
   position: relative;
 }
 
+/* Iframe itself:
+   - width 100% (fill wrapper)
+   - min-width 0 to prevent flex items from forcing overflow
+   - default height is a safe fallback; adjusted at runtime by JS
+*/
 .forecast-frame {
   width: 100%;
   display: block;
   border: 0;
-  height: 640px;
-  min-height: auto;
+  min-width: 0;
+  height: 640px; /* safe fallback; JS will adjust for same-origin frames */
   transition: height 0.3s ease;
   background-color: #ffffff;
 }
 
+/* Table-like overview / forecast table (index.html) */
+.forecast-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 1.5rem 0;
+  border-radius: 1rem;
+  box-shadow: 0 1rem 3rem -1rem rgba(15, 23, 42, 0.3);
+  background: white;
+}
+
+/* Use automatic table layout so columns size to content; allow wrapping */
 .forecast-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  table-layout: auto; /* dynamic column widths */
+  border-collapse: collapse;
   margin: 0;
   background: #ffffff;
   border-radius: 1rem;
@@ -114,25 +123,17 @@ header.navbar {
 .forecast-table td {
   padding: 1rem 1.25rem;
   vertical-align: middle;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  white-space: normal;        /* allow wrapping */
+  word-break: break-word;     /* break long words/URLs */
 }
 
+/* Final row: remove bottom border */
 .forecast-table tr:last-child td {
   border-bottom: none;
 }
 
-.forecast-table td:first-child {
-  font-weight: 500;
-}
-
-.forecast-table-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 1.5rem 0;
-  border-radius: 1rem;
-  box-shadow: 0 1rem 3rem -1rem rgba(15, 23, 42, 0.3);
-}
-
+/* Info wrappers used in the index overview */
 .forecast-info-wrapper {
   display: flex;
   align-items: center;
@@ -161,9 +162,8 @@ header.navbar {
   font-size: 1rem;
   font-weight: 600;
   color: #1e293b;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip; /* ensure full words available, do not ellipsize */
 }
 
 .forecast-info-description {
@@ -173,6 +173,7 @@ header.navbar {
   line-height: 1.4;
 }
 
+/* Forecast-card appearance retained for pages that still use the card wrapper */
 .forecast-card .card {
   border: 0;
   border-radius: 1.25rem;
@@ -196,6 +197,7 @@ header.navbar {
   border-radius: 0 0 1.25rem 1.25rem;
 }
 
+/* Responsive adjustments */
 @media (max-width: 991.98px) {
   .forecast-shell {
     max-width: 100%;
@@ -238,8 +240,9 @@ header.navbar {
     padding: 1.25rem;
   }
 
+  /* allow iframe to be taller on mobile; JS may override if possible */
   .forecast-frame {
-    min-width: 100%;
     height: auto;
+    min-width: 0;
   }
 }
