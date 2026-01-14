@@ -366,16 +366,48 @@ def main():
         comp_avg = {k: mean([x[2][k] for x in per_hour]) for k in comp_names}
         worst3 = ", ".join(f"{k}:{round(v)}" for k,v in sorted(comp_avg.items(), key=lambda kv: kv[1])[:3])
 
-        # best 2h
+        # best 2h - prioritize post-sunset with zero clouds
         best2h = None; best2h_score = -1
         for i in range(len(per_hour)-1):
             seg = per_hour[i:i+2]
             sc = mean([x[1] for x in seg])
-            if sc > best2h_score:
-                best2h_score = sc
+            
+            # Calculate bonus for ideal astrophotography conditions
+            astro_bonus = 0
+            
+            # Check if both hours are after sunset
+            all_night = True
+            for h_data in seg:
+                h = h_data[0]
+                dt_local = _get(h, "date")
+                if dt_local:
+                    dt_utc = _to_utc(dt_local)
+                    sun_obj = geo.sun(dt_utc)
+                    sun_alt_deg = float(sun_obj.alt) * 180.0 / 3.141592653589793
+                    if sun_alt_deg > -6.0:  # not dark enough
+                        all_night = False
+                        break
+            
+            if all_night:
+                astro_bonus += 20  # Strong bonus for night time
+            
+            # Check cloud cover - heavily favor zero or near-zero clouds
+            avg_cloud = mean([x[2]["clouds"] for x in seg])
+            if avg_cloud >= 95:  # essentially zero clouds (score 95-100)
+                astro_bonus += 25  # Massive bonus for clear skies
+            elif avg_cloud >= 85:
+                astro_bonus += 15  # Good bonus for mostly clear
+            elif avg_cloud >= 70:
+                astro_bonus += 5   # Small bonus for acceptable
+            
+            # Total adjusted score
+            adjusted_sc = sc + astro_bonus
+            
+            if adjusted_sc > best2h_score:
+                best2h_score = adjusted_sc
                 t0 = _get(seg[0][0],"date").strftime("%Y-%m-%d %H:%M")
                 t1 = _get(seg[-1][0],"date").strftime("%Y-%m-%d %H:%M")
-                best2h = f"{t0} → {t1} (avg {best2h_score:.1f})"
+                best2h = f"{t0} → {t1} (avg {sc:.1f})"  # Show original score, not bonus-adjusted
 
         fog_peak = max(x[2]["_fogp"] for x in per_hour)
         sqm_med  = round(mean(x[2]["_sqm"] for x in per_hour), 2)
