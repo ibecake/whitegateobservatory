@@ -307,7 +307,6 @@ def render_combined_weather(locations_data: list) -> str:
     .weather-container{max-width:1200px;margin:0 auto}
     .weather-title{font-weight:700;font-size:20px;margin:0 0 16px;color:#1e293b}
     .weather-grid{display:grid;grid-template-columns:1fr;gap:20px}
-    @media (min-width:900px){.weather-grid{grid-template-columns:1fr 1fr}}
     .weather-card-section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
     .weather-h{font-weight:700;font-size:18px;margin:0 0 12px;color:#0f172a}
     .day-row{display:grid;grid-template-columns:120px repeat(6,1fr);gap:8px;border-top:1px solid #f1f5f9;padding:10px 0;align-items:center}
