@@ -59,18 +59,18 @@ class Geo:
 
 # ── Species by month (editable) ───────────────────────────────────────────────
 SPECIES_BY_MONTH = {
-    1:["flounder","whiting","codling (boat)"],
-    2:["flounder","whiting","codling (boat)"],
-    3:["flounder","pollack (some)","early bass (odd)"],
-    4:["bass","pollack","wrasse"],
-    5:["bass","pollack","wrasse","mackerel (first)"],
-    6:["bass","pollack","wrasse","mackerel","garfish","mullet"],
-    7:["bass","pollack","wrasse","mackerel","garfish","mullet"],
-    8:["bass","pollack","wrasse","mackerel","garfish","mullet"],
-    9:["bass","pollack","wrasse","mackerel (tail)","mullet"],
-    10:["bass","pollack","wrasse (tail)","mackerel (odd)"],
-    11:["bass","pollack (boat)","flounder","codling (start)"],
-    12:["flounder","bass (odd)","codling (boat)"],
+    1: ["codling", "whiting", "flounder", "dab", "rockling", "coalfish"],
+    2: ["codling", "whiting", "flounder", "dab", "rockling", "coalfish"],
+    3: ["flounder", "dab", "plaice (starting)", "codling (late)", "bass (odd/mild spells)"],
+    4: ["bass (starting)", "plaice", "flounder", "dab", "dogfish"],
+    5: ["bass", "pollack", "wrasse", "thornback ray (starting)", "smoothhound (late May+)", "mackerel (first/patchy)"],
+    6: ["mackerel", "bass", "pollack", "wrasse", "thornback ray", "smoothhound"],
+    7: ["mackerel (peak)", "bass", "pollack", "wrasse", "garfish", "mullet", "thornback ray"],
+    8: ["bass", "mullet", "mackerel", "pollack", "wrasse", "thornback ray"],
+    9: ["bass (often strong)", "pollack (often bigger)", "mackerel (tail)", "thornback ray (tail)"],
+    10: ["codling (starting)", "whiting (starting)", "coalfish", "bass (early month)", "thornback ray (tail)"],
+    11: ["codling", "whiting", "coalfish", "flounder", "dab", "rockling"],
+    12: ["codling", "whiting", "coalfish", "flounder", "dab", "rockling", "conger (pier/rocks, night)"],
 }
 
 # ── Component scoring ─────────────────────────────────────────────────────────
