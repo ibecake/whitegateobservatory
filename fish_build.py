@@ -174,18 +174,22 @@ def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) ->
     h_next = hours_to(next_ext)
     next_lab = f"next {next_ext['type'].lower()} in {h_next:.1f}h" if next_ext and h_next is not None else "next:?"
 
-    # moving water is good; give bonus to flood (shore bass bias)
+    # moving water is good; give strong bonus to flood (rising tide is best)
     s_move = min(100.0, 40.0 + min(60.0, abs(rate)*300.0))  # 0 m/h->40, 0.2 m/h->100
-    s_phase = 5.0 if rate>0.03 else 0.0  # small flood bias
-    s_slack_pen = -15.0 if phase=="slack" else 0.0
+    s_phase = 15.0 if rate>0.03 else -10.0  # strong flood bias, penalty for ebb
+    s_slack_pen = -20.0 if phase=="slack" else 0.0
 
-    # Near an extreme can be good; slightly favor just-after low
+    # Prefer fishing 1-3 hours after low tide (flood tide)
     timing_bonus = 0.0
-    if h_next is not None:
-        if next_ext["type"] == "High":
-            if h_next <= 2.0: timing_bonus += 6.0
-        else:  # Low
-            if h_next <= 2.0: timing_bonus += 10.0
+    if prev_ext and prev_ext["type"] == "Low":
+        h_since_low = (dt_local - prev_ext["dt"]).total_seconds() / 3600.0
+        if 1.0 <= h_since_low <= 3.0:
+            timing_bonus += 20.0  # prime flood tide window
+        elif 0.5 <= h_since_low < 1.0 or 3.0 < h_since_low <= 4.0:
+            timing_bonus += 10.0  # still good
+    elif h_next is not None:
+        if next_ext["type"] == "High" and h_next <= 1.5:
+            timing_bonus += 8.0  # approaching high tide
 
     score = max(0.0, min(100.0, s_move + s_phase + s_slack_pen + timing_bonus))
     note = f"tide={phase} {rate:+.2f} m/h, {next_lab}"
@@ -193,8 +197,8 @@ def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) ->
 
 # Weights (sum 1.0) — includes tides
 WEIGHTS = dict(
-    wind=0.25, clouds=0.08, precip=0.08, pressure=0.08, humidity=0.05,
-    wave=0.20, seatemp=0.06, tide=0.20
+    wind=0.22, clouds=0.07, precip=0.07, pressure=0.07, humidity=0.04,
+    wave=0.18, seatemp=0.05, tide=0.30
 )
 
 # ── WorldTides fetch ──────────────────────────────────────────────────────────
@@ -298,14 +302,23 @@ def build_payload():
 
         s_tide, n_tide = score_tide(dt_local, heights, extremes) if WT_KEY else (60.0, "tide:? (no key)")
 
-        # dawn/dusk bonus
+        # evening/dusk bonus (best fishing as it gets dark)
         sun = geo.sun(dt_utc); alt = float(sun.alt)*180.0/3.141592653589793
-        dawn_dusk_bonus = 6.0 if (-12.0 < alt < +6.0) else 0.0
+        hour = dt_local.hour
+        evening_bonus = 0.0
+        if -6.0 < alt < +6.0:  # twilight period
+            if 15 <= hour <= 21:  # evening hours
+                evening_bonus = 12.0
+            else:  # morning twilight
+                evening_bonus = 4.0
+        elif -12.0 < alt <= -6.0:  # nautical twilight, darker
+            if 15 <= hour <= 22:
+                evening_bonus = 8.0
 
         score = (
             WEIGHTS["wind"]*s_w + WEIGHTS["clouds"]*s_c + WEIGHTS["precip"]*s_r +
             WEIGHTS["pressure"]*s_p + WEIGHTS["humidity"]*s_hu + WEIGHTS["wave"]*s_wav +
-            WEIGHTS["seatemp"]*s_sst + WEIGHTS["tide"]*s_tide + dawn_dusk_bonus
+            WEIGHTS["seatemp"]*s_sst + WEIGHTS["tide"]*s_tide + evening_bonus
         )
         score = max(0.0, min(100.0, score))
 
@@ -344,7 +357,7 @@ def build_payload():
         high_tide, low_tide = get_tide_times_for_day(day_date, extremes) if WT_KEY else (None, None)
         
         for s, t0, t1, w0 in top:
-            cls = "GOOD" if s>=75 else "FAIR" if s>=60 else "POOR"
+            cls = "GOOD" if s>=70 else "FAIR" if s>=55 else "POOR"
             # Extract wind and gust from notes
             wind_speed = "—"
             gust_speed = "—"
