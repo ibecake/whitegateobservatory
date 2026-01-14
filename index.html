@@ -18,85 +18,9 @@
     />
     <link rel="stylesheet" href="assets/css/dashboard.css" />
   </head>
-  <body data-nav-active="dashboard">
-    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#top">
-        Whitegate Observatory
-      </a>
-      <button
-        class="navbar-toggler position-absolute d-md-none collapsed ms-2"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#sidebarMenu"
-        aria-controls="sidebarMenu"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="navbar-nav flex-row flex-nowrap ms-auto">
-        <div class="nav-item text-nowrap">
-          <span class="nav-link px-3 text-light">Updated every 4 hours</span>
-        </div>
-      </div>
-    </header>
-
-    <div class="container-fluid">
-      <div class="row">
-        <nav
-          id="sidebarMenu"
-          class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse px-3 py-4"
-        >
-          <div class="position-sticky top-0 pt-md-4">
-            <p class="text-uppercase text-muted fw-semibold small mb-3">Jump to Section</p>
-            <ul class="nav flex-column gap-1">
-              <li class="nav-item">
-                <a class="nav-link" href="#astro">
-                  <span class="icon-wrapper"><i class="bi bi-stars"></i></span>
-                  Astrophotography
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#weather">
-                  <span class="icon-wrapper"><i class="bi bi-cloud-sun"></i></span>
-                  Weather Forecast
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#fishing">
-                  <span class="icon-wrapper"><i class="bi bi-water"></i></span>
-                  Fishing Forecast
-                </a>
-              </li>
-            </ul>
-          </div>
-        </nav>
-
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 main-content">
-          <div id="top"></div>
-          <section class="overview-hero text-white bg-primary p-4 p-lg-5 mb-5 rounded-4">
-            <div class="row align-items-center g-4">
-              <div class="col-lg-8">
-                <h1 class="display-6 mb-3">Whitegate Observatory Dashboard</h1>
-                <p class="lead mb-0">
-                  Real-time atmospheric, astronomical, and marine conditions for Whitegate, Co. Cork.
-                  All forecasts update automatically every 4 hours.
-                </p>
-              </div>
-              <div class="col-lg-4">
-                <div class="bg-white text-primary rounded-4 shadow-sm p-4">
-                  <h2 class="h6 fw-semibold mb-2">Live Forecasts</h2>
-                  <ul class="list-unstyled mb-0 small text-secondary">
-                    <li class="mb-1"><i class="bi bi-check-circle me-2 text-primary"></i>Astrophotography quality</li>
-                    <li class="mb-1"><i class="bi bi-check-circle me-2 text-primary"></i>7-day weather outlook</li>
-                    <li class="mb-0"><i class="bi bi-check-circle me-2 text-primary"></i>Tide & fishing conditions</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Astrophotography Section -->
+  <body>
+    <div class="container-fluid py-4">
+      <!-- Astrophotography Section -->
           <section id="astro" class="forecast-section mb-5">
             <div class="section-header mb-3">
               <h2 class="h3"><i class="bi bi-stars me-2"></i>Astrophotography Outlook</h2>
@@ -164,13 +88,7 @@
               </div>
             </div>
           </section>
-
-          <footer class="pt-4 pb-3 small text-center text-muted border-top">
-            Weather data © Meteosource • Tide data © WorldTides
-          </footer>
-        </main>
-      </div>
-    </div>
+        </div>
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
