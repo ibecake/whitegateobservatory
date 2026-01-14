@@ -352,7 +352,7 @@ def build_payload():
             t0, t1 = win[0]["t"], win[-1]["t"] + timedelta(minutes=59)
             best.append((s, t0, t1, "; ".join(w["notes"] for w in win)))
         best.sort(key=lambda x: x[0], reverse=True)
-        top = best[:3]
+        top = best[:1]
         # targets by month
         month = hrs[0]["t"].month
         targets = ", ".join(SPECIES_BY_MONTH.get(month, [])) or "—"
