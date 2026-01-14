@@ -310,8 +310,7 @@ def render_combined_weather(locations_data: list) -> str:
 <body style="margin:0;padding:16px;background:transparent">
 '''
     
-    updated = datetime.now().strftime("%a %d %b %H:%M")
-    html += f'<div class="weather-container"><div class="weather-title">7-Day Weather Forecast — Updated {updated}</div>'
+    html += '<div class="weather-container">'
     html += '<div class="weather-grid">'
     
     for location_name, hourly_data in locations_data:
@@ -449,6 +448,7 @@ def main():
     fishing_content = extract_body_content(render_fishing_card(fishing_payload))
     
     # Build combined HTML
+    updated_time = datetime.now().strftime("%a %d %b %H:%M")
     combined_html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -458,6 +458,7 @@ def main():
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
+<div class="update-timestamp">Last updated: {updated_time}</div>
 {astro_content}
 {weather_content}
 {fishing_content}
