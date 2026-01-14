@@ -259,25 +259,6 @@ def render_html_card(payload: dict) -> str:
 
 def render_weather_card(location_name: str, hourly_data: list) -> str:
     """Render a simple 7-day weather forecast card from hourly data."""
-    css = """
-    <style>
-    .weather-card{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;max-width:900px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-    .weather-h{font-weight:700;font-size:18px;margin:0 0 6px}
-    .weather-sub{color:#6b7280;font-size:12px;margin-bottom:12px}
-    .day-row{display:grid;grid-template-columns:120px repeat(6,1fr);gap:8px;border-top:1px solid #f1f5f9;padding:10px 0;align-items:center}
-    .day-row:first-of-type{border-top:none;font-weight:600;background:#f8fafc}
-    .weather-val{font-size:13px;text-align:center}
-    .credit{margin-top:8px;color:#94a3b8;font-size:11px}
-    </style>
-    """
-    
-    updated = datetime.now().strftime("%a %d %b %H:%M")
-    body = f'<div class="weather-card"><div class="weather-h">{location_name} — 7-Day Weather</div>'
-    body += f'<div class="weather-sub">Updated {updated}</div>'
-    
-    # Header row
-    body += '<div class="day-row"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div><div class="weather-val">Humidity</div><div class="weather-val">Pressure</div></div>'
-    
     # Group by day and get daily summaries
     from collections import defaultdict
     days = defaultdict(list)
@@ -286,6 +267,11 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         if not dt: continue
         day_key = dt.strftime("%Y-%m-%d")
         days[day_key].append(h)
+    
+    body = f'<div class="weather-card-section"><div class="weather-h">{location_name}</div>'
+    
+    # Header row
+    body += '<div class="day-row header-row"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div><div class="weather-val">Humidity</div><div class="weather-val">Pressure</div></div>'
     
     for day_key in sorted(days.keys())[:7]:
         day_hours = days[day_key]
@@ -310,7 +296,36 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         
         body += f'<div class="day-row"><div>{day_label}</div><div class="weather-val">{temp_str}</div><div class="weather-val">{precip_str}</div><div class="weather-val">{wind_str}</div><div class="weather-val">{cloud_str}</div><div class="weather-val">{humid_str}</div><div class="weather-val">{press_str}</div></div>'
     
-    body += '<div class="credit">Weather data © Meteosource</div></div>'
+    body += '</div>'
+    return body
+
+def render_combined_weather(locations_data: list) -> str:
+    """Render combined weather cards for multiple locations."""
+    css = """
+    <style>
+    body{margin:0;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:#f8f9fa}
+    .weather-container{max-width:1200px;margin:0 auto}
+    .weather-title{font-weight:700;font-size:20px;margin:0 0 16px;color:#1e293b}
+    .weather-grid{display:grid;grid-template-columns:1fr;gap:20px}
+    @media (min-width:900px){.weather-grid{grid-template-columns:1fr 1fr}}
+    .weather-card-section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+    .weather-h{font-weight:700;font-size:18px;margin:0 0 12px;color:#0f172a}
+    .day-row{display:grid;grid-template-columns:120px repeat(6,1fr);gap:8px;border-top:1px solid #f1f5f9;padding:10px 0;align-items:center}
+    .header-row{border-top:none;font-weight:600;background:#f8fafc;margin:0 -16px;padding:10px 16px}
+    .day-row:not(.header-row){font-size:13px}
+    .weather-val{text-align:center}
+    .credit{margin-top:16px;color:#94a3b8;font-size:11px;text-align:center}
+    </style>
+    """
+    
+    updated = datetime.now().strftime("%a %d %b %H:%M")
+    body = f'<div class="weather-container"><div class="weather-title">7-Day Weather Forecast — Updated {updated}</div>'
+    body += '<div class="weather-grid">'
+    
+    for location_name, hourly_data in locations_data:
+        body += render_weather_card(location_name, hourly_data)
+    
+    body += '</div><div class="credit">Weather data © Meteosource</div></div>'
     return css + body
 
 def main():
@@ -395,30 +410,28 @@ def main():
 
     print(f"Wrote: {json_out} and {html_out}")
     
-    # Generate weather cards for Whitegate and Cork
+    # Generate combined weather card for both locations
     weather_dir = os.path.join(os.path.dirname(outdir), "weather")
     os.makedirs(weather_dir, exist_ok=True)
     
-    # Whitegate weather (using same data as astro)
-    whitegate_html_tmp = os.path.join(weather_dir, "whitegate.tmp.html")
-    whitegate_html_out = os.path.join(weather_dir, "whitegate.html")
-    with open(whitegate_html_tmp, "w", encoding="utf-8") as f:
-        f.write(render_weather_card("Whitegate", hourly))
-    os.replace(whitegate_html_tmp, whitegate_html_out)
-    
-    # Cork weather (fetch separate data)
+    # Fetch Cork weather data
     CORK_LAT, CORK_LON = 51.8985, -8.4756  # Cork City
     fc_cork = ms.get_point_forecast(lat=CORK_LAT, lon=CORK_LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
                                      sections=(sections.HOURLY,))
     cork_hourly = fc_cork.hourly.data or []
     
-    cork_html_tmp = os.path.join(weather_dir, "cork.tmp.html")
-    cork_html_out = os.path.join(weather_dir, "cork.html")
-    with open(cork_html_tmp, "w", encoding="utf-8") as f:
-        f.write(render_weather_card("Cork", cork_hourly))
-    os.replace(cork_html_tmp, cork_html_out)
+    # Generate single combined weather file with both locations
+    combined_html_tmp = os.path.join(weather_dir, "forecast.tmp.html")
+    combined_html_out = os.path.join(weather_dir, "forecast.html")
+    locations_data = [
+        ("Whitegate, Co. Cork", hourly),
+        ("Cork City", cork_hourly)
+    ]
+    with open(combined_html_tmp, "w", encoding="utf-8") as f:
+        f.write(render_combined_weather(locations_data))
+    os.replace(combined_html_tmp, combined_html_out)
     
-    print(f"Wrote weather: {whitegate_html_out} and {cork_html_out}")
+    print(f"Wrote combined weather: {combined_html_out}")
 
 if __name__ == "__main__":
     main()
