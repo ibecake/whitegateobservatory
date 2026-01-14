@@ -382,7 +382,7 @@ def main():
                 dt_local = _get(h, "date")
                 if dt_local:
                     dt_utc = _to_utc(dt_local)
-                    sun_obj = geo.sun(dt_utc)
+                    sun_obj, _, _ = geo.compute(dt_utc, None)
                     sun_alt_deg = float(sun_obj.alt) * 180.0 / 3.141592653589793
                     if sun_alt_deg > -6.0:  # not dark enough
                         all_night = False
