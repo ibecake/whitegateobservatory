@@ -48,8 +48,11 @@ jobs:
           cp whitegate-weather.html dist/whitegate-weather.html
           cp cork-weather.html dist/cork-weather.html
           cp fishing.html dist/fishing.html
-          cp -R assets dist/assets
-
+          cp -R assets dist/assets          
+          # Debug: List what was created
+          echo "=== dist/ structure ==="
+          find dist -type f -name "*.html" -o -name "*.json" | sort
+          echo "======================="
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
