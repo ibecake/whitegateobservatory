@@ -31,36 +31,9 @@ OVERRIDE_SEA_T  = os.environ.get("SEA_TEMP") # °C
 
 OUT_DIR   = "dist/fishing"
 
-# ── Card styling (matches your astro/weather cards) ───────────────────────────
+# ── Card styling moved to dashboard.css ───────────────────────────────────────
 def shared_card_css() -> str:
-    return """
-<style>
-  body{margin:0;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:transparent}
-  .wrap{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:transparent;}
-  .card{max-width:750px; border:1px solid #e5e7eb; border-radius:12px;
-        padding:16px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.06); color:#0f172a;}
-  .h{font-weight:700; font-size:18px; margin:0 0 6px}
-  .sub{color:#6b7280; font-size:12px; margin-bottom:12px}
-  .credit{margin-top:8px; color:#94a3b8; font-size:11px}
-  .tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:720px; background:#fff; color:#0f172a; table-layout:fixed}
-  th, td{padding:10px; border-top:1px solid #f1f5f9; text-align:left; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
-  thead th{border-bottom:1px solid #e5e7eb; color:#6b7280; font-size:12px; letter-spacing:.02em; text-transform:uppercase}
-  td.num, th.num{text-align:right}
-  .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
-  .GOOD{background:#16a34a} .FAIR{background:#ca8a04} .POOR{background:#dc2626}
-  .dim{color:#6b7280}
-  @media (max-width: 900px){
-    /* Hide Details to keep rows compact */
-    .card table thead th:nth-child(6), .card table tbody td:nth-child(6){ display:none; }
-  }
-  @media (max-width: 640px){
-    /* Keep: Date, Window, Score, Class, Targets */
-    .card th, .card td{ padding:6px; font-size:12px; line-height:1.15 }
-    .badge{ padding:1px 6px; font-size:11px }
-  }
-</style>
-"""
+    return ""  # All CSS now in dashboard.css
 
 def shared_card_js(message_type: str) -> str:
     return f"""
@@ -364,10 +337,19 @@ def build_payload():
 
 # ── Render HTML card ──────────────────────────────────────────────────────────
 def render_card(payload: dict) -> str:
-    css = shared_card_css()
     js  = shared_card_js("fishing-card-size")
     updated = payload["generated_at_local"]
     wins = payload["windows"]
+
+    html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body style="margin:0;padding:16px;background:transparent">
+'''
 
     colgroup = (
         "<colgroup>"
@@ -396,8 +378,7 @@ def render_card(payload: dict) -> str:
                 "</tr>"
             )
 
-    html = (
-        css +
+    html += (
         '<div id="fish-root" class="wrap"><div class="card">'
         '<div class="h">Whitegate Fishing Forecast — Best Times & Targets</div>'
         f'<div class="sub">Updated {updated}. Score blends wind, clouds, rain, pressure trend, humidity, waves, sea temp'
@@ -407,7 +388,7 @@ def render_card(payload: dict) -> str:
         '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th>Details</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
         '<div class="credit">Weather data © Meteosource • Tides © WorldTides • Check Irish regs before fishing.</div>'
-        '</div></div>' + js
+        '</div></div>' + js + '</body></html>'
     )
     return html
 

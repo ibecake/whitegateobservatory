@@ -267,3 +267,261 @@ header.navbar {
     min-width: 0;
   }
 }
+
+/* ====================================================================
+   Card Styles for Embedded Forecasts (Astro, Weather, Fishing)
+   ==================================================================== */
+
+/* Astro Card */
+.astro-card {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  max-width: 750px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.astro-h {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+
+.astro-sub {
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.astro-card .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #f1f5f9;
+  padding: 10px 0;
+}
+
+.astro-card .row:first-of-type {
+  border-top: none;
+}
+
+.astro-card .badge {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.astro-card .GREAT {
+  background: #16a34a;
+}
+
+.astro-card .OK {
+  background: #ca8a04;
+}
+
+.astro-card .POOR {
+  background: #dc2626;
+}
+
+.astro-card .meta {
+  color: #475569;
+  font-size: 12px;
+}
+
+.astro-card .credit {
+  margin-top: 8px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.astro-card .best {
+  font-size: 12px;
+  color: #0f172a;
+}
+
+/* Weather Card */
+.weather-container {
+  max-width: 750px;
+  margin: 0 auto;
+}
+
+.weather-title {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 6px;
+  color: #0f172a;
+}
+
+.weather-sub {
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+.weather-card-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.weather-h {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 12px;
+  color: #0f172a;
+}
+
+.day-row {
+  display: grid;
+  grid-template-columns: 120px repeat(6, 1fr);
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding: 10px 0;
+  align-items: center;
+}
+
+.header-row {
+  border-top: none;
+  font-weight: 600;
+  background: #f8fafc;
+  margin: 0 -16px;
+  padding: 10px 16px;
+}
+
+.day-row:not(.header-row) {
+  font-size: 13px;
+}
+
+.weather-val {
+  text-align: center;
+}
+
+/* Fishing Card */
+.wrap {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  background: transparent;
+}
+
+.card {
+  max-width: 750px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+  color: #0f172a;
+}
+
+.h {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 6px;
+}
+
+.sub {
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.credit {
+  margin-top: 8px;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.tblwrap {
+  overflow: auto;
+}
+
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+  background: #fff;
+  color: #0f172a;
+  table-layout: fixed;
+}
+
+.card th,
+.card td {
+  padding: 10px;
+  border-top: 1px solid #f1f5f9;
+  text-align: left;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.card thead th {
+  border-bottom: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.card td.num,
+.card th.num {
+  text-align: right;
+}
+
+.card .badge {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #fff;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.card .GOOD {
+  background: #16a34a;
+}
+
+.card .FAIR {
+  background: #ca8a04;
+}
+
+.card .POOR {
+  background: #dc2626;
+}
+
+.card .dim {
+  color: #6b7280;
+}
+
+@media (max-width: 900px) {
+  /* Hide Details column to keep rows compact */
+  .card table thead th:nth-child(6),
+  .card table tbody td:nth-child(6) {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .card th,
+  .card td {
+    padding: 6px;
+    font-size: 12px;
+    line-height: 1.15;
+  }
+  
+  .card .badge {
+    padding: 1px 6px;
+    font-size: 11px;
+  }
+}

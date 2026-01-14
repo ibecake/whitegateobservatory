@@ -229,33 +229,31 @@ def classify(score: float) -> str:
     return "GREAT" if score>=75 else "OK" if score>=60 else "POOR"
 
 def render_html_card(payload: dict) -> str:
-    # lightweight, self-contained card; tweak styles to taste
+    # lightweight, self-contained card
     nights = payload["nights"]
     updated = payload["generated_at_local"]
-    css = """
-    <style>
-    .astro-card{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;max-width:750px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-    .astro-h{font-weight:700;font-size:18px;margin:0 0 6px}
-    .astro-sub{color:#6b7280;font-size:12px;margin-bottom:12px}
-    .row{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f1f5f9;padding:10px 0}
-    .row:first-of-type{border-top:none}
-    .badge{border-radius:999px;padding:2px 8px;font-size:12px;color:#fff}
-    .GREAT{background:#16a34a}.OK{background:#ca8a04}.POOR{background:#dc2626}
-    .meta{color:#475569;font-size:12px}
-    .credit{margin-top:8px;color:#94a3b8;font-size:11px}
-    .best{font-size:12px;color:#0f172a}
-    </style>
-    """
-    body = f'<div class="astro-card"><div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
-    body+= f'<div class="astro-sub">Updated {updated}</div>'
+    
+    html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body style="margin:0;padding:16px;background:transparent">
+'''
+    
+    html += f'<div class="astro-card"><div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
+    html += f'<div class="astro-sub">Updated {updated}</div>'
     for n in nights:
         badge = f'<span class="badge {n["class"]}">{n["class"]} {int(round(n["score"]))}</span>'
-        body+= f'<div class="row"><div><div><strong>{n["label"]}</strong> {badge}</div>'
-        if n.get("best2h"): body+= f'<div class="best">Best 2h: {n["best2h"]}</div>'
-        body+= f'<div class="meta">{n["notes"]}</div></div>'
-        body+= f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div></div>'
-    body+= '<div class="credit">Weather data © Meteosource</div></div>'
-    return css + body
+        html += f'<div class="row"><div><div><strong>{n["label"]}</strong> {badge}</div>'
+        if n.get("best2h"): html += f'<div class="best">Best 2h: {n["best2h"]}</div>'
+        html += f'<div class="meta">{n["notes"]}</div></div>'
+        html += f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div></div>'
+    html += '<div class="credit">Weather data © Meteosource</div></div>'
+    html += '</body></html>'
+    return html
 
 def render_weather_card(location_name: str, hourly_data: list) -> str:
     """Render a simple 7-day weather forecast card from hourly data."""
@@ -301,32 +299,27 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
 
 def render_combined_weather(locations_data: list) -> str:
     """Render combined weather cards for multiple locations."""
-    css = """
-    <style>
-    body{margin:0;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:transparent}
-    .weather-container{max-width:750px;margin:0 auto}
-    .weather-title{font-weight:700;font-size:18px;margin:0 0 6px;color:#0f172a}
-    .weather-sub{color:#6b7280;font-size:12px;margin-bottom:12px}
-    .weather-grid{display:grid;grid-template-columns:1fr;gap:20px}
-    .weather-card-section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
-    .weather-h{font-weight:700;font-size:18px;margin:0 0 12px;color:#0f172a}
-    .day-row{display:grid;grid-template-columns:120px repeat(6,1fr);gap:8px;border-top:1px solid #f1f5f9;padding:10px 0;align-items:center}
-    .header-row{border-top:none;font-weight:600;background:#f8fafc;margin:0 -16px;padding:10px 16px}
-    .day-row:not(.header-row){font-size:13px}
-    .weather-val{text-align:center}
-    .credit{margin-top:8px;color:#94a3b8;font-size:11px}
-    </style>
-    """
+    
+    html = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body style="margin:0;padding:16px;background:transparent">
+'''
     
     updated = datetime.now().strftime("%a %d %b %H:%M")
-    body = f'<div class="weather-container"><div class="weather-title">7-Day Weather Forecast — Updated {updated}</div>'
-    body += '<div class="weather-grid">'
+    html += f'<div class="weather-container"><div class="weather-title">7-Day Weather Forecast — Updated {updated}</div>'
+    html += '<div class="weather-grid">'
     
     for location_name, hourly_data in locations_data:
-        body += render_weather_card(location_name, hourly_data)
+        html += render_weather_card(location_name, hourly_data)
     
-    body += '</div><div class="credit">Weather data © Meteosource</div></div>'
-    return css + body
+    html += '</div><div class="credit">Weather data © Meteosource</div></div>'
+    html += '</body></html>'
+    return html
 
 def main():
     ap = argparse.ArgumentParser(description="Build astro JSON + HTML card.")
