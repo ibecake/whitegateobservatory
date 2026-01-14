@@ -425,6 +425,39 @@ def main():
     os.replace(combined_html_tmp, combined_html_out)
     
     print(f"Wrote combined weather: {combined_html_out}")
+    
+    # Generate combined page with all three forecasts
+    combined_dir = os.path.dirname(outdir)
+    combined_html_path = os.path.join(combined_dir, "combined.html")
+    combined_tmp_path = os.path.join(combined_dir, "combined.tmp.html")
+    
+    # Read fishing data
+    import sys
+    sys.path.insert(0, os.path.dirname(__file__))
+    from fish_build import build_payload as build_fishing_payload, render_card as render_fishing_card
+    fishing_payload = build_fishing_payload()
+    
+    # Build combined HTML
+    combined_html = f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Whitegate Observatory</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body>
+{render_html_card(payload).split('<body')[1].split('</body>')[0] if '<body' in render_html_card(payload) else render_html_card(payload)}
+{render_combined_weather(locations_data).split('<body')[1].split('</body>')[0] if '<body' in render_combined_weather(locations_data) else render_combined_weather(locations_data)}
+{render_fishing_card(fishing_payload).split('<body')[1].split('</body>')[0] if '<body' in render_fishing_card(fishing_payload) else render_fishing_card(fishing_payload)}
+</body>
+</html>'''
+    
+    with open(combined_tmp_path, "w", encoding="utf-8") as f:
+        f.write(combined_html)
+    os.replace(combined_tmp_path, combined_html_path)
+    
+    print(f"Wrote combined page: {combined_html_path}")
 
 if __name__ == "__main__":
     main()

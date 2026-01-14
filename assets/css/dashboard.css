@@ -1,244 +1,40 @@
-/* Dashboard styles — updated to prevent ellipsis/truncation, enable dynamic column sizing,
-   keep responsive behavior, and make iframe containers flexible. */
-
-:root {
-  color-scheme: light;
-}
+/* Dashboard styles - simplified for single page with no nested scrolling */
 
 body {
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   background-color: #f8f9fb;
-  min-height: 100vh;
-}
-
-/* main content container — prevent accidental X overflow hiding */
-.main-content {
-  background-color: transparent;
-  overflow-x: hidden;
-  max-width: 100%;
-}
-
-
-/* Forecast sections */
-.forecast-section {
-  scroll-margin-top: 80px; /* offset for sticky header */
-}
-
-.section-header h2 {
-  font-weight: 600;
-  color: #212529;
-}
-
-/* Forecast shell (iframe container) */
-.forecast-shell {
-  max-width: 1320px;
-  margin: 0 auto;
-}
-
-.forecast-card {
-  max-width: 100%;
-  margin: 0 auto;
-}
-
-.forecast-card .card {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
-  border-radius: 1rem;
-}
-
-/* Forecast frame wrapper - no scrolling, transparent container */
-.forecast-frame-wrap {
-  width: 100%;
-  overflow: visible;
-  border-radius: 0;
-  background: transparent;
-  position: relative;
-}
-
-.forecast-frame {
-  width: 100%;
-  display: block;
-  border: 0;
-  min-width: 0;
-  height: 100%;
-  background-color: transparent;
-}
-
-/* Table-like overview / forecast table (index.html) */
-.forecast-table-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  margin: 1.5rem 0;
-  border-radius: 1rem;
-  box-shadow: 0 1rem 3rem -1rem rgba(15, 23, 42, 0.3);
-  background: white;
-}
-
-/* Use automatic table layout so columns size to content; allow wrapping */
-.forecast-table {
-  width: 100%;
-  table-layout: auto; /* dynamic column widths */
-  border-collapse: collapse;
   margin: 0;
-  background: #ffffff;
-  border-radius: 1rem;
+  padding: 16px;
 }
 
-.forecast-table th,
-.forecast-table td {
-  padding: 1rem 1.25rem;
-  vertical-align: middle;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
-  white-space: normal;        /* allow wrapping */
-  word-break: break-word;     /* break long words/URLs */
-}
-
-/* Final row: remove bottom border */
-.forecast-table tr:last-child td {
-  border-bottom: none;
-}
-
-/* Info wrappers used in the index overview */
-.forecast-info-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.forecast-info-icon {
-  flex-shrink: 0;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.75rem;
-  background: rgba(13, 110, 253, 0.12);
-  color: #0d6efd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.25rem;
-}
-
-.forecast-info-content {
-  min-width: 0;
-}
-
-.forecast-info-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #1e293b;
-  overflow: hidden;
-  text-overflow: clip; /* ensure full words available, do not ellipsize */
-}
-
-.forecast-info-description {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: #64748b;
-  line-height: 1.4;
-}
-
-/* Forecast-card appearance retained for pages that still use the card wrapper */
-.forecast-card .card {
-  border: 0;
-  border-radius: 1.25rem;
-  box-shadow: 0 2rem 4rem -2rem rgba(15, 23, 42, 0.45);
-  overflow: visible;
-  background-color: transparent;
-}
-
-.forecast-card .card-header {
-  background: linear-gradient(135deg, rgba(13, 110, 253, 0.12), rgba(13, 202, 240, 0.22));
-  border-bottom: 0;
-  padding: 1.5rem 1.75rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.forecast-card .card-body {
-  padding: 1.75rem;
-  background-color: #ffffff;
-  border-radius: 0 0 1.25rem 1.25rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 991.98px) {
-  .forecast-shell {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 767.98px) {
-  .sidebar {
-    min-height: auto;
-    box-shadow: none;
-  }
-
-  .overview-hero {
-    border-radius: 1rem;
-    padding: 1.5rem !important;
-  }
-
-  .forecast-info-wrapper {
-    gap: 0.75rem;
-  }
-
-  .forecast-info-icon {
-    width: 2rem;
-    height: 2rem;
-    font-size: 1rem;
-  }
-
-  .forecast-table th,
-  .forecast-table td {
-    padding: 0.75rem 1rem;
-  }
-
-  .forecast-card .card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.25rem;
-  }
-
-  .forecast-card .card-body {
-    padding: 1.25rem;
-  }
-
-  /* allow iframe to be taller on mobile; JS may override if possible */
-  .forecast-frame {
-    height: auto;
-    min-width: 0;
-  }
-}
-
-/* ====================================================================
-   Card Styles for Embedded Forecasts (Astro, Weather, Fishing)
-   ==================================================================== */
-
-/* Astro Card */
-.astro-card {
+/* Card Styles for Forecasts */
+.astro-card,
+.weather-card-section,
+.card {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-  max-width: 750px;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px;
+  margin-bottom: 20px;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
 }
 
-.astro-h {
+/* Headings */
+.astro-h, .weather-title, .weather-h, .h {
   font-weight: 700;
   font-size: 18px;
   margin: 0 0 6px;
+  color: #0f172a;
 }
 
-.astro-sub {
+.astro-sub, .weather-sub, .sub {
   color: #6b7280;
   font-size: 12px;
   margin-bottom: 12px;
 }
 
+/* Astro Card Rows */
 .astro-card .row {
   display: flex;
   align-items: center;
@@ -251,79 +47,41 @@ body {
   border-top: none;
 }
 
-.astro-card .badge {
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #fff;
-}
-
-.astro-card .GREAT {
-  background: #16a34a;
-}
-
-.astro-card .OK {
-  background: #ca8a04;
-}
-
-.astro-card .POOR {
-  background: #dc2626;
-}
-
-.astro-card .meta {
+.meta {
   color: #475569;
   font-size: 12px;
 }
 
-.astro-card .credit {
-  margin-top: 8px;
-  color: #94a3b8;
-  font-size: 11px;
-}
-
-.astro-card .best {
+.best {
   font-size: 12px;
   color: #0f172a;
 }
 
-/* Weather Card */
+/* Badges */
+.badge {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #fff;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.GREAT { background: #16a34a; }
+.OK { background: #ca8a04; }
+.POOR { background: #dc2626; }
+.GOOD { background: #16a34a; }
+.FAIR { background: #ca8a04; }
+
+/* Weather Grid */
 .weather-container {
-  max-width: 750px;
   margin: 0 auto;
-}
-
-.weather-title {
-  font-weight: 700;
-  font-size: 18px;
-  margin: 0 0 6px;
-  color: #0f172a;
-}
-
-.weather-sub {
-  color: #6b7280;
-  font-size: 12px;
-  margin-bottom: 12px;
 }
 
 .weather-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-}
-
-.weather-card-section {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-}
-
-.weather-h {
-  font-weight: 700;
-  font-size: 18px;
-  margin: 0 0 12px;
-  color: #0f172a;
 }
 
 .day-row {
@@ -351,32 +109,36 @@ body {
   text-align: center;
 }
 
-/* Fishing Card */
-.wrap {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-  background: transparent;
-}
-
-.card {
-  max-width: 750px;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+/* Fishing Table */
+table {
+  width: 100%;
+  border-collapse: collapse;
   background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   color: #0f172a;
 }
 
-.h {
-  font-weight: 700;
-  font-size: 18px;
-  margin: 0 0 6px;
+th, td {
+  padding: 10px;
+  border-top: 1px solid #f1f5f9;
+  text-align: left;
+  font-size: 14px;
+  vertical-align: middle;
 }
 
-.sub {
+thead th {
+  border-bottom: 1px solid #e5e7eb;
   color: #6b7280;
   font-size: 12px;
-  margin-bottom: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+td.num, th.num {
+  text-align: right;
+}
+
+.dim {
+  color: #6b7280;
 }
 
 .credit {
@@ -385,71 +147,7 @@ body {
   font-size: 11px;
 }
 
-.tblwrap {
-  overflow: auto;
-}
-
-.card table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 720px;
-  background: #fff;
-  color: #0f172a;
-  table-layout: fixed;
-}
-
-.card th,
-.card td {
-  padding: 10px;
-  border-top: 1px solid #f1f5f9;
-  text-align: left;
-  font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-}
-
-.card thead th {
-  border-bottom: 1px solid #e5e7eb;
-  color: #6b7280;
-  font-size: 12px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.card td.num,
-.card th.num {
-  text-align: right;
-}
-
-.card .badge {
-  border-radius: 999px;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #fff;
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.card .GOOD {
-  background: #16a34a;
-}
-
-.card .FAIR {
-  background: #ca8a04;
-}
-
-.card .POOR {
-  background: #dc2626;
-}
-
-.card .dim {
-  color: #6b7280;
-}
-
 @media (max-width: 900px) {
-  /* Hide Details column to keep rows compact */
   .card table thead th:nth-child(6),
   .card table tbody td:nth-child(6) {
     display: none;
@@ -457,14 +155,16 @@ body {
 }
 
 @media (max-width: 640px) {
-  .card th,
-  .card td {
-    padding: 6px;
-    font-size: 12px;
-    line-height: 1.15;
+  body {
+    padding: 8px;
   }
   
-  .card .badge {
+  th, td {
+    padding: 6px;
+    font-size: 12px;
+  }
+  
+  .badge {
     padding: 1px 6px;
     font-size: 11px;
   }
