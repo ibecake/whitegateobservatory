@@ -120,7 +120,21 @@ def score_sea_temp(tC: Optional[float], month:int):
     s = 85 if 10<=tC<=17 else 95 if tC>17 else 60 if 8<=tC<10 else 45
     return s, f"SST={tC:.1f}°C"
 
-# NEW: tide score
+# NEW: tide scoredef get_tide_times_for_day(day_date, extremes: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
+    """Find high and low tide times for a given day"""
+    high_time = None
+    low_time = None
+    
+    for ex in extremes:
+        ex_date = ex['dt'].date()
+        if ex_date == day_date:
+            time_str = ex['dt'].strftime("%H:%M")
+            if ex['type'] == 'High':
+                high_time = time_str
+            elif ex['type'] == 'Low':
+                low_time = time_str
+    
+    return high_time, low_time
 def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) -> Tuple[float,str]:
     """heights: [{'dt':datetime,'height':float}] step=1h
        extremes: [{'dt':datetime,'type':'High'|'Low','height':float}]"""
@@ -296,6 +310,8 @@ def build_payload():
         rows.append(dict(
             t=dt_local, score=score,
             notes="; ".join([n_w,n_c,n_r,n_p,n_wav,n_sst,n_tide]),
+            wind_speed=ws,
+            wind_gust=gust
         ))
 
     # 2h windows per day
@@ -312,14 +328,28 @@ def build_payload():
             win = hrs[i:i+2]
             s = mean([w["score"] for w in win])
             t0, t1 = win[0]["t"], win[-1]["t"] + timedelta(minutes=59)
-            best.append((s, t0, t1, "; ".join(w["notes"] for w in win)))
+            # Extract wind data from first hour of window
+            w0 = win[0]
+            best.append((s, t0, t1, w0))
         best.sort(key=lambda x: x[0], reverse=True)
         top = best[:1]
         # targets by month
         month = hrs[0]["t"].month
         targets = ", ".join(SPECIES_BY_MONTH.get(month, [])) or "—"
-        for s, t0, t1, note in top:
+        
+        # Get tide times for this day
+        day_date = hrs[0]["t"].date()
+        high_tide, low_tide = get_tide_times_for_day(day_date, extremes) if WT_KEY else (None, None)
+        
+        for s, t0, t1, w0 in top:
             cls = "GOOD" if s>=75 else "FAIR" if s>=60 else "POOR"
+            # Extract wind and gust from notes
+            wind_speed = "—"
+            gust_speed = "—"
+            if "wind_gust" in w0:
+                wind_speed = f"{w0['wind_speed']:.1f}" if w0['wind_speed'] is not None else "—"
+                gust_speed = f"{w0['wind_gust']:.1f}" if w0['wind_gust'] is not None else "—"
+            
             windows.append(dict(
                 day_label = t0.strftime("%a %d %b"),
                 start = t0.strftime("%H:%M"),
@@ -327,7 +357,10 @@ def build_payload():
                 score = int(round(s)),
                 cls   = cls,
                 targets = targets,
-                details = note
+                high_tide = high_tide or "—",
+                low_tide = low_tide or "—",
+                wind = wind_speed,
+                gust = gust_speed
             ))
 
     return {
@@ -358,12 +391,15 @@ def render_card(payload: dict) -> str:
         "<col style='width:6ch'>"   # Score
         "<col style='width:7ch'>"   # Class
         "<col style='width:26ch'>"  # Targets
-        "<col>"                     # Details (flex)
+        "<col style='width:8ch'>"   # High Tide
+        "<col style='width:8ch'>"   # Low Tide
+        "<col style='width:7ch'>"   # Wind
+        "<col style='width:7ch'>"   # Gust
         "</colgroup>"
     )
 
     if not wins:
-        rows = "<tr><td colspan='6' class='dim'>No data</td></tr>"
+        rows = "<tr><td colspan='9' class='dim'>No data</td></tr>"
     else:
         rows = ""
         for w in wins:
@@ -374,7 +410,10 @@ def render_card(payload: dict) -> str:
                 f"<td class='num'><strong>{w['score']}</strong></td>"
                 f"<td><span class='badge {w['cls']}'>{w['cls']}</span></td>"
                 f"<td class='dim'>{w['targets']}</td>"
-                f"<td class='dim' title='{w['details']}'>{w['details']}</td>"
+                f"<td class='num'>{w['high_tide']}</td>"
+                f"<td class='num'>{w['low_tide']}</td>"
+                f"<td class='num'>{w['wind']}</td>"
+                f"<td class='num'>{w['gust']}</td>"
                 "</tr>"
             )
 
@@ -385,7 +424,7 @@ def render_card(payload: dict) -> str:
         + (", tides via WorldTides" if WT_KEY else ", tides (no key)") + '.</div>'
         '<div class="tblwrap"><table>'
         f"{colgroup}"
-        '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th>Details</th></tr></thead>'
+        '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th class="num">High Tide</th><th class="num">Low Tide</th><th class="num">Wind (m/s)</th><th class="num">Gust (m/s)</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
         '<div class="credit">Check Irish regs before fishing.</div>'
         '</div></div>' + js + '</body></html>'
