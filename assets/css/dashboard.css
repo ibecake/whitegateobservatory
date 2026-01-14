@@ -95,29 +95,28 @@ header.navbar {
   border-radius: 1rem;
 }
 
-/* Allow the frame wrapper to horizontally scroll when needed; don't hide overflow vertically */
+/* Forecast frame wrapper - no scrolling, transparent container */
 .forecast-frame-wrap {
   width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 1rem;
-  background: #ffffff;
+  overflow: visible;
+  border-radius: 0;
+  background: transparent;
   position: relative;
 }
 
 /* Iframe itself:
    - width 100% (fill wrapper)
    - min-width 0 to prevent flex items from forcing overflow
-   - default height is a safe fallback; adjusted at runtime by JS
+   - height auto to fit content without scrollbars
 */
 .forecast-frame {
   width: 100%;
   display: block;
   border: 0;
   min-width: 0;
-  height: 640px; /* safe fallback; JS will adjust for same-origin frames */
-  transition: height 0.3s ease;
-  background-color: #ffffff;
+  height: auto;
+  min-height: 400px;
+  background-color: transparent;
 }
 
 /* Table-like overview / forecast table (index.html) */
