@@ -433,9 +433,20 @@ def main():
     
     # Read fishing data
     import sys
+    import re
     sys.path.insert(0, os.path.dirname(__file__))
     from fish_build import build_payload as build_fishing_payload, render_card as render_fishing_card
     fishing_payload = build_fishing_payload()
+    
+    # Extract body content without body tag
+    def extract_body_content(html):
+        # Remove everything before <body...> and after </body>
+        match = re.search(r'<body[^>]*>(.*)</body>', html, re.DOTALL)
+        return match.group(1) if match else html
+    
+    astro_content = extract_body_content(render_html_card(payload))
+    weather_content = extract_body_content(render_combined_weather(locations_data))
+    fishing_content = extract_body_content(render_fishing_card(fishing_payload))
     
     # Build combined HTML
     combined_html = f'''<!DOCTYPE html>
@@ -447,9 +458,9 @@ def main():
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
-{render_html_card(payload).split('<body')[1].split('</body>')[0] if '<body' in render_html_card(payload) else render_html_card(payload)}
-{render_combined_weather(locations_data).split('<body')[1].split('</body>')[0] if '<body' in render_combined_weather(locations_data) else render_combined_weather(locations_data)}
-{render_fishing_card(fishing_payload).split('<body')[1].split('</body>')[0] if '<body' in render_fishing_card(fishing_payload) else render_fishing_card(fishing_payload)}
+{astro_content}
+{weather_content}
+{fishing_content}
 </body>
 </html>'''
     
