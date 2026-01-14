@@ -37,7 +37,6 @@ body {
 /* Astro Table Layout */
 .astro-table {
   width: 100%;
-  overflow-x: auto;
 }
 
 .astro-row {
