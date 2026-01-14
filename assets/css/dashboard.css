@@ -34,27 +34,41 @@ body {
   margin-bottom: 12px;
 }
 
-/* Astro Card Rows */
-.astro-card .row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* Astro Table Layout */
+.astro-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.astro-row {
+  display: grid;
+  grid-template-columns: 140px 80px 140px repeat(6, 1fr);
+  gap: 8px;
   border-top: 1px solid #f1f5f9;
   padding: 10px 0;
+  align-items: center;
+  text-align: center;
+  font-size: 13px;
 }
 
-.astro-card .row:first-of-type {
+.astro-row > div:first-child {
+  text-align: left;
+}
+
+.astro-header-row {
   border-top: none;
+  font-weight: 600;
+  background: #f8fafc;
+  margin: 0 -16px;
+  padding: 10px 16px;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
 }
 
-.meta {
-  color: #475569;
-  font-size: 12px;
-}
-
-.best {
-  font-size: 12px;
-  color: #0f172a;
+.astro-time {
+  font-size: 11px;
+  color: #6b7280;
 }
 
 /* Badges */

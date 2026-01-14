@@ -245,12 +245,29 @@ def render_html_card(payload: dict) -> str:
     
     html += f'<div class="astro-card"><div class="astro-h">Whitegate Observatory — Astrophotography Outlook</div>'
     html += f'<div class="astro-sub">Updated {updated}</div>'
+    
+    # Add table header
+    html += '<div class="astro-table">'
+    html += '<div class="astro-row astro-header-row">'
+    html += '<div>Night</div><div>Score</div><div>Best 2h</div><div>Dewspread</div><div>Clouds</div><div>Precip</div><div>Fog</div><div>SQM</div><div>Airmass</div>'
+    html += '</div>'
+    
     for n in nights:
         badge = f'<span class="badge {n["class"]}">{n["class"]} {int(round(n["score"]))}</span>'
-        html += f'<div class="row"><div><div><strong>{n["label"]}</strong> {badge}</div>'
-        if n.get("best2h"): html += f'<div class="best">Best 2h: {n["best2h"]}</div>'
-        html += f'<div class="meta">{n["notes"]}</div></div>'
-        html += f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div></div>'
+        best2h_text = n.get("best2h", "—").replace(" (avg ", "<br>(").replace(")", ")") if n.get("best2h") else "—"
+        
+        html += '<div class="astro-row">'
+        html += f'<div><strong>{n["label"]}</strong><br><span class="astro-time">{n["start_local"]}<br/>→ {n["end_local"]}</span></div>'
+        html += f'<div>{badge}</div>'
+        html += f'<div class="astro-time">{best2h_text}</div>'
+        html += f'<div>{n.get("dewspread", "—")}</div>'
+        html += f'<div>{n.get("clouds", "—")}</div>'
+        html += f'<div>{n.get("precip", "—")}</div>'
+        html += f'<div>{n.get("fog", "—")}%</div>'
+        html += f'<div>{n.get("sqm", "—")}</div>'
+        html += f'<div>{n.get("airmass", "—")}</div>'
+        html += '</div>'
+    
     html += '</div></div>'
     html += '</body></html>'
     return html
@@ -375,6 +392,12 @@ def main():
             "worst": worst3,
             "best2h": best2h,
             "notes": f"{worst3} • fog≤{fog_peak}%, SQM≈{sqm_med}, airmass≈{airmass_med}",
+            "dewspread": round(comp_avg["dewspread"]),
+            "clouds": round(comp_avg["clouds"]),
+            "precip": round(comp_avg["precip"]),
+            "fog": fog_peak,
+            "sqm": sqm_med,
+            "airmass": airmass_med,
         })
 
     payload = {
