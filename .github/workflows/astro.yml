@@ -36,19 +36,26 @@ jobs:
           WORLD_TIDES_KEY: ${{ secrets.WORLD_TIDES_KEY }}
         run: |
           rm -rf dist
-          mkdir -p dist
-          # Build cards
+          mkdir -p dist/astro dist/weather dist/fishing
+          
+          # Build cards (these create JSON data)
           python astro_build.py --out dist/astro
-          # If your astro_build also writes weather cards, they’ll be under dist/weather already
-          # Build fishing
           python fish_build.py --out dist/fishing
-          # Copy site shell
+          
+          # Copy iframe HTML templates
+          cp templates/astro-iframe.html dist/astro/astro.html
+          cp templates/weather-iframe.html dist/weather/whitegate.html
+          cp templates/weather-iframe.html dist/weather/cork.html
+          cp templates/fishing-iframe.html dist/fishing/card.html
+          
+          # Copy site shell pages
           cp index.html dist/index.html
           cp astro.html dist/astro.html
           cp whitegate-weather.html dist/whitegate-weather.html
           cp cork-weather.html dist/cork-weather.html
           cp fishing.html dist/fishing.html
-          cp -R assets dist/assets          
+          cp -R assets dist/assets
+          
           # Debug: List what was created
           echo "=== dist/ structure ==="
           find dist -type f -name "*.html" -o -name "*.json" | sort
