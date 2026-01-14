@@ -38,15 +38,19 @@ jobs:
           rm -rf dist
           mkdir -p dist/astro dist/weather dist/fishing
           
-          # Build cards (these create JSON data)
+          # Build cards (these create card.html files with actual API data)
           python astro_build.py --out dist/astro
           python fish_build.py --out dist/fishing
           
-          # Copy iframe HTML templates
-          cp templates/astro-iframe.html dist/astro/astro.html
+          # Copy generated card.html to expected iframe locations
+          # astro/card.html → astro/astro.html
+          cp dist/astro/card.html dist/astro/astro.html
+          # fishing/card.html is already correct
+          
+          # Weather HTML files need to be created - these are Meteosource widget embeds
+          # For now, create placeholder weather files (TODO: create proper weather build script)
           cp templates/weather-iframe.html dist/weather/whitegate.html
           cp templates/weather-iframe.html dist/weather/cork.html
-          cp templates/fishing-iframe.html dist/fishing/card.html
           
           # Copy site shell pages
           cp index.html dist/index.html
@@ -58,7 +62,7 @@ jobs:
           
           # Debug: List what was created
           echo "=== dist/ structure ==="
-          find dist -type f -name "*.html" -o -name "*.json" | sort
+          find dist -type f \( -name "*.html" -o -name "*.json" \) | sort
           echo "======================="
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
