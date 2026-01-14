@@ -35,32 +35,21 @@ OUT_DIR   = "dist/fishing"
 def shared_card_css() -> str:
     return """
 <style>
-  :root{
-    --astro-font: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
-    --astro-bg: #ffffff; --astro-fg: #0f172a; --astro-sub: #64748b;
-    --astro-border: #e5e7eb; --astro-shadow: 0 2px 10px rgba(0,0,0,.06);
-    --astro-radius: 12px; --badge-good:#16a34a; --badge-fair:#ca8a04; --badge-poor:#dc2626;
-  }
-  @media (prefers-color-scheme: dark){
-    :root{
-      --astro-bg:#0b1020; --astro-fg:#e5e7eb; --astro-sub:#9aa4b2; --astro-border:#1f2937;
-      --astro-shadow: 0 8px 30px rgba(0,0,0,.45);
-    }
-  }
-  .wrap{font-family:var(--astro-font); background:transparent;}
-  .card{max-width:980px; border:1px solid var(--astro-border); border-radius:var(--astro-radius);
-        padding:16px; background:var(--astro-bg); box-shadow:var(--astro-shadow); color:var(--astro-fg);}
+  body{margin:0;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:transparent}
+  .wrap{font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif; background:transparent;}
+  .card{max-width:750px; border:1px solid #e5e7eb; border-radius:12px;
+        padding:16px; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.06); color:#0f172a;}
   .h{font-weight:700; font-size:18px; margin:0 0 6px}
-  .sub{color:var(--astro-sub); font-size:12px; margin-bottom:12px}
-  .credit{margin-top:8px; color:var(--astro-sub); font-size:11px}
+  .sub{color:#6b7280; font-size:12px; margin-bottom:12px}
+  .credit{margin-top:8px; color:#94a3b8; font-size:11px}
   .tblwrap{overflow:auto}
-  table{width:100%; border-collapse:collapse; min-width:720px; background:var(--astro-bg); color:var(--astro-fg); table-layout:fixed}
-  th, td{padding:10px; border-top:1px solid var(--astro-border); text-align:left; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
-  thead th{border-bottom:1px solid var(--astro-border); color:var(--astro-sub); font-size:12px; letter-spacing:.02em; text-transform:uppercase}
+  table{width:100%; border-collapse:collapse; min-width:720px; background:#fff; color:#0f172a; table-layout:fixed}
+  th, td{padding:10px; border-top:1px solid #f1f5f9; text-align:left; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle}
+  thead th{border-bottom:1px solid #e5e7eb; color:#6b7280; font-size:12px; letter-spacing:.02em; text-transform:uppercase}
   td.num, th.num{text-align:right}
   .badge{border-radius:999px; padding:2px 8px; font-size:12px; color:#fff; display:inline-block; white-space:nowrap}
-  .GOOD{background:var(--badge-good)} .FAIR{background:var(--badge-fair)} .POOR{background:var(--badge-poor)}
-  .dim{color:var(--astro-sub)}
+  .GOOD{background:#16a34a} .FAIR{background:#ca8a04} .POOR{background:#dc2626}
+  .dim{color:#6b7280}
   @media (max-width: 900px){
     /* Hide Details to keep rows compact */
     .card table thead th:nth-child(6), .card table tbody td:nth-child(6){ display:none; }

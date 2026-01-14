@@ -303,9 +303,10 @@ def render_combined_weather(locations_data: list) -> str:
     """Render combined weather cards for multiple locations."""
     css = """
     <style>
-    body{margin:0;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:#f8f9fa}
-    .weather-container{max-width:1200px;margin:0 auto}
-    .weather-title{font-weight:700;font-size:20px;margin:0 0 16px;color:#1e293b}
+    body{margin:0;padding:16px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;background:transparent}
+    .weather-container{max-width:750px;margin:0 auto}
+    .weather-title{font-weight:700;font-size:18px;margin:0 0 6px;color:#0f172a}
+    .weather-sub{color:#6b7280;font-size:12px;margin-bottom:12px}
     .weather-grid{display:grid;grid-template-columns:1fr;gap:20px}
     .weather-card-section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.06)}
     .weather-h{font-weight:700;font-size:18px;margin:0 0 12px;color:#0f172a}
@@ -313,7 +314,7 @@ def render_combined_weather(locations_data: list) -> str:
     .header-row{border-top:none;font-weight:600;background:#f8fafc;margin:0 -16px;padding:10px 16px}
     .day-row:not(.header-row){font-size:13px}
     .weather-val{text-align:center}
-    .credit{margin-top:16px;color:#94a3b8;font-size:11px;text-align:center}
+    .credit{margin-top:8px;color:#94a3b8;font-size:11px}
     </style>
     """
     
