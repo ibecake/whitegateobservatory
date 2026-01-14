@@ -20,75 +20,48 @@
   </head>
   <body>
     <div class="container-fluid py-4">
-      <!-- Astrophotography Section -->
-          <section id="astro" class="forecast-section mb-5">
-            <div class="section-header mb-3">
-              <h2 class="h3"><i class="bi bi-stars me-2"></i>Astrophotography Outlook</h2>
-              <p class="text-muted mb-0">Night quality scores, best imaging windows, and atmospheric conditions</p>
-            </div>
-            <div class="forecast-card">
-              <div class="card">
-                <div class="card-body p-0">
-                  <div class="forecast-frame-wrap">
-                    <iframe
-                      class="forecast-frame"
-                      src="astro/astro.html"
-                      title="Astrophotography Forecast"
-                      scrolling="auto"
-                      loading="lazy"
-                    ></iframe>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Weather Section -->
-          <section id="weather" class="forecast-section mb-5">
-            <div class="section-header mb-3">
-              <h2 class="h3"><i class="bi bi-cloud-sun me-2"></i>Weather Forecast</h2>
-              <p class="text-muted mb-0">7-day outlook for Whitegate and Cork with temperature, precipitation, and wind</p>
-            </div>
-            <div class="forecast-card">
-              <div class="card">
-                <div class="card-body p-0">
-                  <div class="forecast-frame-wrap">
-                    <iframe
-                      class="forecast-frame"
-                      src="weather/forecast.html"
-                      title="Weather Forecast"
-                      scrolling="auto"
-                      loading="lazy"
-                    ></iframe>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- Fishing Section -->
-          <section id="fishing" class="forecast-section mb-5">
-            <div class="section-header mb-3">
-              <h2 class="h3"><i class="bi bi-water me-2"></i>Fishing Forecast</h2>
-              <p class="text-muted mb-0">Tide times, moon phase, and optimal bite windows</p>
-            </div>
-            <div class="forecast-card">
-              <div class="card">
-                <div class="card-body p-0">
-                  <div class="forecast-frame-wrap">
-                    <iframe
-                      class="forecast-frame"
-                      src="fishing/card.html"
-                      title="Fishing Forecast"
-                      scrolling="auto"
-                      loading="lazy"
-                    ></iframe>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+      <div class="card mb-5">
+        <div class="card-body p-0">
+          <div class="forecast-frame-wrap">
+            <iframe
+              class="forecast-frame"
+              src="astro/astro.html"
+              title="Astrophotography Forecast"
+              scrolling="auto"
+              loading="lazy"
+            ></iframe>
+          </div>
         </div>
+      </div>
+
+      <div class="card mb-5">
+        <div class="card-body p-0">
+          <div class="forecast-frame-wrap">
+            <iframe
+              class="forecast-frame"
+              src="weather/forecast.html"
+              title="Weather Forecast"
+              scrolling="auto"
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-5">
+        <div class="card-body p-0">
+          <div class="forecast-frame-wrap">
+            <iframe
+              class="forecast-frame"
+              src="fishing/card.html"
+              title="Fishing Forecast"
+              scrolling="auto"
+              loading="lazy"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
