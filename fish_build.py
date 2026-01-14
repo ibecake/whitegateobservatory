@@ -120,7 +120,8 @@ def score_sea_temp(tC: Optional[float], month:int):
     s = 85 if 10<=tC<=17 else 95 if tC>17 else 60 if 8<=tC<10 else 45
     return s, f"SST={tC:.1f}°C"
 
-# NEW: tide scoredef get_tide_times_for_day(day_date, extremes: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
+# NEW: tide helpers
+def get_tide_times_for_day(day_date, extremes: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
     """Find high and low tide times for a given day"""
     high_time = None
     low_time = None
@@ -135,6 +136,7 @@ def score_sea_temp(tC: Optional[float], month:int):
                 low_time = time_str
     
     return high_time, low_time
+
 def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) -> Tuple[float,str]:
     """heights: [{'dt':datetime,'height':float}] step=1h
        extremes: [{'dt':datetime,'type':'High'|'Low','height':float}]"""
