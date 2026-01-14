@@ -247,7 +247,7 @@ def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, ste
         ts = ex.get("dt") or ex.get("time")  # some payloads use "dt" or "time"
         if ts is None: continue
         extremes.append(dict(
-            dt=datetime.fromtimestamp(int(ts)),
+            dt=datetime.fromtimestamp(int(ts), tz=timezone.utc),
             type=ex.get("type",""),
             height=float(ex.get("height", 0.0))
         ))
@@ -260,7 +260,7 @@ def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, ste
         ts = h.get("dt") or h.get("time")
         if ts is None: continue
         heights.append(dict(
-            dt=datetime.fromtimestamp(int(ts)),
+            dt=datetime.fromtimestamp(int(ts), tz=timezone.utc),
             height=float(h.get("height", 0.0))
         ))
 
@@ -278,7 +278,7 @@ def build_payload():
         return {"generated_at_local": datetime.now().strftime("%a %d %b %H:%M"), "windows":[]}
 
     # WorldTides: start from now-6h (to ensure prev points) for WT_DAYS
-    start_utc = datetime.utcnow().replace(minute=0, second=0, microsecond=0) - timedelta(hours=6)
+    start_utc = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) - timedelta(hours=6)
     wt = fetch_worldtides(LAT, LON, start_utc, WT_DAYS, WT_STEP_S, WT_KEY)
 
     heights = wt.get("heights", [])
