@@ -294,19 +294,19 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         dt = _get(day_hours[0], "date")
         day_label = dt.strftime("%a %d %b") if dt else day_key
         
-        temps = [_get(h, "temperature") for h in day_hours if _get(h, "temperature") is not None]
-        precips = [_get(h, "precipitation.total") or 0 for h in day_hours]
-        winds = [_get(h, "wind.speed") or 0 for h in day_hours]
-        clouds = [_get(h, "cloud_cover") or 0 for h in day_hours]
-        humidity = [_get(h, "humidity") or 0 for h in day_hours]
-        pressure = [_get(h, "pressure") or 0 for h in day_hours]
+        temps = [t for t in [_get(h, "temperature") for h in day_hours] if isinstance(t, (int, float))]
+        precips = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "precipitation.total") for h in day_hours]]
+        winds = [w if isinstance(w, (int, float)) else 0 for w in [_get(h, "wind.speed") for h in day_hours]]
+        clouds = [c if isinstance(c, (int, float)) else 0 for c in [_get(h, "cloud_cover") for h in day_hours]]
+        humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
+        pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
         
         temp_str = f"{int(min(temps))}°/{int(max(temps))}°C" if temps else "N/A"
         precip_str = f"{sum(precips):.1f}mm" if precips else "0mm"
-        wind_str = f"{int(mean(winds))} km/h" if winds else "N/A"
-        cloud_str = f"{int(mean(clouds))}%" if clouds else "N/A"
-        humid_str = f"{int(mean(humidity))}%" if humidity else "N/A"
-        press_str = f"{int(mean(pressure))} hPa" if pressure else "N/A"
+        wind_str = f"{int(mean(winds) if winds else 0)} km/h"
+        cloud_str = f"{int(mean(clouds) if clouds else 0)}%"
+        humid_str = f"{int(mean(humidity) if humidity else 0)}%"
+        press_str = f"{int(mean(pressure) if pressure else 0)} hPa"
         
         body += f'<div class="day-row"><div>{day_label}</div><div class="weather-val">{temp_str}</div><div class="weather-val">{precip_str}</div><div class="weather-val">{wind_str}</div><div class="weather-val">{cloud_str}</div><div class="weather-val">{humid_str}</div><div class="weather-val">{press_str}</div></div>'
     
