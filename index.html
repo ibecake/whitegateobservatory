@@ -20,7 +20,7 @@
   </head>
   <body data-nav-active="dashboard">
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="index.html">
+      <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#top">
         Whitegate Observatory
       </a>
       <button
@@ -36,7 +36,7 @@
       </button>
       <div class="navbar-nav flex-row flex-nowrap ms-auto">
         <div class="nav-item text-nowrap">
-          <span class="nav-link px-3 text-light">Updated every ~4 hours</span>
+          <span class="nav-link px-3 text-light">Updated every 4 hours</span>
         </div>
       </div>
     </header>
@@ -48,34 +48,22 @@
           class="col-md-3 col-lg-2 d-md-block bg-white sidebar collapse px-3 py-4"
         >
           <div class="position-sticky top-0 pt-md-4">
-            <p class="text-uppercase text-muted fw-semibold small mb-3">Forecasts</p>
+            <p class="text-uppercase text-muted fw-semibold small mb-3">Jump to Section</p>
             <ul class="nav flex-column gap-1">
               <li class="nav-item">
-                <a class="nav-link" data-nav-item="dashboard" href="index.html">
-                  <span class="icon-wrapper"><i class="bi bi-speedometer2"></i></span>
-                  Dashboard Overview
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-nav-item="astro" href="astro.html">
+                <a class="nav-link" href="#astro">
                   <span class="icon-wrapper"><i class="bi bi-stars"></i></span>
-                  Astrophotography Outlook
+                  Astrophotography
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" data-nav-item="whitegate" href="whitegate-weather.html">
+                <a class="nav-link" href="#weather">
                   <span class="icon-wrapper"><i class="bi bi-cloud-sun"></i></span>
-                  Whitegate 7-Day Weather
+                  Weather Forecast
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" data-nav-item="cork" href="cork-weather.html">
-                  <span class="icon-wrapper"><i class="bi bi-cloud-rain"></i></span>
-                  Cork 7-Day Weather
-                </a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" data-nav-item="fishing" href="fishing.html">
+                <a class="nav-link" href="#fishing">
                   <span class="icon-wrapper"><i class="bi bi-water"></i></span>
                   Fishing Forecast
                 </a>
@@ -85,104 +73,101 @@
         </nav>
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4 main-content">
-          <section class="overview-hero text-white bg-primary p-4 p-lg-5 mb-4">
+          <div id="top"></div>
+          <section class="overview-hero text-white bg-primary p-4 p-lg-5 mb-5 rounded-4">
             <div class="row align-items-center g-4">
-              <div class="col-lg-7">
-                <h1 class="display-6 mb-3">Your observing window at a glance</h1>
-                <p class="lead mb-4">
-                  Explore atmospheric, astronomical, and marine conditions from a single dashboard. Use the
-                  menu to open each live forecast in a focused view without losing navigation.
+              <div class="col-lg-8">
+                <h1 class="display-6 mb-3">Whitegate Observatory Dashboard</h1>
+                <p class="lead mb-0">
+                  Real-time atmospheric, astronomical, and marine conditions for Whitegate, Co. Cork.
+                  All forecasts update automatically every 4 hours.
                 </p>
-                <div class="d-flex flex-wrap gap-2">
-                  <a class="btn btn-light text-primary fw-semibold" href="astro.html">
-                    Launch Astrophotography Outlook
-                  </a>
-                  <a class="btn btn-outline-light fw-semibold" href="whitegate-weather.html">
-                    Check Whitegate Weather
-                  </a>
-                </div>
               </div>
-              <div class="col-lg-5">
-                <div class="bg-white text-primary rounded-4 shadow-sm p-4 h-100">
-                  <h2 class="h5 fw-semibold mb-3">Latest update</h2>
-                  <ul class="list-unstyled mb-0 small text-start text-secondary">
-                    <li class="mb-2"><i class="bi bi-check-circle me-2 text-primary"></i>Live widgets refresh automatically.</li>
-                    <li class="mb-2"><i class="bi bi-check-circle me-2 text-primary"></i>Menu links open full-size forecast pages.</li>
-                    <li class="mb-0"><i class="bi bi-check-circle me-2 text-primary"></i>Resize handling prevents truncated data.</li>
+              <div class="col-lg-4">
+                <div class="bg-white text-primary rounded-4 shadow-sm p-4">
+                  <h2 class="h6 fw-semibold mb-2">Live Forecasts</h2>
+                  <ul class="list-unstyled mb-0 small text-secondary">
+                    <li class="mb-1"><i class="bi bi-check-circle me-2 text-primary"></i>Astrophotography quality</li>
+                    <li class="mb-1"><i class="bi bi-check-circle me-2 text-primary"></i>7-day weather outlook</li>
+                    <li class="mb-0"><i class="bi bi-check-circle me-2 text-primary"></i>Tide & fishing conditions</li>
                   </ul>
                 </div>
               </div>
             </div>
           </section>
 
-          <!-- Replaced cards with a responsive table-like list (drop-in) -->
-          <div class="forecast-table-container">
-            <table class="forecast-table">
-              <tbody>
-                <tr>
-                  <td>
-                    <div class="forecast-info-wrapper">
-                      <div class="forecast-info-icon"><i class="bi bi-stars"></i></div>
-                      <div class="forecast-info-content">
-                        <h3 class="forecast-info-title">Astrophotography Outlook</h3>
-                        <p class="forecast-info-description">Deep-sky seeing, cloud cover, and transparency to plan your imaging sessions.</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="text-end align-middle">
-                    <a class="btn btn-sm btn-primary" href="astro.html">Open forecast</a>
-                  </td>
-                </tr>
+          <!-- Astrophotography Section -->
+          <section id="astro" class="forecast-section mb-5">
+            <div class="section-header mb-3">
+              <h2 class="h3"><i class="bi bi-stars me-2"></i>Astrophotography Outlook</h2>
+              <p class="text-muted mb-0">Night quality scores, best imaging windows, and atmospheric conditions</p>
+            </div>
+            <div class="forecast-card">
+              <div class="card">
+                <div class="card-body p-0">
+                  <div class="forecast-frame-wrap">
+                    <iframe
+                      class="forecast-frame"
+                      src="astro/astro.html"
+                      title="Astrophotography Forecast"
+                      scrolling="auto"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-                <tr>
-                  <td>
-                    <div class="forecast-info-wrapper">
-                      <div class="forecast-info-icon"><i class="bi bi-cloud-sun text-warning"></i></div>
-                      <div class="forecast-info-content">
-                        <h3 class="forecast-info-title">Whitegate 7-Day Weather</h3>
-                        <p class="forecast-info-description">Hourly and daily temperature, precipitation, and wind to prepare for local outings.</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="text-end align-middle">
-                    <a class="btn btn-sm btn-primary" href="whitegate-weather.html">Open forecast</a>
-                  </td>
-                </tr>
+          <!-- Weather Section -->
+          <section id="weather" class="forecast-section mb-5">
+            <div class="section-header mb-3">
+              <h2 class="h3"><i class="bi bi-cloud-sun me-2"></i>Weather Forecast</h2>
+              <p class="text-muted mb-0">7-day outlook for Whitegate and Cork with temperature, precipitation, and wind</p>
+            </div>
+            <div class="forecast-card">
+              <div class="card">
+                <div class="card-body p-0">
+                  <div class="forecast-frame-wrap">
+                    <iframe
+                      class="forecast-frame"
+                      src="weather/forecast.html"
+                      title="Weather Forecast"
+                      scrolling="auto"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-                <tr>
-                  <td>
-                    <div class="forecast-info-wrapper">
-                      <div class="forecast-info-icon"><i class="bi bi-cloud-rain text-info"></i></div>
-                      <div class="forecast-info-content">
-                        <h3 class="forecast-info-title">Cork 7-Day Weather</h3>
-                        <p class="forecast-info-description">Compare trends across the broader region to decide where to travel.</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="text-end align-middle">
-                    <a class="btn btn-sm btn-primary" href="cork-weather.html">Open forecast</a>
-                  </td>
-                </tr>
+          <!-- Fishing Section -->
+          <section id="fishing" class="forecast-section mb-5">
+            <div class="section-header mb-3">
+              <h2 class="h3"><i class="bi bi-water me-2"></i>Fishing Forecast</h2>
+              <p class="text-muted mb-0">Tide times, moon phase, and optimal bite windows</p>
+            </div>
+            <div class="forecast-card">
+              <div class="card">
+                <div class="card-body p-0">
+                  <div class="forecast-frame-wrap">
+                    <iframe
+                      class="forecast-frame"
+                      src="fishing/card.html"
+                      title="Fishing Forecast"
+                      scrolling="auto"
+                      loading="lazy"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-                <tr>
-                  <td>
-                    <div class="forecast-info-wrapper">
-                      <div class="forecast-info-icon"><i class="bi bi-water text-primary"></i></div>
-                      <div class="forecast-info-content">
-                        <h3 class="forecast-info-title">Fishing Forecast</h3>
-                        <p class="forecast-info-description">Tides, moon phase, and bite predictions for Whitegate anglers.</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="text-end align-middle">
-                    <a class="btn btn-sm btn-primary" href="fishing.html">Open forecast</a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <footer class="pt-4 small">Weather data © Meteosource • Tides © WorldTides</footer>
+          <footer class="pt-4 pb-3 small text-center text-muted border-top">
+            Weather data © Meteosource • Tide data © WorldTides
+          </footer>
         </main>
       </div>
     </div>
