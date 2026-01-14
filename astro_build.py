@@ -298,7 +298,7 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         temps = [t for t in [_get(h, "temperature") for h in day_hours] if isinstance(t, (int, float))]
         precips = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "precipitation.total") for h in day_hours]]
         winds = [w if isinstance(w, (int, float)) else 0 for w in [_get(h, "wind.speed") for h in day_hours]]
-        clouds = [c if isinstance(c, (int, float)) else 0 for c in [_get(h, "cloud_cover") for h in day_hours]]
+        clouds = [c if isinstance(c, (int, float)) else 0 for c in [_get(h, "cloud_cover.total") for h in day_hours]]
         humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
         pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
         
