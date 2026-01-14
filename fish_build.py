@@ -387,7 +387,7 @@ def render_card(payload: dict) -> str:
         f"{colgroup}"
         '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th>Details</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
-        '<div class="credit">Weather data © Meteosource • Tides © WorldTides • Check Irish regs before fishing.</div>'
+        '<div class="credit">Check Irish regs before fishing.</div>'
         '</div></div>' + js + '</body></html>'
     )
     return html

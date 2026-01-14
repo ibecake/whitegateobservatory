@@ -251,7 +251,7 @@ def render_html_card(payload: dict) -> str:
         if n.get("best2h"): html += f'<div class="best">Best 2h: {n["best2h"]}</div>'
         html += f'<div class="meta">{n["notes"]}</div></div>'
         html += f'<div class="meta" style="text-align:right">{n["start_local"]}<br/>→ {n["end_local"]}</div></div>'
-    html += '<div class="credit">Weather data © Meteosource</div></div>'
+    html += '</div></div>'
     html += '</body></html>'
     return html
 
@@ -316,7 +316,7 @@ def render_combined_weather(locations_data: list) -> str:
     for location_name, hourly_data in locations_data:
         html += render_weather_card(location_name, hourly_data)
     
-    html += '</div><div class="credit">Weather data © Meteosource</div></div>'
+    html += '</div></div>'
     html += '</body></html>'
     return html
 
@@ -458,7 +458,7 @@ def main():
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
 <body>
-<div class="update-timestamp">Last updated: {updated_time}</div>
+<div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
 {astro_content}
 {weather_content}
 {fishing_content}
