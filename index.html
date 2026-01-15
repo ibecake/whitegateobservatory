@@ -92,7 +92,7 @@
 
     <script>
       // Initialize the map centered on Whitegate, East Cork
-      const map = L.map('map').setView([51.825256, -8.240009], 12);
+      const map = L.map('map').setView([51.825256, -8.240009], 14);
 
       // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -101,7 +101,7 @@
       }).addTo(map);
 
       // Add a marker for Whitegate Observatory
-      const marker = L.marker([51.8478, -8.3156]).addTo(map);
+      const marker = L.marker([51.825256, -8.240009]).addTo(map);
       marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland').openPopup();
 
       // Optional: Add a circle to highlight the area
