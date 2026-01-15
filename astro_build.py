@@ -200,6 +200,12 @@ def hour_quality(h, geo: Geo, target_ra_dec):
     ws, visk = _ms(_get(h,"wind.speed")), _km(_get(h,"visibility"))
     fogp = fog_probability(spread, ws, visk)
 
+    # Get actual metric values from API
+    cloud_total = _pct(_get(h,"cloud_cover.total"))
+    precip_total = _mm(_get(h,"precipitation.total"))
+    temp = _c(_get(h,"temperature"))
+    dewpoint = _c(_get(h,"dew_point")) or _c(_get(h,"dewpoint"))
+
     dt_local = _get(h,"date"); dt_utc = _to_utc(dt_local)
     sun, moon, star = geo.compute(dt_utc, target_ra_dec)
 
@@ -219,7 +225,8 @@ def hour_quality(h, geo: Geo, target_ra_dec):
              W_WIND*s_wind + W_PRECIP*s_precip + W_BRIGHT*s_bright)
 
     comps = {"clouds":s_clouds,"visibility":s_vis,"dewspread":s_dew,"wind":s_wind,"precip":s_precip,"brightness":s_bright,
-             "_fogp":fogp,"_airmass":X,"_sqm":sqm}
+             "_fogp":fogp,"_airmass":X,"_sqm":sqm,
+             "_cloud_pct":cloud_total,"_precip_mm":precip_total,"_dewspread_c":spread}
     notes = {"clouds":r_clouds,"visibility":r_vis,"dewspread":r_dew,"wind":r_wind,"precip":r_precip,
              "brightness": f"{bright_note}, moon_alt={moon_alt_deg:.0f}°, illum={int(round(moon_phase_frac*100))}%"
                            + (f", sep={sep_deg:.0f}°" if sep_deg is not None else "")}
@@ -297,14 +304,14 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         
         temps = [t for t in [_get(h, "temperature") for h in day_hours] if isinstance(t, (int, float))]
         precips = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "precipitation.total") for h in day_hours]]
-        winds = [w if isinstance(w, (int, float)) else 0 for w in [_get(h, "wind.speed") for h in day_hours]]
+        winds = [w if isinstance(w, (int, float)) else 0 for w in [_get(h, "wind.speed") for h in day_hours]]  # m/s from API
         clouds = [c if isinstance(c, (int, float)) else 0 for c in [_get(h, "cloud_cover.total") for h in day_hours]]
         humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
         pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
         
         temp_str = f"{int(min(temps))}°/{int(max(temps))}°C" if temps else "N/A"
         precip_str = f"{sum(precips):.1f}mm" if precips else "0mm"
-        wind_str = f"{int(mean(winds) if winds else 0)} km/h"
+        wind_str = f"{int(mean(winds) * 3.6 if winds else 0)} km/h"  # Convert m/s to km/h
         cloud_str = f"{int(mean(clouds) if clouds else 0)}%"
         humid_str = f"{int(mean(humidity) if humidity else 0)}%"
         press_str = f"{int(mean(pressure) if pressure else 0)} hPa"
@@ -412,6 +419,15 @@ def main():
         fog_peak = max(x[2]["_fogp"] for x in per_hour)
         sqm_med  = round(mean(x[2]["_sqm"] for x in per_hour), 2)
         airmass_med = round(mean(x[2]["_airmass"] for x in per_hour), 2)
+        
+        # Calculate actual metric averages (not scores)
+        cloud_pct_vals = [x[2]["_cloud_pct"] for x in per_hour if x[2].get("_cloud_pct") is not None]
+        precip_mm_vals = [x[2]["_precip_mm"] for x in per_hour if x[2].get("_precip_mm") is not None]
+        dewspread_vals = [x[2]["_dewspread_c"] for x in per_hour if x[2].get("_dewspread_c") is not None]
+        
+        cloud_pct_avg = round(mean(cloud_pct_vals)) if cloud_pct_vals else None
+        precip_mm_avg = round(sum(precip_mm_vals), 1) if precip_mm_vals else None
+        dewspread_avg = round(mean(dewspread_vals), 1) if dewspread_vals else None
 
         nights_out.append({
             "label": w.label,
@@ -424,9 +440,9 @@ def main():
             "worst": worst3,
             "best2h": best2h,
             "notes": f"{worst3} • fog≤{fog_peak}%, SQM≈{sqm_med}, airmass≈{airmass_med}",
-            "dewspread": round(comp_avg["dewspread"]),
-            "clouds": round(comp_avg["clouds"]),
-            "precip": round(comp_avg["precip"]),
+            "dewspread": f"{dewspread_avg}°C" if dewspread_avg is not None else "—",
+            "clouds": f"{cloud_pct_avg}%" if cloud_pct_avg is not None else "—",
+            "precip": f"{precip_mm_avg}mm" if precip_mm_avg is not None else "—",
             "fog": fog_peak,
             "sqm": sqm_med,
             "airmass": airmass_med,
