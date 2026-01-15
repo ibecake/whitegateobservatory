@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
       .top-menu {
         background: #1a1a1a;
@@ -34,6 +36,37 @@
         font-weight: 700;
         color: #4a9eff;
       }
+      .content-wrapper {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 2rem;
+      }
+      .map-container {
+        margin: 2rem 0;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+      }
+      .map-header {
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+      }
+      .map-header h2 {
+        margin: 0 0 0.5rem 0;
+        color: #1a1a1a;
+        font-size: 1.5rem;
+      }
+      .map-header p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.95rem;
+      }
+      #map {
+        height: 600px;
+        width: 100%;
+      }
     </style>
   </head>
   <body>
@@ -46,5 +79,38 @@
         <a href="astro-photography.html">Astro Photography</a>
       </nav>
     </div>
+
+    <div class="content-wrapper">
+      <div class="map-container">
+        <div class="map-header">
+          <h2>Observatory Location</h2>
+          <p>Whitegate, East Cork and Cork Harbour</p>
+        </div>
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <script>
+      // Initialize the map centered on Whitegate, East Cork
+      const map = L.map('map').setView([51.8478, -8.3156], 12);
+
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Add a marker for Whitegate Observatory
+      const marker = L.marker([51.8478, -8.3156]).addTo(map);
+      marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland').openPopup();
+
+      // Optional: Add a circle to highlight the area
+      const circle = L.circle([51.8478, -8.3156], {
+        color: '#4a9eff',
+        fillColor: '#4a9eff',
+        fillOpacity: 0.2,
+        radius: 1000
+      }).addTo(map);
+    </script>
   </body>
 </html>
