@@ -527,8 +527,44 @@ def main():
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+      .top-menu {{
+        background: #1a1a1a;
+        padding: 0.85rem 2rem;
+        border-bottom: 2px solid #333;
+      }}
+      .top-menu nav {{
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+      }}
+      .top-menu a {{
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background 0.2s;
+      }}
+      .top-menu a:hover {{
+        background: #333;
+      }}
+      .top-menu .logo {{
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #4a9eff;
+      }}
+    </style>
 </head>
 <body>
+<div class="top-menu">
+  <nav>
+    <span class="logo">Whitegate Observatory</span>
+    <a href="combined.html">Conditions</a>
+  </nav>
+</div>
 <div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
 {astro_content}
 {weather_content}
