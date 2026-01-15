@@ -563,6 +563,9 @@ def main():
   <nav>
     <a href="index.html" class="logo">Whitegate Observatory</a>
     <a href="combined.html">Conditions</a>
+    <a href="radio.html">Radio</a>
+    <a href="radio-astronomy.html">Radio Astronomy</a>
+    <a href="astro-photography.html">Astro Photography</a>
   </nav>
 </div>
 <div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
