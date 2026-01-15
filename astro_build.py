@@ -561,7 +561,7 @@ def main():
 <body>
 <div class="top-menu">
   <nav>
-    <span class="logo">Whitegate Observatory</span>
+    <a href="index.html" class="logo">Whitegate Observatory</a>
     <a href="combined.html">Conditions</a>
   </nav>
 </div>
