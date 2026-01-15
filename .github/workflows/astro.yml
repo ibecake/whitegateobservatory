@@ -56,6 +56,9 @@ jobs:
           
           # Copy site shell pages (now only index.html - all forecasts consolidated)
           cp index.html dist/index.html
+          cp radio.html dist/radio.html
+          cp radio-astronomy.html dist/radio-astronomy.html
+          cp astro-photography.html dist/astro-photography.html
           cp -R assets dist/assets
           
           # Debug: List what was created
