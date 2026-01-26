@@ -566,6 +566,7 @@ def main():
     <a href="radio.html">Radio</a>
     <a href="radio-astronomy.html">Radio Astronomy</a>
     <a href="astro-photography.html">Astro Photography</a>
+    <a href="tinygs.html">TinyGS</a>
   </nav>
 </div>
 <div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
