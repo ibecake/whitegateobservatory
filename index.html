@@ -148,8 +148,8 @@
             let catchList = '';
             if (spot.catches && spot.catches.length > 0) {
               catchList = '<ul>';
-              spot.catches.forEach(c => {
-                catchList += `<li><strong>${c.species}</strong>: ${c.count} caught (last: ${c.lastCaught})</li>`;
+              spot.catches.forEach(species => {
+                catchList += `<li>${species}</li>`;
               });
               catchList += '</ul>';
             } else {
