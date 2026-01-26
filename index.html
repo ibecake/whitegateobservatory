@@ -176,13 +176,13 @@
             
             // Get today's tide info if available
             let tideInfo = '';
-            if (tideData && tideData.days && tideData.days.length > 0) {
-              const today = tideData.days[0];
+            if (tideData && tideData.windows && tideData.windows.length > 0) {
+              const today = tideData.windows[0];
               if (today.high_tide || today.low_tide) {
                 tideInfo = '<div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #ddd;">';
                 tideInfo += '<strong>Today\'s Tides:</strong><br>';
-                if (today.high_tide) tideInfo += `High: ${today.high_tide}<br>`;
-                if (today.low_tide) tideInfo += `Low: ${today.low_tide}`;
+                if (today.high_tide && today.high_tide !== '—') tideInfo += `High: ${today.high_tide}<br>`;
+                if (today.low_tide && today.low_tide !== '—') tideInfo += `Low: ${today.low_tide}`;
                 tideInfo += '</div>';
               }
             }
