@@ -4,13 +4,15 @@
       "lat": 51.825256,
       "lon": -8.240009,
       "name": "Whitegate Pier",
-      "catches": ["Bass", "Mackerel"]
+      "catches": ["Bass", "Mackerel"],
+      "seasons": "Spring, Summer, Autumn"
     },
     {
       "lat": 51.830,
       "lon": -8.235,
       "name": "East Shore Mark",
-      "catches": ["Pollack"]
+      "catches": ["Pollack"],
+      "seasons": "Year-round"
     }
   ]
 }

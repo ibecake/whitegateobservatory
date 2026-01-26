@@ -139,6 +139,15 @@
         popupAnchor: [0, -15]
       });
 
+      // Fetch tide data
+      let tideData = null;
+      fetch('fishing/fishing.json')
+        .then(response => response.json())
+        .then(data => {
+          tideData = data;
+        })
+        .catch(error => console.log('Tide data not available'));
+
       // Fetch and display fishing spots
       fetch('assets/data/fishing-spots.json')
         .then(response => response.json())
@@ -156,10 +165,27 @@
               catchList = '<p><em>No catches recorded yet</em></p>';
             }
             
+            // Get today's tide info if available
+            let tideInfo = '';
+            if (tideData && tideData.days && tideData.days.length > 0) {
+              const today = tideData.days[0];
+              if (today.high_tide || today.low_tide) {
+                tideInfo = '<div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #ddd;">';
+                tideInfo += '<strong>Today\'s Tides:</strong><br>';
+                if (today.high_tide) tideInfo += `High: ${today.high_tide}<br>`;
+                if (today.low_tide) tideInfo += `Low: ${today.low_tide}`;
+                tideInfo += '</div>';
+              }
+            }
+
+            const seasonsInfo = spot.seasons ? `<div style="margin-top: 0.5rem;"><strong>Best Seasons:</strong> ${spot.seasons}</div>` : '';
+            
             const popupContent = `
               <div class="fishing-popup">
                 <h3>🎣 ${spot.name}</h3>
                 ${catchList}
+                ${seasonsInfo}
+                ${tideInfo}
               </div>
             `;
 
