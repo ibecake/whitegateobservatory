@@ -142,11 +142,20 @@
       // Fetch tide data
       let tideData = null;
       fetch('fishing/fishing.json')
-        .then(response => response.json())
-        .then(data => {
-          tideData = data;
+        .then(response => {
+          if (!response.ok) {
+            console.log('Tide data not available (HTTP ' + response.status + ')');
+            return null;
+          }
+          return response.json();
         })
-        .catch(error => console.log('Tide data not available'));
+        .then(data => {
+          if (data) {
+            tideData = data;
+            console.log('Tide data loaded:', tideData);
+          }
+        })
+        .catch(error => console.log('Tide data fetch error:', error));
 
       // Fetch and display fishing spots
       fetch('assets/data/fishing-spots.json')
