@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>TinyGS - Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
+    <meta http-equiv="refresh" content="0; url=https://tinygs.com/station/WHITEGATE_OBS@rMqFX9YkwH8b-brg">
     <style>
       .top-menu {
         background: #1a1a1a;
@@ -34,20 +35,36 @@
         font-weight: 700;
         color: #4a9eff;
       }
-      .iframe-container {
-        width: 100%;
-        height: calc(100vh - 80px);
-        margin: 0;
-        padding: 0;
+      .content-wrapper {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 2rem;
       }
-      .iframe-container iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
+      .redirect-message {
+        text-align: center;
+        padding: 4rem 2rem;
       }
-      body {
-        margin: 0;
-        padding: 0;
+      .redirect-message h1 {
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+      }
+      .redirect-message p {
+        color: #6c757d;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+      }
+      .redirect-message a {
+        display: inline-block;
+        background: #4a9eff;
+        color: white;
+        padding: 1rem 2rem;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
+      .redirect-message a:hover {
+        background: #3580d0;
       }
     </style>
   </head>
@@ -62,8 +79,13 @@
         <a href="tinygs.html">TinyGS</a>
       </nav>
     </div>
-    <div class="iframe-container">
-      <iframe src="https://tinygs.com/station/WHITEGATE_OBS%40rMqFX9YkwH8b-brg" title="TinyGS Station"></iframe>
+    <div class="content-wrapper">
+      <div class="redirect-message">
+        <h1>Redirecting to TinyGS Station...</h1>
+        <p>You are being redirected to the Whitegate Observatory TinyGS station page.</p>
+        <p>If you are not redirected automatically, click the button below:</p>
+        <a href="https://tinygs.com/station/WHITEGATE_OBS@rMqFX9YkwH8b-brg" target="_blank">View TinyGS Station</a>
+      </div>
     </div>
   </body>
 </html>
