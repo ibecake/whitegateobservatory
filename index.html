@@ -67,6 +67,20 @@
         height: 600px;
         width: 100%;
       }
+      .fishing-popup h3 {
+        margin: 0 0 0.5rem 0;
+        color: #1a1a1a;
+      }
+      .fishing-popup ul {
+        margin: 0.5rem 0 0 0;
+        padding-left: 1.2rem;
+      }
+      .fishing-popup li {
+        margin: 0.3rem 0;
+      }
+      .leaflet-control-layers {
+        font-family: inherit;
+      }
     </style>
   </head>
   <body>
@@ -96,7 +110,7 @@
       const map = L.map('map').setView([51.863212, -8.120911], 11);
 
       // Add OpenStreetMap tiles
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19
       }).addTo(map);
@@ -105,13 +119,64 @@
       const marker = L.marker([51.825256, -8.240009]).addTo(map);
       marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
 
-      // Optional: Add a circle to highlight the area
+      // Add a circle to highlight the observatory area
       const circle = L.circle([51.825256, -8.240009], {
         color: '#4a9eff',
         fillColor: '#4a9eff',
         fillOpacity: 0.2,
         radius: 100
       }).addTo(map);
+
+      // Create fishing spots layer
+      const fishingLayer = L.layerGroup();
+
+      // Create custom fishing icon (using emoji in divIcon)
+      const fishingIcon = L.divIcon({
+        html: '🎣',
+        className: 'fishing-marker',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        popupAnchor: [0, -15]
+      });
+
+      // Fetch and display fishing spots
+      fetch('assets/data/fishing-spots.json')
+        .then(response => response.json())
+        .then(data => {
+          data.spots.forEach(spot => {
+            // Create popup content
+            let catchList = '';
+            if (spot.catches && spot.catches.length > 0) {
+              catchList = '<ul>';
+              spot.catches.forEach(c => {
+                catchList += `<li><strong>${c.species}</strong>: ${c.count} caught (last: ${c.lastCaught})</li>`;
+              });
+              catchList += '</ul>';
+            } else {
+              catchList = '<p><em>No catches recorded yet</em></p>';
+            }
+            
+            const popupContent = `
+              <div class="fishing-popup">
+                <h3>🎣 ${spot.name}</h3>
+                ${catchList}
+              </div>
+            `;
+
+            // Add marker to fishing layer
+            const fishMarker = L.marker([spot.lat, spot.lon], { icon: fishingIcon })
+              .bindPopup(popupContent);
+            fishingLayer.addLayer(fishMarker);
+          });
+        })
+        .catch(error => console.error('Error loading fishing spots:', error));
+
+      // Add layer control
+      const overlays = {
+        "🎣 Fishing Spots": fishingLayer
+      };
+
+      L.control.layers(null, overlays, { collapsed: false }).addTo(map);
     </script>
   </body>
 </html>

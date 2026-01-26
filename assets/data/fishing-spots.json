@@ -1,0 +1,21 @@
+{
+  "spots": [
+    {
+      "lat": 51.825256,
+      "lon": -8.240009,
+      "name": "Whitegate Pier",
+      "catches": [
+        {"species": "Bass", "count": 3, "lastCaught": "2026-01-15"},
+        {"species": "Mackerel", "count": 12, "lastCaught": "2026-01-20"}
+      ]
+    },
+    {
+      "lat": 51.830,
+      "lon": -8.235,
+      "name": "East Shore Mark",
+      "catches": [
+        {"species": "Pollack", "count": 5, "lastCaught": "2026-01-18"}
+      ]
+    }
+  ]
+}
