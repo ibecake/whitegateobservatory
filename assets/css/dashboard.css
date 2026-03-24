@@ -173,6 +173,19 @@ td.num, th.num {
   font-size: 11px;
 }
 
+/* Screen-reader-only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (max-width: 900px) {
   .card table thead th:nth-child(6),
   .card table tbody td:nth-child(6) {
