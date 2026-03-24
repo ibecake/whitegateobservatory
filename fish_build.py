@@ -201,6 +201,48 @@ WEIGHTS = dict(
     wave=0.18, seatemp=0.05, tide=0.30
 )
 
+# Shared datetime format used by the tide chart builder
+_TIDE_DT_FMT = "%a %d %b %H:%M"
+
+# ── Tide chart data builder ───────────────────────────────────────────────────
+def _build_tide_chart_data(heights: List[Dict], extremes: List[Dict]) -> dict:
+    """Build Chart.js-compatible data from hourly tide heights and extremes.
+
+    Returns a dict with:
+      labels     – ISO-format datetime strings (one per hourly sample)
+      heights    – matching tide-height values (metres)
+      high_data  – sparse array with height values only at High-tide extremes
+      low_data   – sparse array with height values only at Low-tide extremes
+    """
+    labels = [h["dt"].strftime(_TIDE_DT_FMT) for h in heights]
+    height_values = [round(h["height"], 2) for h in heights]
+
+    high_data: List[Optional[float]] = [None] * len(labels)
+    low_data:  List[Optional[float]] = [None] * len(labels)
+
+    label_to_idx = {lbl: i for i, lbl in enumerate(labels)}
+    for ex in extremes:
+        lbl = ex["dt"].strftime(_TIDE_DT_FMT)
+        idx = label_to_idx.get(lbl)
+        if idx is None and heights:
+            # fall back to the nearest hourly sample
+            idx = min(
+                range(len(heights)),
+                key=lambda i: abs((heights[i]["dt"] - ex["dt"]).total_seconds()),
+            )
+        if idx is not None:
+            if ex["type"] == "High":
+                high_data[idx] = round(ex["height"], 2)
+            elif ex["type"] == "Low":
+                low_data[idx] = round(ex["height"], 2)
+
+    return {
+        "labels":    labels,
+        "heights":   height_values,
+        "high_data": high_data,
+        "low_data":  low_data,
+    }
+
 # ── WorldTides fetch ──────────────────────────────────────────────────────────
 def wt_request(params: dict) -> Optional[dict]:
     url = "https://www.worldtides.info/api"
@@ -378,16 +420,137 @@ def build_payload():
                 gust = gust_speed
             ))
 
+    tide_chart = (
+        _build_tide_chart_data(heights, extremes) if heights
+        else {"labels": [], "heights": [], "high_data": [], "low_data": []}
+    )
+
     return {
         "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
-        "windows": windows
+        "windows": windows,
+        "tide_chart": tide_chart,
     }
+
+# ── Tide graph HTML builder ───────────────────────────────────────────────────
+def _render_tide_graph(tide_chart: dict) -> str:
+    """Return an HTML card containing a Chart.js tide-height graph.
+
+    The graph shows:
+      • A filled area-line for hourly tide heights.
+      • Orange scatter points for High-tide extremes.
+      • Sky-blue scatter points for Low-tide extremes.
+    Chart.js is loaded from a CDN so no additional Python package is required.
+    """
+    chart_json = json.dumps(tide_chart)
+    return f"""<div class="card" style="margin-top:16px">
+  <div class="h">Cork Harbour — Tide Heights</div>
+  <div class="sub">Hourly tide heights (metres).
+    <span aria-hidden="true">●</span><span class="sr-only">Orange dot:</span> High tide
+    &nbsp;<span aria-hidden="true">●</span><span class="sr-only">Blue dot:</span> Low tide
+  </div>
+  <div style="position:relative;width:100%;height:260px">
+    <canvas id="tideChart"
+      aria-label="Tide height chart for Cork Harbour showing hourly heights in metres with high and low tide markers"
+      role="img"></canvas>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function(){{
+  var raw = {chart_json};
+  if (!raw.labels || !raw.labels.length) return;
+
+  // Show a tick label every 24 hours (one per day)
+  var tickLabels = raw.labels.map(function(lbl, i) {{
+    return (i % 24 === 0) ? lbl.slice(0, 9) : "";
+  }});
+
+  new Chart(document.getElementById("tideChart"), {{
+    type: "line",
+    data: {{
+      labels: raw.labels,
+      datasets: [
+        {{
+          label: "Tide height (m)",
+          data: raw.heights,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59,130,246,0.12)",
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          order: 3
+        }},
+        {{
+          label: "High tide",
+          data: raw.high_data,
+          type: "scatter",
+          backgroundColor: "#f97316",
+          borderColor: "#f97316",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          showLine: false,
+          spanGaps: false,
+          order: 1
+        }},
+        {{
+          label: "Low tide",
+          data: raw.low_data,
+          type: "scatter",
+          backgroundColor: "#0ea5e9",
+          borderColor: "#0ea5e9",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          showLine: false,
+          spanGaps: false,
+          order: 2
+        }}
+      ]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {{ mode: "index", intersect: false }},
+      plugins: {{
+        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+        tooltip: {{
+          callbacks: {{
+            title: function(items) {{ return items[0].label; }},
+            label: function(item) {{
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              return item.dataset.label + ": " + v.toFixed(2) + " m";
+            }}
+          }}
+        }}
+      }},
+      scales: {{
+        x: {{
+          ticks: {{
+            callback: function(val, idx) {{ return tickLabels[idx]; }},
+            maxRotation: 0,
+            autoSkip: false,
+            font: {{ size: 11 }}
+          }},
+          grid: {{ color: "rgba(0,0,0,0.05)" }}
+        }},
+        y: {{
+          title: {{ display: true, text: "Height (m)", font: {{ size: 11 }} }},
+          ticks: {{ font: {{ size: 11 }} }},
+          grid: {{ color: "rgba(0,0,0,0.05)" }}
+        }}
+      }}
+    }}
+  }});
+}})();
+</script>"""
 
 # ── Render HTML card ──────────────────────────────────────────────────────────
 def render_card(payload: dict) -> str:
     js  = shared_card_js("fishing-card-size")
     updated = payload["generated_at_local"]
     wins = payload["windows"]
+    tide_chart = payload.get("tide_chart", {"labels": [], "heights": [], "high_data": [], "low_data": []})
 
     html = '''<!DOCTYPE html>
 <html lang="en">
@@ -442,7 +605,9 @@ def render_card(payload: dict) -> str:
         '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th class="num">High Tide</th><th class="num">Low Tide</th><th class="num">Wind (m/s)</th><th class="num">Gust (m/s)</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
         '<div class="credit">Check Irish regs before fishing.</div>'
-        '</div></div>' + js + '</body></html>'
+        '</div>'
+        + _render_tide_graph(tide_chart)
+        + '</div>' + js + '</body></html>'
     )
     return html
 
