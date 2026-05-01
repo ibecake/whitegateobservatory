@@ -553,7 +553,7 @@ def main():
     <button class="wx-btn"           data-var="wave_height"   data-label="Wave Height">🌊 Wave Height</button>
     <button class="wx-btn"           data-var="wave_period"   data-label="Wave Period">🌊 Wave Period</button>
     <button class="wx-btn"           data-var="humidity"      data-label="Humidity">💧 Humidity</button>
-    <button class="wx-btn"           data-var="temperature"   data-label="Temperature">🌡 Temp</button>
+    <button class="wx-btn"           data-var="temperature"   data-label="Temperature">🌡 Temperature</button>
     <button class="wx-btn"           data-var="sea_temperature" data-label="Sea Temp">🌡 Sea Temp</button>
     <button class="wx-btn"           data-var="precipitation" data-label="Precipitation">🌧 Precip</button>
     <button class="wx-btn"           data-var="clouds"        data-label="Cloud Cover">☁️ Clouds</button>
