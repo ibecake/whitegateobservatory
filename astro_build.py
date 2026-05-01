@@ -309,10 +309,10 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
         pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
 
-        # Wave/swell height — try common Meteosource field names, fall back to N/A
+        # Wave/swell height — Flexi tier exposes flat attributes wave_height / swell_height
         wave_heights = [
             v for v in [
-                _get(h, "wave_height") or _get(h, "swell.height") or _get(h, "waves.height")
+                _get(h, "wave_height") or _get(h, "swell_height")
                 for h in day_hours
             ]
             if isinstance(v, (int, float))
@@ -564,7 +564,7 @@ def main():
   <!-- Time slider -->
   <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
     <span style="font-size:0.85rem;color:#374151;white-space:nowrap;font-weight:600;">Forecast time:</span>
-    <input id="wx-time-slider" type="range" min="0" max="48" step="3" value="0"
+    <input id="wx-time-slider" type="range" min="0" max="48" step="1" value="0"
            style="flex:1;accent-color:#0d6efd;cursor:pointer;" />
     <span id="wx-time-label" style="font-size:0.85rem;color:#374151;white-space:nowrap;min-width:60px;text-align:right;">Now</span>
     <div style="display:flex;gap:4px;">
