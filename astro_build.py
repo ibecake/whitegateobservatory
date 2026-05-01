@@ -552,8 +552,8 @@ def main():
     <button class="wx-btn"           data-var="wind_gust"     data-label="Wind Gusts">💨 Wind Gusts</button>
     <button class="wx-btn"           data-var="wave_height"   data-label="Wave Height">🌊 Wave Height</button>
     <button class="wx-btn"           data-var="wave_period"   data-label="Wave Period">🌊 Wave Period</button>
-    <button class="wx-btn"           data-var="swell_height"  data-label="Swell Height">🌊 Swell Height</button>
-    <button class="wx-btn"           data-var="swell_period"  data-label="Swell Period">🌊 Swell Period</button>
+    <button class="wx-btn"           data-var="humidity"      data-label="Humidity">💧 Humidity</button>
+    <button class="wx-btn"           data-var="temperature"   data-label="Temperature">🌡 Temperature</button>
     <button class="wx-btn"           data-var="sea_temperature" data-label="Sea Temp">🌡 Sea Temp</button>
     <button class="wx-btn"           data-var="precipitation" data-label="Precipitation">🌧 Precip</button>
     <button class="wx-btn"           data-var="clouds"        data-label="Cloud Cover">☁️ Clouds</button>
@@ -635,13 +635,13 @@ def main():
       {{c:"#ffffcc",v:"0"}},{{c:"#a1dab4",v:"5"}},{{c:"#41b6c4",v:"10"}},
       {{c:"#2c7fb8",v:"15"}},{{c:"#253494",v:"20+"}},
     ]}},
-    swell_height:    {{ label:"Swell Height",  unit:"m",    legend:[
-      {{c:"#f7fbff",v:"0"}},{{c:"#9ecae1",v:"0.5"}},{{c:"#3182bd",v:"1"}},
-      {{c:"#08519c",v:"2"}},{{c:"#002171",v:"3+"}},
+    humidity:        {{ label:"Humidity",      unit:"%",    legend:[
+      {{c:"#f7fbff",v:"0"}},{{c:"#c6dbef",v:"20"}},{{c:"#6baed6",v:"40"}},
+      {{c:"#2171b5",v:"60"}},{{c:"#08306b",v:"80+"}},
     ]}},
-    swell_period:    {{ label:"Swell Period",  unit:"s",    legend:[
-      {{c:"#fff7ec",v:"0"}},{{c:"#fdd49e",v:"5"}},{{c:"#fc8d59",v:"10"}},
-      {{c:"#d7301f",v:"15"}},{{c:"#7f0000",v:"20+"}},
+    temperature:     {{ label:"Temperature",   unit:"°C",   legend:[
+      {{c:"#0000ff",v:"-10"}},{{c:"#00aaff",v:"0"}},{{c:"#00ff88",v:"10"}},
+      {{c:"#ffff00",v:"20"}},{{c:"#ff0000",v:"30+"}},
     ]}},
     sea_temperature: {{ label:"Sea Temp",      unit:"°C",   legend:[
       {{c:"#0000ff",v:"5"}},{{c:"#00aaff",v:"10"}},{{c:"#00ff88",v:"15"}},
@@ -714,7 +714,7 @@ def main():
       tileSize: 256,
       opacity: 0.65,
       attribution: '&copy; Meteosource',
-      crossOrigin: true,
+      maxNativeZoom: 14,
     }});
     wxLayer.addTo(map);
     document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label;
