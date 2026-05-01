@@ -560,12 +560,12 @@ def main():
     .then(function(r) { return r.json(); })
     .then(function(data) {
       (data.spots || []).forEach(function(spot) {
-        var catches = (spot.catches || []).join(', ') || '\u2014';
-        var seasons = spot.seasons || '\u2014';
+        var catches = (spot.catches || []).join(', ') || '—';
+        var seasons = spot.seasons || '—';
         var type    = spot.type    || '';
         var notes   = spot.notes   || '';
         var popup =
-          '<b>\uD83C\uDFA3 ' + spot.name + '</b>' +
+          '<b>🎣 ' + spot.name + '</b>' +
           (type    ? '<br><span style="color:#555">Type: </span>'    + type    : '') +
           '<br><span style="color:#555">Fish: </span>'   + catches +
           '<br><span style="color:#555">Best: </span>'   + seasons +
