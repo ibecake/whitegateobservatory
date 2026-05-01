@@ -974,9 +974,9 @@ def main():
       maxNativeZoom: 14,
     }});
     // Detect when wave/swell tiles fail to load (404 / no data for this tier).
-    // tileTotal is tracked live (incremented on both tileload and tileerror) so
-    // that the in-flight tileerror check is meaningful and the notice can appear
-    // as soon as more than half the tiles in a batch have errored.
+    // tileTotal is computed on-demand as loadCount + errorCount so the in-flight
+    // tileerror check is meaningful and the notice can appear as soon as more than
+    // half the tiles in a batch have errored.
     var isWaveLayer = LAYERS[activeVar] && LAYERS[activeVar].wave;
     if (isWaveLayer) {{
       var errorCount = 0; var loadCount = 0;
