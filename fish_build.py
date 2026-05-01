@@ -8,6 +8,7 @@ from typing import Optional, List, Tuple, Dict
 from datetime import datetime, timedelta, timezone
 from statistics import mean
 from math import sin, radians, copysign
+from zoneinfo import ZoneInfo
 
 import requests
 import ephem
@@ -19,6 +20,7 @@ MS_API_KEY  = os.environ.get("METEOSOURCE_API_KEY", "PASTE-METEOSOURCE-KEY")
 MS_TIER     = tiers.FLEXI
 LAT, LON    = 51.8268, -8.2321    # Whitegate
 TZ          = "Europe/Dublin"
+_DUBLIN_TZ  = ZoneInfo(TZ)
 
 WT_KEY      = os.environ.get("WORLD_TIDES_KEY")  # required for tides
 WT_DAYS     = 7
@@ -122,20 +124,23 @@ def score_sea_temp(tC: Optional[float], month:int):
 
 # NEW: tide helpers
 def get_tide_times_for_day(day_date, extremes: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
-    """Find high and low tide times for a given day"""
-    high_time = None
-    low_time = None
-    
+    """Find all high and low tide times for a given day (in local time)."""
+    high_times = []
+    low_times = []
+
     for ex in extremes:
-        ex_date = ex['dt'].date()
+        ex_date = ex['dt'].astimezone(_DUBLIN_TZ).date()
         if ex_date == day_date:
-            time_str = ex['dt'].strftime("%H:%M")
+            time_str = ex['dt'].astimezone(_DUBLIN_TZ).strftime("%H:%M")
             if ex['type'] == 'High':
-                high_time = time_str
+                high_times.append(time_str)
             elif ex['type'] == 'Low':
-                low_time = time_str
-    
-    return high_time, low_time
+                low_times.append(time_str)
+
+    return (
+        " / ".join(high_times) if high_times else None,
+        " / ".join(low_times) if low_times else None,
+    )
 
 def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) -> Tuple[float,str]:
     """heights: [{'dt':datetime,'height':float}] step=1h
@@ -214,7 +219,7 @@ def _build_tide_chart_data(heights: List[Dict], extremes: List[Dict]) -> dict:
       high_data  – sparse array with height values only at High-tide extremes
       low_data   – sparse array with height values only at Low-tide extremes
     """
-    labels = [h["dt"].strftime(_TIDE_DT_FMT) for h in heights]
+    labels = [h["dt"].astimezone(_DUBLIN_TZ).strftime(_TIDE_DT_FMT) for h in heights]
     height_values = [round(h["height"], 2) for h in heights]
 
     high_data: List[Optional[float]] = [None] * len(labels)
@@ -222,7 +227,7 @@ def _build_tide_chart_data(heights: List[Dict], extremes: List[Dict]) -> dict:
 
     label_to_idx = {lbl: i for i, lbl in enumerate(labels)}
     for ex in extremes:
-        lbl = ex["dt"].strftime(_TIDE_DT_FMT)
+        lbl = ex["dt"].astimezone(_DUBLIN_TZ).strftime(_TIDE_DT_FMT)
         idx = label_to_idx.get(lbl)
         if idx is None and heights:
             # fall back to the nearest hourly sample
