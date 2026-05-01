@@ -528,7 +528,12 @@ def main():
     map_section = '''<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
   <div style="padding:1.5rem;background:#f8f9fa;border-bottom:1px solid #dee2e6;">
     <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Fishing Locations</h2>
-    <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour</p>
+    <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour &mdash; click a marker for details</p>
+    <p style="margin:0.5rem 0 0;font-size:0.85rem;color:#6c757d;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#4a9eff;border:2px solid #1d6fbd;vertical-align:middle;margin-right:4px;"></span>Observatory
+      &nbsp;
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid #16a34a;vertical-align:middle;margin-right:4px;"></span>Fishing spot
+    </p>
   </div>
   <div id="obs-map" style="height:420px;width:100%;"></div>
 </div>
@@ -540,11 +545,43 @@ def main():
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '\xa9 OpenStreetMap contributors', maxZoom: 19
   }).addTo(map);
-  var marker = L.marker([51.825256, -8.240009]).addTo(map);
-  marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
+
+  // Observatory marker
+  var obsMarker = L.marker([51.825256, -8.240009]).addTo(map);
+  obsMarker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
   L.circle([51.825256, -8.240009], {
     color: '#4a9eff', fillColor: '#4a9eff', fillOpacity: 0.2, radius: 100
   }).addTo(map);
+
+  // Fishing spots overlay — loaded from external JSON so spots can be updated
+  // without modifying any Python build script.  Edit assets/data/fishing-spots.json
+  // to add, remove or update spots.
+  fetch('assets/data/fishing-spots.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      (data.spots || []).forEach(function(spot) {
+        var catches = (spot.catches || []).join(', ') || '—';
+        var seasons = spot.seasons || '—';
+        var type    = spot.type    || '';
+        var notes   = spot.notes   || '';
+        var popup =
+          '<b>🎣 ' + spot.name + '</b>' +
+          (type    ? '<br><span style="color:#555">Type: </span>'    + type    : '') +
+          '<br><span style="color:#555">Fish: </span>'   + catches +
+          '<br><span style="color:#555">Best: </span>'   + seasons +
+          (notes   ? '<br><span style="color:#555">Notes: </span>'   + notes   : '');
+        L.circleMarker([spot.lat, spot.lon], {
+          radius: 8,
+          color: '#16a34a',
+          fillColor: '#22c55e',
+          fillOpacity: 0.85,
+          weight: 2
+        }).addTo(map).bindPopup(popup);
+      });
+    })
+    .catch(function(e) {
+      console.warn('Could not load fishing spots overlay:', e);
+    });
 })();
 </script>'''
 

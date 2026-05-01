@@ -1,18 +1,59 @@
 {
+  "_comment": "Edit this file to add, remove or update fishing spots. Each spot appears as a green marker on the marine page map.",
   "spots": [
     {
       "lat": 51.825256,
       "lon": -8.240009,
       "name": "Whitegate Pier",
-      "catches": ["Bass", "Mackerel"],
-      "seasons": "Spring, Summer, Autumn"
+      "type": "Pier",
+      "catches": ["Bass", "Mackerel", "Flounder", "Mullet"],
+      "seasons": "Spring, Summer, Autumn",
+      "notes": "Good at dusk on a flooding tide"
     },
     {
       "lat": 51.830,
       "lon": -8.235,
       "name": "East Shore Mark",
-      "catches": ["Pollack"],
-      "seasons": "Year-round"
+      "type": "Shore (rocks)",
+      "catches": ["Pollack", "Wrasse", "Coalfish"],
+      "seasons": "Year-round",
+      "notes": "Best 2 hours either side of high water"
+    },
+    {
+      "lat": 51.845,
+      "lon": -8.195,
+      "name": "Cuskinny Rock",
+      "type": "Shore (rocks)",
+      "catches": ["Bass", "Pollack", "Wrasse"],
+      "seasons": "Spring, Summer, Autumn",
+      "notes": "Sheltered from westerly wind; spinning and lure work well"
+    },
+    {
+      "lat": 51.808,
+      "lon": -8.262,
+      "name": "Roches Point Rocks",
+      "type": "Shore (rocks)",
+      "catches": ["Pollack", "Bass", "Mackerel", "Garfish"],
+      "seasons": "Spring, Summer, Autumn",
+      "notes": "Exposed mark — check conditions before going; excellent in calm weather"
+    },
+    {
+      "lat": 51.855,
+      "lon": -8.290,
+      "name": "Ringaskiddy Pier",
+      "type": "Pier",
+      "catches": ["Flounder", "Dab", "Codling", "Whiting"],
+      "seasons": "Autumn, Winter",
+      "notes": "Night fishing for codling and whiting from October onwards"
+    },
+    {
+      "lat": 51.862,
+      "lon": -8.142,
+      "name": "Cobh Promenade",
+      "type": "Pier / promenade",
+      "catches": ["Flounder", "Dab", "Mullet", "Bass"],
+      "seasons": "Spring, Summer, Autumn",
+      "notes": "Flounder on the bottom; mullet with bread on top"
     }
   ]
 }
