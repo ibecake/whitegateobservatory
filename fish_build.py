@@ -26,7 +26,7 @@ WT_KEY      = os.environ.get("WORLD_TIDES_KEY")  # required for tides
 WT_DAYS     = 7
 WT_STEP_S   = 3600  # 1h height resolution keeps credit usage low
 
-# Optional marine overrides until you wire a marine API (waves/sea temp)
+# Optional marine env-var overrides (take priority over API data for testing)
 OVERRIDE_WAVE_H = os.environ.get("WAVE_H")   # metres
 OVERRIDE_WAVE_T = os.environ.get("WAVE_T")   # seconds
 OVERRIDE_SEA_T  = os.environ.get("SEA_TEMP") # °C
@@ -348,10 +348,14 @@ def build_payload():
         prev = by_time.get(dt_local - timedelta(hours=3))
         pres_prev = getattr(prev, "pressure", None) if prev else None
 
-        # marine overrides
-        wave_h = float(OVERRIDE_WAVE_H) if OVERRIDE_WAVE_H else None
-        wave_t = float(OVERRIDE_WAVE_T) if OVERRIDE_WAVE_T else None
-        sst    = float(OVERRIDE_SEA_T)  if OVERRIDE_SEA_T  else None
+        # marine data: read from API, with optional env-var overrides for testing
+        wave_h = float(OVERRIDE_WAVE_H) if OVERRIDE_WAVE_H else (
+            getattr(h, "wave_height", None) or getattr(h, "swell_height", None)
+        )
+        wave_t = float(OVERRIDE_WAVE_T) if OVERRIDE_WAVE_T else (
+            getattr(h, "wave_period", None) or getattr(h, "swell_period", None)
+        )
+        sst    = float(OVERRIDE_SEA_T)  if OVERRIDE_SEA_T  else getattr(h, "sea_temperature", None)
 
         # component scores
         s_w,   n_w   = score_wind(ws, gust)
