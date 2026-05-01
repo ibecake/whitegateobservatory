@@ -538,7 +538,7 @@ def main():
 (function() {
   var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '\\u00a9 OpenStreetMap contributors', maxZoom: 19
+    attribution: '\xa9 OpenStreetMap contributors', maxZoom: 19
   }).addTo(map);
   var marker = L.marker([51.825256, -8.240009]).addTo(map);
   marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
@@ -599,7 +599,7 @@ def main():
     <a href="tinygs.html">TinyGS</a>
   </nav>
 </div>
-<div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data \u00a9 Meteosource \u2022 Tides \u00a9 WorldTides</span></div>
+<div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
 {weather_content}
 {fishing_content}
 {map_section}
