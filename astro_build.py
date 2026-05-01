@@ -279,8 +279,13 @@ def render_html_card(payload: dict) -> str:
     html += '</body></html>'
     return html
 
-def render_weather_card(location_name: str, hourly_data: list) -> str:
-    """Render a simple 7-day weather forecast card from hourly data."""
+def render_weather_card(location_name: str, hourly_data: list, marine_data: dict = None) -> str:
+    """Render a simple 7-day weather forecast card from hourly data.
+
+    marine_data (optional): dict returned by fetch_openmeteo_marine, keyed by
+    naive-UTC datetime.  Used to populate the Wave column when Meteosource
+    hourly data does not include wave_height.
+    """
     # Group by day and get daily summaries
     from collections import defaultdict
     days = defaultdict(list)
@@ -309,14 +314,26 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
         pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
 
-        # Wave/swell height — Flexi tier exposes flat attributes wave_height / swell_height
-        wave_heights = [
-            v for v in [
-                _get(h, "wave_height") or _get(h, "swell_height")
-                for h in day_hours
+        # Wave height — prefer Open-Meteo Marine data (Meteosource hourly does
+        # not include wave variables in its standard API response)
+        if marine_data:
+            wave_heights = []
+            for h in day_hours:
+                h_dt = _get(h, "date")
+                if h_dt:
+                    h_utc = _to_utc(h_dt)
+                    key = datetime(h_utc.year, h_utc.month, h_utc.day, h_utc.hour)
+                    wh = marine_data.get(key, {}).get("wave_height")
+                    if wh is not None:
+                        wave_heights.append(float(wh))
+        else:
+            wave_heights = [
+                v for v in [
+                    _get(h, "wave_height") or _get(h, "swell_height")
+                    for h in day_hours
+                ]
+                if isinstance(v, (int, float))
             ]
-            if isinstance(v, (int, float))
-        ]
         
         temp_str = f"{int(min(temps))}°/{int(max(temps))}°C" if temps else "N/A"
         precip_str = f"{sum(precips):.1f}mm" if precips else "0mm"
@@ -347,8 +364,13 @@ def render_combined_weather(locations_data: list) -> str:
     html += '<div class="weather-container">'
     html += '<div class="weather-grid">'
     
-    for location_name, hourly_data in locations_data:
-        html += render_weather_card(location_name, hourly_data)
+    for item in locations_data:
+        if len(item) == 3:
+            location_name, hourly_data, marine_data = item
+        else:
+            location_name, hourly_data = item
+            marine_data = None
+        html += render_weather_card(location_name, hourly_data, marine_data)
     
     html += '</div></div>'
     html += '</body></html>'
@@ -493,11 +515,22 @@ def main():
                                        sections=(sections.HOURLY,))
     harbour_hourly = fc_harbour.hourly.data or []
     
+    # Fetch marine data for the harbour weather card wave column.
+    # Import fetch_openmeteo_marine from fish_build (imported below in marine page block).
+    import sys
+    import re
+    sys.path.insert(0, os.path.dirname(__file__))
+    from fish_build import (build_payload as build_fishing_payload,
+                            render_card as render_fishing_card,
+                            fetch_openmeteo_marine)
+    # Use a point near the Cork Harbour entrance for representative wave data.
+    harbour_marine_data = fetch_openmeteo_marine(51.79, -8.25)
+
     # Generate weather file for Cork Harbour
     harbour_html_tmp = os.path.join(weather_dir, "forecast.tmp.html")
     harbour_html_out = os.path.join(weather_dir, "forecast.html")
     locations_data = [
-        ("Cork Harbour", harbour_hourly)
+        ("Cork Harbour", harbour_hourly, harbour_marine_data)
     ]
     with open(harbour_html_tmp, "w", encoding="utf-8") as f:
         f.write(render_combined_weather(locations_data))
@@ -510,11 +543,6 @@ def main():
     marine_html_path = os.path.join(marine_dir, "marine.html")
     marine_tmp_path = os.path.join(marine_dir, "marine.tmp.html")
     
-    # Read fishing data
-    import sys
-    import re
-    sys.path.insert(0, os.path.dirname(__file__))
-    from fish_build import build_payload as build_fishing_payload, render_card as render_fishing_card
     fishing_payload = build_fishing_payload()
     
     # Extract body content without body tag
@@ -599,6 +627,14 @@ def main():
                 z-index:910;background:rgba(13,61,107,0.9);color:#fff;border-radius:8px;
                 padding:14px 20px;text-align:center;font-size:0.88rem;max-width:280px;pointer-events:none;">
       🌊 Wave / swell tiles are not available for this API tier or location.
+    </div>
+
+    <!-- Sea temperature info notice (hidden by default) -->
+    <div id="wx-sst-notice"
+         style="display:none;position:absolute;top:10px;right:10px;z-index:910;
+                background:rgba(13,61,107,0.85);color:#fff;border-radius:6px;
+                padding:6px 12px;font-size:0.78rem;max-width:220px;text-align:center;pointer-events:none;">
+      🌡 Sea temperature data covers open ocean only — coastal &amp; land areas show no colour.
     </div>
   </div>
 
@@ -716,10 +752,15 @@ def main():
   function updateLayer() {{
     if (wxLayer) {{ map.removeLayer(wxLayer); wxLayer = null; }}
     document.getElementById('wx-wave-notice').style.display = 'none';
+    document.getElementById('wx-sst-notice').style.display = 'none';
     if (!MS_KEY || MS_KEY === 'PASTE-YOUR-API-KEY-HERE') {{
       // No key — show a placeholder message and skip tile fetch
       document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label + ' (API key required)';
       return;
+    }}
+    // Show sea-temperature info notice (tiles only cover open ocean)
+    if (activeVar === 'sea_temperature') {{
+      document.getElementById('wx-sst-notice').style.display = 'block';
     }}
     wxLayer = L.tileLayer(tileUrl(activeVar, forecastHrs), {{
       tileSize: 256,

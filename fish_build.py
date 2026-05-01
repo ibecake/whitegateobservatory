@@ -26,6 +26,14 @@ WT_KEY      = os.environ.get("WORLD_TIDES_KEY")  # required for tides
 WT_DAYS     = 7
 WT_STEP_S   = 3600  # 1h height resolution keeps credit usage low
 
+# Open-Meteo Marine API query point — near the Cork Harbour entrance / Roche's
+# Point so the wave/SST values represent open-coast conditions rather than the
+# sheltered inner harbour.  The Meteosource point-forecast API does not return
+# wave or sea-temperature data in its standard hourly section, so we supplement
+# with the free Open-Meteo Marine API (no key required).
+MARINE_LAT  = 51.79
+MARINE_LON  = -8.25
+
 # Optional marine env-var overrides (take priority over API data for testing)
 OVERRIDE_WAVE_H = os.environ.get("WAVE_H")   # metres
 OVERRIDE_WAVE_T = os.environ.get("WAVE_T")   # seconds
@@ -312,6 +320,49 @@ def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, ste
     extremes.sort(key=lambda x: x["dt"])
     return dict(heights=heights, extremes=extremes)
 
+# ── Open-Meteo Marine API (free, no key required) ────────────────────────────
+def fetch_openmeteo_marine(lat: float, lon: float) -> dict:
+    """Fetch hourly wave height, wave period and SST from Open-Meteo Marine API.
+
+    Returns a dict keyed by naive-UTC datetime (truncated to the hour) where
+    each value is a dict with keys: wave_height (m), wave_period (s),
+    sea_surface_temperature (°C).  Values may be None if the model grid has
+    no data for this location.  Returns {} on any error so callers can safely
+    fall back to their existing behaviour.
+    """
+    url = "https://marine-api.open-meteo.com/v1/marine"
+    params = {
+        "latitude": lat,
+        "longitude": lon,
+        "hourly": "wave_height,wave_period,sea_surface_temperature",
+        "timezone": "UTC",
+        "forecast_days": 7,
+    }
+    try:
+        r = requests.get(url, params=params, timeout=20)
+        if r.status_code != 200:
+            print(f"[OpenMeteo Marine] HTTP {r.status_code}: {r.text[:120]}")
+            return {}
+        data = r.json()
+        hourly   = data.get("hourly", {})
+        times    = hourly.get("time", [])
+        wh_list  = hourly.get("wave_height", [])
+        wp_list  = hourly.get("wave_period", [])
+        sst_list = hourly.get("sea_surface_temperature", [])
+        result = {}
+        for i, t_str in enumerate(times):
+            dt_utc = datetime.strptime(t_str, "%Y-%m-%dT%H:%M")  # naive UTC
+            result[dt_utc] = {
+                "wave_height":            wh_list[i]  if i < len(wh_list)  else None,
+                "wave_period":            wp_list[i]  if i < len(wp_list)  else None,
+                "sea_surface_temperature": sst_list[i] if i < len(sst_list) else None,
+            }
+        print(f"[OpenMeteo Marine] fetched {len(result)} hourly rows for ({lat},{lon})")
+        return result
+    except Exception as e:
+        print(f"[OpenMeteo Marine] error: {e}")
+        return {}
+
 # ── Build (fetch + score + windows) ───────────────────────────────────────────
 def build_payload():
     ms = Meteosource(MS_API_KEY, MS_TIER)
@@ -327,6 +378,10 @@ def build_payload():
 
     heights = wt.get("heights", [])
     extremes = wt.get("extremes", [])
+
+    # Open-Meteo Marine: wave height/period and SST (Meteosource hourly does not
+    # include these variables in its standard API response)
+    marine_data = fetch_openmeteo_marine(MARINE_LAT, MARINE_LON)
 
     geo = Geo(LAT, LON)
     by_time = {h.date: h for h in hourly if getattr(h, "date", None)}
@@ -348,14 +403,13 @@ def build_payload():
         prev = by_time.get(dt_local - timedelta(hours=3))
         pres_prev = getattr(prev, "pressure", None) if prev else None
 
-        # marine data: read from API, with optional env-var overrides for testing
-        wave_h = float(OVERRIDE_WAVE_H) if OVERRIDE_WAVE_H else (
-            getattr(h, "wave_height", None) or getattr(h, "swell_height", None)
-        )
-        wave_t = float(OVERRIDE_WAVE_T) if OVERRIDE_WAVE_T else (
-            getattr(h, "wave_period", None) or getattr(h, "swell_period", None)
-        )
-        sst    = float(OVERRIDE_SEA_T)  if OVERRIDE_SEA_T  else getattr(h, "sea_temperature", None)
+        # marine data: look up from Open-Meteo by UTC hour, with optional
+        # env-var overrides for local testing
+        dt_utc_h = datetime(dt_utc.year, dt_utc.month, dt_utc.day, dt_utc.hour)
+        marine = marine_data.get(dt_utc_h, {})
+        wave_h = float(OVERRIDE_WAVE_H) if OVERRIDE_WAVE_H else marine.get("wave_height")
+        wave_t = float(OVERRIDE_WAVE_T) if OVERRIDE_WAVE_T else marine.get("wave_period")
+        sst    = float(OVERRIDE_SEA_T)  if OVERRIDE_SEA_T  else marine.get("sea_surface_temperature")
 
         # component scores
         s_w,   n_w   = score_wind(ws, gust)
