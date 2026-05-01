@@ -527,7 +527,7 @@ def main():
     
     map_section = '''<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
   <div style="padding:1.5rem;background:#f8f9fa;border-bottom:1px solid #dee2e6;">
-    <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Observatory Location</h2>
+    <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Fishing Locations</h2>
     <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour</p>
   </div>
   <div id="obs-map" style="height:420px;width:100%;"></div>
