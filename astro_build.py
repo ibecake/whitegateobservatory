@@ -348,6 +348,208 @@ def render_weather_card(location_name: str, hourly_data: list, marine_data: dict
     body += '</div>'
     return body
 
+def _build_wave_chart_data(marine_data: dict) -> dict:
+    """Convert the Open-Meteo marine dict into Chart.js-ready time series.
+
+    marine_data is keyed by naive-UTC datetime (truncated to the hour).
+    Returns a dict with:
+      labels           – local-time strings (one per hour, 7 days)
+      wave_heights     – wave height values in metres (None where missing)
+      wave_periods     – wave period values in seconds (None where missing)
+      sea_temps        – sea surface temperature in °C (None where missing)
+    """
+    from zoneinfo import ZoneInfo
+    dublin = ZoneInfo("Europe/Dublin")
+
+    sorted_keys = sorted(marine_data.keys())
+    labels: List[str] = []
+    wave_heights: List = []
+    wave_periods: List = []
+    sea_temps: List = []
+
+    for k in sorted_keys:
+        dt_local = k.replace(tzinfo=timezone.utc).astimezone(dublin)
+        labels.append(dt_local.strftime("%a %d %b %H:%M"))
+        row = marine_data[k]
+        wave_heights.append(round(float(row["wave_height"]), 2) if row.get("wave_height") is not None else None)
+        wave_periods.append(round(float(row["wave_period"]), 1) if row.get("wave_period") is not None else None)
+        sea_temps.append(round(float(row["sea_surface_temperature"]), 1) if row.get("sea_surface_temperature") is not None else None)
+
+    return {
+        "labels":       labels,
+        "wave_heights": wave_heights,
+        "wave_periods": wave_periods,
+        "sea_temps":    sea_temps,
+    }
+
+
+def _render_wave_chart(chart_data: dict) -> str:
+    """Return an HTML card containing Chart.js wave height / period / SST charts.
+
+    Renders two stacked charts:
+      1. Wave height (m) and sea surface temperature (°C) on a dual-axis chart.
+      2. Wave period (s) on a separate chart below.
+    Chart.js is loaded from CDN — the same CDN used by the tide chart in fish_build.py.
+    """
+    chart_json = json.dumps(chart_data)
+    return f"""<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+  <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
+    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">🌊 Wave &amp; Swell Forecast</h2>
+    <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour entrance &mdash; Open-Meteo Marine data &mdash; 7-day hourly forecast</p>
+  </div>
+  <div style="padding:16px;">
+    <div style="position:relative;width:100%;height:240px;margin-bottom:16px;">
+      <canvas id="waveHeightChart"
+        aria-label="Wave height and sea surface temperature forecast"
+        role="img"></canvas>
+    </div>
+    <div style="position:relative;width:100%;height:160px;">
+      <canvas id="wavePeriodChart"
+        aria-label="Wave period forecast in seconds"
+        role="img"></canvas>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function(){{
+  var raw = {chart_json};
+  if (!raw.labels || !raw.labels.length) return;
+
+  // Show a date label only at midnight local time (label ends "00:00").
+  var tickLabels = raw.labels.map(function(lbl) {{
+    return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
+  }});
+
+  var commonScaleX = {{
+    ticks: {{
+      callback: function(val, idx) {{ return tickLabels[idx]; }},
+      maxRotation: 0, autoSkip: false, font: {{ size: 11 }}
+    }},
+    grid: {{ color: "rgba(0,0,0,0.05)" }}
+  }};
+
+  // ── Chart 1: Wave Height + Sea Surface Temperature ──────────────────────────
+  new Chart(document.getElementById("waveHeightChart"), {{
+    type: "line",
+    data: {{
+      labels: raw.labels,
+      datasets: [
+        {{
+          label: "Wave Height (m)",
+          data: raw.wave_heights,
+          borderColor: "#1a90ff",
+          backgroundColor: "rgba(26,144,255,0.12)",
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          yAxisID: "yH",
+          spanGaps: true,
+        }},
+        {{
+          label: "Sea Temp (°C)",
+          data: raw.sea_temps,
+          borderColor: "#ef4444",
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointRadius: 0,
+          fill: false,
+          tension: 0.4,
+          yAxisID: "yT",
+          spanGaps: true,
+        }}
+      ]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {{ mode: "index", intersect: false }},
+      plugins: {{
+        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+        tooltip: {{
+          callbacks: {{
+            title: function(items) {{ return items[0].label; }},
+            label: function(item) {{
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              var unit = item.dataset.yAxisID === "yT" ? "°C" : "m";
+              return item.dataset.label + ": " + v.toFixed(item.dataset.yAxisID === "yT" ? 1 : 2) + unit;
+            }}
+          }}
+        }}
+      }},
+      scales: {{
+        x: commonScaleX,
+        yH: {{
+          type: "linear", position: "left",
+          title: {{ display: true, text: "Wave Height (m)", font: {{ size: 11 }} }},
+          ticks: {{ font: {{ size: 11 }} }},
+          min: 0,
+          grid: {{ color: "rgba(0,0,0,0.05)" }}
+        }},
+        yT: {{
+          type: "linear", position: "right",
+          title: {{ display: true, text: "Sea Temp (°C)", font: {{ size: 11 }} }},
+          ticks: {{ font: {{ size: 11 }} }},
+          grid: {{ drawOnChartArea: false }}
+        }}
+      }}
+    }}
+  }});
+
+  // ── Chart 2: Wave Period ─────────────────────────────────────────────────────
+  new Chart(document.getElementById("wavePeriodChart"), {{
+    type: "line",
+    data: {{
+      labels: raw.labels,
+      datasets: [
+        {{
+          label: "Wave Period (s)",
+          data: raw.wave_periods,
+          borderColor: "#8b5cf6",
+          backgroundColor: "rgba(139,92,246,0.10)",
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          spanGaps: true,
+        }}
+      ]
+    }},
+    options: {{
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {{ mode: "index", intersect: false }},
+      plugins: {{
+        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+        tooltip: {{
+          callbacks: {{
+            title: function(items) {{ return items[0].label; }},
+            label: function(item) {{
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              return "Wave Period: " + v.toFixed(1) + "s";
+            }}
+          }}
+        }}
+      }},
+      scales: {{
+        x: commonScaleX,
+        y: {{
+          title: {{ display: true, text: "Period (s)", font: {{ size: 11 }} }},
+          ticks: {{ font: {{ size: 11 }} }},
+          min: 0,
+          grid: {{ color: "rgba(0,0,0,0.05)" }}
+        }}
+      }}
+    }}
+  }});
+}})();
+</script>"""
+
+
 def render_combined_weather(locations_data: list) -> str:
     """Render combined weather cards for multiple locations."""
     
@@ -553,6 +755,9 @@ def main():
     weather_content = extract_body_content(render_combined_weather(locations_data))
     fishing_content = extract_body_content(render_fishing_card(fishing_payload))
     
+    wave_chart_data = _build_wave_chart_data(harbour_marine_data)
+    wave_chart_content = _render_wave_chart(wave_chart_data)
+
     # The Meteosource API key is intentionally embedded in the generated HTML so
     # the browser can load weather tile images directly from the Meteosource CDN.
     # This is the standard pattern for all client-side map tile APIs (Mapbox,
@@ -768,24 +973,29 @@ def main():
       attribution: '&copy; Meteosource',
       maxNativeZoom: 14,
     }});
-    // Detect when wave/swell tiles fail to load (404 / no data for this tier)
+    // Detect when wave/swell tiles fail to load (404 / no data for this tier).
+    // tileTotal is tracked live (incremented on both tileload and tileerror) so
+    // that the in-flight tileerror check is meaningful and the notice can appear
+    // as soon as more than half the tiles in a batch have errored.
     var isWaveLayer = LAYERS[activeVar] && LAYERS[activeVar].wave;
     if (isWaveLayer) {{
-      var errorCount = 0; var loadCount = 0; var tileTotal = 0;
-      wxLayer.on('tileload',  function() {{ loadCount++;  }});
+      var errorCount = 0; var loadCount = 0;
+      wxLayer.on('loading', function() {{
+        errorCount = 0; loadCount = 0;
+        document.getElementById('wx-wave-notice').style.display = 'none';
+      }});
+      wxLayer.on('tileload', function() {{
+        loadCount++;
+      }});
       wxLayer.on('tileerror', function() {{
         errorCount++;
-        // If more than half the tiles fail, assume the variable is unavailable
+        var tileTotal = loadCount + errorCount;
         if (tileTotal > 0 && errorCount / tileTotal > 0.5) {{
           document.getElementById('wx-wave-notice').style.display = 'block';
         }}
       }});
-      wxLayer.on('loading', function(e) {{
-        tileTotal = 0; loadCount = 0; errorCount = 0;
-        document.getElementById('wx-wave-notice').style.display = 'none';
-      }});
       wxLayer.on('load', function() {{
-        tileTotal = loadCount + errorCount;
+        var tileTotal = loadCount + errorCount;
         if (tileTotal > 0 && errorCount / tileTotal > 0.5) {{
           document.getElementById('wx-wave-notice').style.display = 'block';
         }}
@@ -967,9 +1177,12 @@ def main():
     <a href="tinygs.html">TinyGS</a>
   </nav>
 </div>
-<div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
+<div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides • Wave/swell data © Open-Meteo</span></div>
 {weather_content}
 {fishing_content}
+<div style="max-width:1200px;margin:0 auto;padding:0 1rem;">
+{wave_chart_content}
+</div>
 {map_section}
 </body>
 </html>'''
