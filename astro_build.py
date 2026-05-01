@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Build static JSON + HTML card for Whitegate Observatory astro nights.
-# Run on a schedule (e.g., cron every 4h). No DB needed.
+# Run on a schedule (e.g., cron every 6h). No DB needed.
 
 from __future__ import annotations
 import os, json, argparse
@@ -745,15 +745,27 @@ def main():
     marine_html_path = os.path.join(marine_dir, "marine.html")
     marine_tmp_path = os.path.join(marine_dir, "marine.tmp.html")
     
-    fishing_payload = build_fishing_payload()
-    
+    fishing_payload = build_fishing_payload(hourly_data=fc.hourly.data, marine_data=harbour_marine_data)
+
+    # Write fishing card + JSON so the workflow does not need a separate fish_build.py run
+    fishing_dir = os.path.join(os.path.dirname(outdir), "fishing")
+    os.makedirs(fishing_dir, exist_ok=True)
+    fishing_html = render_fishing_card(fishing_payload)
+    with open(os.path.join(fishing_dir, "fishing.tmp.json"), "w", encoding="utf-8") as f:
+        json.dump(fishing_payload, f, ensure_ascii=False, indent=2)
+    os.replace(os.path.join(fishing_dir, "fishing.tmp.json"), os.path.join(fishing_dir, "fishing.json"))
+    with open(os.path.join(fishing_dir, "card.tmp.html"), "w", encoding="utf-8") as f:
+        f.write(fishing_html)
+    os.replace(os.path.join(fishing_dir, "card.tmp.html"), os.path.join(fishing_dir, "card.html"))
+    print(f"Wrote FISHING: {os.path.join(fishing_dir,'fishing.json')} / {os.path.join(fishing_dir,'card.html')}")
+
     # Extract body content without body tag
     def extract_body_content(html):
         match = re.search(r'<body[^>]*>(.*)</body>', html, re.DOTALL)
         return match.group(1) if match else html
     
     weather_content = extract_body_content(render_combined_weather(locations_data))
-    fishing_content = extract_body_content(render_fishing_card(fishing_payload))
+    fishing_content = extract_body_content(fishing_html)
     
     wave_chart_data = _build_wave_chart_data(harbour_marine_data)
     wave_chart_content = _render_wave_chart(wave_chart_data)

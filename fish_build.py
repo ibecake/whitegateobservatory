@@ -364,11 +364,21 @@ def fetch_openmeteo_marine(lat: float, lon: float) -> dict:
         return {}
 
 # ── Build (fetch + score + windows) ───────────────────────────────────────────
-def build_payload():
-    ms = Meteosource(MS_API_KEY, MS_TIER)
-    fc = ms.get_point_forecast(lat=LAT, lon=LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
-                               sections=(sections.HOURLY,))
-    hourly = fc.hourly.data or []
+def build_payload(hourly_data=None, marine_data=None):
+    """Build the fishing forecast payload.
+
+    hourly_data: pre-fetched list of Meteosource hourly objects (same LAT/LON).
+                 When None the function fetches from the API itself.
+    marine_data: pre-fetched Open-Meteo Marine dict (keyed by naive-UTC datetime).
+                 When None the function fetches from the API itself.
+    """
+    if hourly_data is None:
+        ms = Meteosource(MS_API_KEY, MS_TIER)
+        fc = ms.get_point_forecast(lat=LAT, lon=LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
+                                   sections=(sections.HOURLY,))
+        hourly = fc.hourly.data or []
+    else:
+        hourly = hourly_data
     if not hourly:
         return {"generated_at_local": datetime.now().strftime("%a %d %b %H:%M"), "windows":[]}
 
@@ -381,7 +391,8 @@ def build_payload():
 
     # Open-Meteo Marine: wave height/period and SST (Meteosource hourly does not
     # include these variables in its standard API response)
-    marine_data = fetch_openmeteo_marine(MARINE_LAT, MARINE_LON)
+    if marine_data is None:
+        marine_data = fetch_openmeteo_marine(MARINE_LAT, MARINE_LON)
 
     geo = Geo(LAT, LON)
     by_time = {h.date: h for h in hourly if getattr(h, "date", None)}
