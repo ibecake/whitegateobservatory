@@ -525,7 +525,261 @@ def main():
     weather_content = extract_body_content(render_combined_weather(locations_data))
     fishing_content = extract_body_content(render_fishing_card(fishing_payload))
     
-    map_section = '''<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+    # The Meteosource API key is intentionally embedded in the generated HTML so
+    # the browser can load weather tile images directly from the Meteosource CDN.
+    # This is the standard pattern for all client-side map tile APIs (Mapbox,
+    # Google Maps, etc.).  Meteosource keys are registered per domain, which
+    # limits unauthorised reuse.  There is no server-side proxy alternative for
+    # a fully-static GitHub Pages site.
+    ms_api_key_js = API_KEY
+
+    map_section = f'''<!-- Leaflet CSS/JS shared by both maps on this page -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SAILING WEATHER MAP
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+  <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
+    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">⛵ Sailing Weather Map</h2>
+    <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour &amp; Coast &mdash; select a layer and step through the forecast</p>
+  </div>
+
+  <!-- Layer selector -->
+  <div id="wx-layer-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
+    <button class="wx-btn wx-active" data-var="wind_speed"    data-label="Wind Speed">💨 Wind Speed</button>
+    <button class="wx-btn"           data-var="wind_gust"     data-label="Wind Gusts">💨 Wind Gusts</button>
+    <button class="wx-btn"           data-var="wave_height"   data-label="Wave Height">🌊 Wave Height</button>
+    <button class="wx-btn"           data-var="wave_period"   data-label="Wave Period">🌊 Wave Period</button>
+    <button class="wx-btn"           data-var="swell_height"  data-label="Swell Height">🌊 Swell Height</button>
+    <button class="wx-btn"           data-var="swell_period"  data-label="Swell Period">🌊 Swell Period</button>
+    <button class="wx-btn"           data-var="sea_temperature" data-label="Sea Temp">🌡 Sea Temp</button>
+    <button class="wx-btn"           data-var="precipitation" data-label="Precipitation">🌧 Precip</button>
+    <button class="wx-btn"           data-var="clouds"        data-label="Cloud Cover">☁️ Clouds</button>
+    <button class="wx-btn"           data-var="pressure"      data-label="Pressure">🔵 Pressure</button>
+  </div>
+
+  <!-- Time slider -->
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
+    <span style="font-size:0.85rem;color:#374151;white-space:nowrap;font-weight:600;">Forecast time:</span>
+    <input id="wx-time-slider" type="range" min="0" max="48" step="3" value="0"
+           style="flex:1;accent-color:#0d6efd;cursor:pointer;" />
+    <span id="wx-time-label" style="font-size:0.85rem;color:#374151;white-space:nowrap;min-width:60px;text-align:right;">Now</span>
+    <div style="display:flex;gap:4px;">
+      <button id="wx-play-btn" title="Play animation"
+              style="padding:3px 10px;font-size:0.8rem;border:1px solid #0d6efd;border-radius:4px;background:#0d6efd;color:#fff;cursor:pointer;">▶ Play</button>
+      <button id="wx-stop-btn" title="Stop animation"
+              style="padding:3px 10px;font-size:0.8rem;border:1px solid #6c757d;border-radius:4px;background:#6c757d;color:#fff;cursor:pointer;">■ Stop</button>
+    </div>
+  </div>
+
+  <!-- Map + Legend wrapper -->
+  <div style="position:relative;">
+    <div id="wx-map" style="height:520px;width:100%;"></div>
+
+    <!-- Active layer label (top-left over map) -->
+    <div id="wx-layer-label"
+         style="position:absolute;top:10px;left:50px;z-index:900;background:rgba(13,61,107,0.85);
+                color:#fff;font-size:0.82rem;font-weight:600;padding:4px 10px;border-radius:4px;pointer-events:none;">
+      Wind Speed
+    </div>
+
+    <!-- Colour legend (bottom-left over map) -->
+    <div id="wx-legend"
+         style="position:absolute;bottom:30px;left:10px;z-index:900;background:rgba(255,255,255,0.93);
+                border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.18);padding:8px 12px;min-width:160px;font-size:0.78rem;">
+      <div id="wx-legend-title" style="font-weight:700;margin-bottom:6px;color:#0d3d6b;">Wind Speed</div>
+      <div id="wx-legend-body"></div>
+    </div>
+  </div>
+
+  <div style="padding:8px 16px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:0.78rem;color:#6b7280;">
+    Weather map tiles &copy; <a href="https://www.meteosource.com" target="_blank" rel="noopener" style="color:#0d6efd;">Meteosource</a>
+    &nbsp;|&nbsp; Base map &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:#0d6efd;">OpenStreetMap</a> contributors
+  </div>
+</div>
+
+<style>
+.wx-btn {{
+  padding:5px 12px;font-size:0.82rem;font-weight:500;
+  border:1px solid #0d6efd;border-radius:20px;
+  background:#fff;color:#0d6efd;cursor:pointer;transition:all 0.15s;
+}}
+.wx-btn:hover {{ background:#e8f0fe; }}
+.wx-btn.wx-active {{ background:#0d6efd;color:#fff; }}
+.wx-legend-row {{ display:flex;align-items:center;gap:6px;margin-bottom:3px; }}
+.wx-swatch {{ width:18px;height:12px;border-radius:2px;flex-shrink:0; }}
+</style>
+
+<script>
+(function() {{
+  var MS_KEY = "{ms_api_key_js}";
+  var MS_TIER = "flexi";
+
+  // ── Layer metadata ──────────────────────────────────────────────────────────
+  var LAYERS = {{
+    wind_speed:      {{ label:"Wind Speed",    unit:"m/s",  legend:[
+      {{c:"#0000ff",v:"0"}},{{c:"#00aaff",v:"3"}},{{c:"#00ff88",v:"6"}},
+      {{c:"#ffff00",v:"10"}},{{c:"#ff8800",v:"15"}},{{c:"#ff0000",v:"20+"}},
+    ]}},
+    wind_gust:       {{ label:"Wind Gusts",    unit:"m/s",  legend:[
+      {{c:"#0000ff",v:"0"}},{{c:"#00aaff",v:"5"}},{{c:"#00ff88",v:"10"}},
+      {{c:"#ffff00",v:"15"}},{{c:"#ff8800",v:"20"}},{{c:"#ff0000",v:"25+"}},
+    ]}},
+    wave_height:     {{ label:"Wave Height",   unit:"m",    legend:[
+      {{c:"#b3e0ff",v:"0"}},{{c:"#66b8ff",v:"0.5"}},{{c:"#1a90ff",v:"1"}},
+      {{c:"#005eb8",v:"2"}},{{c:"#002080",v:"3+"}},
+    ]}},
+    wave_period:     {{ label:"Wave Period",   unit:"s",    legend:[
+      {{c:"#ffffcc",v:"0"}},{{c:"#a1dab4",v:"5"}},{{c:"#41b6c4",v:"10"}},
+      {{c:"#2c7fb8",v:"15"}},{{c:"#253494",v:"20+"}},
+    ]}},
+    swell_height:    {{ label:"Swell Height",  unit:"m",    legend:[
+      {{c:"#f7fbff",v:"0"}},{{c:"#9ecae1",v:"0.5"}},{{c:"#3182bd",v:"1"}},
+      {{c:"#08519c",v:"2"}},{{c:"#002171",v:"3+"}},
+    ]}},
+    swell_period:    {{ label:"Swell Period",  unit:"s",    legend:[
+      {{c:"#fff7ec",v:"0"}},{{c:"#fdd49e",v:"5"}},{{c:"#fc8d59",v:"10"}},
+      {{c:"#d7301f",v:"15"}},{{c:"#7f0000",v:"20+"}},
+    ]}},
+    sea_temperature: {{ label:"Sea Temp",      unit:"°C",   legend:[
+      {{c:"#0000ff",v:"5"}},{{c:"#00aaff",v:"10"}},{{c:"#00ff88",v:"15"}},
+      {{c:"#ffff00",v:"20"}},{{c:"#ff0000",v:"25+"}},
+    ]}},
+    precipitation:   {{ label:"Precipitation", unit:"mm/h", legend:[
+      {{c:"#e0f3ff",v:"0"}},{{c:"#74c6ff",v:"1"}},{{c:"#0080ff",v:"3"}},
+      {{c:"#004fa3",v:"8"}},{{c:"#800080",v:"15+"}},
+    ]}},
+    clouds:          {{ label:"Cloud Cover",   unit:"%",    legend:[
+      {{c:"#ffffff",v:"0"}},{{c:"#cccccc",v:"25"}},{{c:"#999999",v:"50"}},
+      {{c:"#555555",v:"75"}},{{c:"#222222",v:"100"}},
+    ]}},
+    pressure:        {{ label:"Pressure",      unit:"hPa",  legend:[
+      {{c:"#800000",v:"980"}},{{c:"#ff4400",v:"995"}},{{c:"#ffff00",v:"1010"}},
+      {{c:"#00aaff",v:"1020"}},{{c:"#0000aa",v:"1030+"}},
+    ]}},
+  }};
+
+  // ── Constants ───────────────────────────────────────────────────────────────
+  // Cork Harbour map centre and default zoom
+  var MAP_CENTER_LAT  = 51.845;
+  var MAP_CENTER_LON  = -8.25;
+  var MAP_DEFAULT_ZOOM = 10;
+  // Whitegate Observatory coordinates
+  var OBS_LAT = 51.825256;
+  var OBS_LON = -8.240009;
+  // Animation frame interval in milliseconds
+  var ANIMATION_INTERVAL_MS = 1800;
+
+  // ── State ───────────────────────────────────────────────────────────────────
+  var activeVar   = "wind_speed";
+  var forecastHrs = 0;
+  var wxLayer     = null;
+  var playTimer   = null;
+
+  // ── Map ─────────────────────────────────────────────────────────────────────
+  var map = L.map('wx-map').setView([MAP_CENTER_LAT, MAP_CENTER_LON], MAP_DEFAULT_ZOOM);
+
+  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 18,
+    opacity: 1,
+  }}).addTo(map);
+
+  // Observatory marker
+  L.circleMarker([OBS_LAT, OBS_LON], {{
+    radius: 7, color: '#1d6fbd', fillColor: '#4a9eff', fillOpacity: 0.9, weight: 2
+  }}).addTo(map).bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
+
+  // ── Tile URL builder ────────────────────────────────────────────────────────
+  function tileUrl(varName, hrs) {{
+    var dt = hrs === 0 ? '+0hours' : '+' + hrs + 'hours';
+    return 'https://www.meteosource.com/api/v1/' + MS_TIER + '/map' +
+           '?key=' + MS_KEY +
+           '&tile_x={{x}}&tile_y={{y}}&tile_zoom={{z}}' +
+           '&variable=' + varName +
+           '&datetime=' + dt;
+  }}
+
+  // ── Update weather tile layer ───────────────────────────────────────────────
+  function updateLayer() {{
+    if (wxLayer) {{ map.removeLayer(wxLayer); wxLayer = null; }}
+    if (!MS_KEY || MS_KEY === 'PASTE-YOUR-API-KEY-HERE') {{
+      // No key — show a placeholder message and skip tile fetch
+      document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label + ' (API key required)';
+      return;
+    }}
+    wxLayer = L.tileLayer(tileUrl(activeVar, forecastHrs), {{
+      tileSize: 256,
+      opacity: 0.65,
+      attribution: '&copy; Meteosource',
+      crossOrigin: true,
+    }});
+    wxLayer.addTo(map);
+    document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label;
+    updateLegend();
+  }}
+
+  // ── Legend ──────────────────────────────────────────────────────────────────
+  function updateLegend() {{
+    var meta = LAYERS[activeVar];
+    document.getElementById('wx-legend-title').textContent = meta.label + ' (' + meta.unit + ')';
+    var html = '';
+    meta.legend.forEach(function(row) {{
+      html += '<div class="wx-legend-row"><div class="wx-swatch" style="background:' + row.c + '"></div><span>' + row.v + ' ' + meta.unit + '</span></div>';
+    }});
+    document.getElementById('wx-legend-body').innerHTML = html;
+  }}
+
+  // ── Time label ──────────────────────────────────────────────────────────────
+  function updateTimeLabel(hrs) {{
+    var el = document.getElementById('wx-time-label');
+    if (hrs === 0) {{ el.textContent = 'Now'; }}
+    else {{ el.textContent = '+' + hrs + 'h'; }}
+  }}
+
+  // ── Layer buttons ───────────────────────────────────────────────────────────
+  document.querySelectorAll('.wx-btn').forEach(function(btn) {{
+    btn.addEventListener('click', function() {{
+      document.querySelectorAll('.wx-btn').forEach(function(b) {{ b.classList.remove('wx-active'); }});
+      btn.classList.add('wx-active');
+      activeVar = btn.dataset.var;
+      updateLayer();
+    }});
+  }});
+
+  // ── Time slider ─────────────────────────────────────────────────────────────
+  var slider = document.getElementById('wx-time-slider');
+  slider.addEventListener('input', function() {{
+    forecastHrs = parseInt(this.value);
+    updateTimeLabel(forecastHrs);
+    updateLayer();
+  }});
+
+  // ── Play/Stop animation ─────────────────────────────────────────────────────
+  document.getElementById('wx-play-btn').addEventListener('click', function() {{
+    if (playTimer) return;
+    playTimer = setInterval(function() {{
+      forecastHrs = forecastHrs >= 48 ? 0 : forecastHrs + 3;
+      slider.value = forecastHrs;
+      updateTimeLabel(forecastHrs);
+      updateLayer();
+    }}, ANIMATION_INTERVAL_MS);
+  }});
+  document.getElementById('wx-stop-btn').addEventListener('click', function() {{
+    if (playTimer) {{ clearInterval(playTimer); playTimer = null; }}
+  }});
+
+  // ── Initial render ──────────────────────────────────────────────────────────
+  updateLayer();
+}})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FISHING LOCATIONS MAP
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
   <div style="padding:1.5rem;background:#f8f9fa;border-bottom:1px solid #dee2e6;">
     <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Fishing Locations</h2>
     <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour &mdash; click a marker for details</p>
@@ -537,29 +791,31 @@ def main():
   </div>
   <div id="obs-map" style="height:420px;width:100%;"></div>
 </div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-(function() {
+(function() {{
+  // Whitegate Observatory coordinates (same as weather map above)
+  var OBS_LAT = 51.825256;
+  var OBS_LON = -8.240009;
+
   var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
     attribution: '\xa9 OpenStreetMap contributors', maxZoom: 19
-  }).addTo(map);
+  }}).addTo(map);
 
   // Observatory marker
-  var obsMarker = L.marker([51.825256, -8.240009]).addTo(map);
+  var obsMarker = L.marker([OBS_LAT, OBS_LON]).addTo(map);
   obsMarker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
-  L.circle([51.825256, -8.240009], {
+  L.circle([OBS_LAT, OBS_LON], {{
     color: '#4a9eff', fillColor: '#4a9eff', fillOpacity: 0.2, radius: 100
-  }).addTo(map);
+  }}).addTo(map);
 
   // Fishing spots overlay — loaded from external JSON so spots can be updated
   // without modifying any Python build script.  Edit assets/data/fishing-spots.json
   // to add, remove or update spots.
   fetch('assets/data/fishing-spots.json')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      (data.spots || []).forEach(function(spot) {
+    .then(function(r) {{ return r.json(); }})
+    .then(function(data) {{
+      (data.spots || []).forEach(function(spot) {{
         var catches = (spot.catches || []).join(', ') || '—';
         var seasons = spot.seasons || '—';
         var type    = spot.type    || '';
@@ -570,19 +826,19 @@ def main():
           '<br><span style="color:#555">Fish: </span>'   + catches +
           '<br><span style="color:#555">Best: </span>'   + seasons +
           (notes   ? '<br><span style="color:#555">Notes: </span>'   + notes   : '');
-        L.circleMarker([spot.lat, spot.lon], {
+        L.circleMarker([spot.lat, spot.lon], {{
           radius: 8,
           color: '#16a34a',
           fillColor: '#22c55e',
           fillOpacity: 0.85,
           weight: 2
-        }).addTo(map).bindPopup(popup);
-      });
-    })
-    .catch(function(e) {
+        }}).addTo(map).bindPopup(popup);
+      }});
+    }})
+    .catch(function(e) {{
       console.warn('Could not load fishing spots overlay:', e);
-    });
-})();
+    }});
+}})();
 </script>'''
 
     # Build marine page HTML
