@@ -8,6 +8,7 @@ from typing import Optional, List, Tuple, Dict
 from datetime import datetime, timedelta, timezone
 from statistics import mean
 from math import sin, radians, copysign
+from zoneinfo import ZoneInfo
 
 import requests
 import ephem
@@ -19,6 +20,7 @@ MS_API_KEY  = os.environ.get("METEOSOURCE_API_KEY", "PASTE-METEOSOURCE-KEY")
 MS_TIER     = tiers.FLEXI
 LAT, LON    = 51.8268, -8.2321    # Whitegate
 TZ          = "Europe/Dublin"
+_DUBLIN_TZ  = ZoneInfo(TZ)
 
 WT_KEY      = os.environ.get("WORLD_TIDES_KEY")  # required for tides
 WT_DAYS     = 7
@@ -122,20 +124,29 @@ def score_sea_temp(tC: Optional[float], month:int):
 
 # NEW: tide helpers
 def get_tide_times_for_day(day_date, extremes: List[Dict]) -> Tuple[Optional[str], Optional[str]]:
-    """Find high and low tide times for a given day"""
-    high_time = None
-    low_time = None
-    
+    """Find all high and low tide times for a given day (in local Dublin time).
+
+    Returns a pair of strings (high_times, low_times).  When a day has more than
+    one extreme of a given type (typical for Cork Harbour) the times are joined
+    with " / " (e.g. "03:22 / 15:48").  Returns None for a type when no extreme
+    falls on that day.
+    """
+    high_times = []
+    low_times = []
+
     for ex in extremes:
-        ex_date = ex['dt'].date()
+        ex_date = ex['dt'].astimezone(_DUBLIN_TZ).date()
         if ex_date == day_date:
-            time_str = ex['dt'].strftime("%H:%M")
+            time_str = ex['dt'].astimezone(_DUBLIN_TZ).strftime("%H:%M")
             if ex['type'] == 'High':
-                high_time = time_str
+                high_times.append(time_str)
             elif ex['type'] == 'Low':
-                low_time = time_str
-    
-    return high_time, low_time
+                low_times.append(time_str)
+
+    return (
+        " / ".join(high_times) if high_times else None,
+        " / ".join(low_times) if low_times else None,
+    )
 
 def score_tide(dt_local: datetime, heights: List[Dict], extremes: List[Dict]) -> Tuple[float,str]:
     """heights: [{'dt':datetime,'height':float}] step=1h
@@ -208,28 +219,37 @@ _TIDE_DT_FMT = "%a %d %b %H:%M"
 def _build_tide_chart_data(heights: List[Dict], extremes: List[Dict]) -> dict:
     """Build Chart.js-compatible data from hourly tide heights and extremes.
 
+    Exact extreme datetimes are merged into the heights list so that High/Low
+    markers are plotted at their precise HH:MM position rather than being
+    snapped to the nearest hourly sample.
+
     Returns a dict with:
-      labels     – ISO-format datetime strings (one per hourly sample)
+      labels     – local-time datetime strings (one per data point)
       heights    – matching tide-height values (metres)
       high_data  – sparse array with height values only at High-tide extremes
       low_data   – sparse array with height values only at Low-tide extremes
     """
-    labels = [h["dt"].strftime(_TIDE_DT_FMT) for h in heights]
-    height_values = [round(h["height"], 2) for h in heights]
+    # Merge exact extreme timestamps into the hourly heights so scatter markers
+    # land at the true minute-accurate position (no rounding to nearest hour).
+    # The merged list is sorted chronologically so the chart line is drawn in
+    # the correct order after the extra points are inserted.
+    existing_dts = {h["dt"] for h in heights}
+    merged: List[Dict] = list(heights)
+    for ex in extremes:
+        if ex["dt"] not in existing_dts:
+            merged.append({"dt": ex["dt"], "height": ex["height"]})
+    merged.sort(key=lambda h: h["dt"])
+
+    labels = [h["dt"].astimezone(_DUBLIN_TZ).strftime(_TIDE_DT_FMT) for h in merged]
+    height_values = [round(h["height"], 2) for h in merged]
 
     high_data: List[Optional[float]] = [None] * len(labels)
     low_data:  List[Optional[float]] = [None] * len(labels)
 
     label_to_idx = {lbl: i for i, lbl in enumerate(labels)}
     for ex in extremes:
-        lbl = ex["dt"].strftime(_TIDE_DT_FMT)
+        lbl = ex["dt"].astimezone(_DUBLIN_TZ).strftime(_TIDE_DT_FMT)
         idx = label_to_idx.get(lbl)
-        if idx is None and heights:
-            # fall back to the nearest hourly sample
-            idx = min(
-                range(len(heights)),
-                key=lambda i: abs((heights[i]["dt"] - ex["dt"]).total_seconds()),
-            )
         if idx is not None:
             if ex["type"] == "High":
                 high_data[idx] = round(ex["height"], 2)
@@ -259,7 +279,7 @@ def wt_request(params: dict) -> Optional[dict]:
 def fetch_worldtides(lat: float, lon: float, start_utc: datetime, days: int, step_s: int=3600, key: Optional[str]=None):
     if not key:
         return dict(heights=[], extremes=[])
-    start_ts = int(time.mktime(start_utc.timetuple()))
+    start_ts = int(start_utc.timestamp())
     length_s = int(days * 86400)
 
     # 1) Extremes (high/low times)
@@ -460,9 +480,12 @@ def _render_tide_graph(tide_chart: dict) -> str:
   var raw = {chart_json};
   if (!raw.labels || !raw.labels.length) return;
 
-  // Show a tick label every 24 hours (one per day)
-  var tickLabels = raw.labels.map(function(lbl, i) {{
-    return (i % 24 === 0) ? lbl.slice(0, 9) : "";
+  // Show a date label only at midnight local time (label ends "00:00").
+  // The hourly height sample at UTC 23:00 is always IST 00:00 (UTC+1 summer /
+  // UTC+0 winter), so there is always an exact midnight label to match against
+  // regardless of any extra extreme data-points inserted between hourly samples.
+  var tickLabels = raw.labels.map(function(lbl) {{
+    return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
   }});
 
   new Chart(document.getElementById("tideChart"), {{
