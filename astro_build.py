@@ -791,6 +791,12 @@ def main():
     <button class="wx-btn"           data-var="precipitation"     data-label="Precipitation">🌧 Precip</button>
     <button class="wx-btn"           data-var="clouds"            data-label="Cloud Cover">☁️ Clouds</button>
     <button class="wx-btn"           data-var="pressure"          data-label="Pressure">🔵 Pressure</button>
+    <button class="wx-btn"           data-var="feels_like_temperature" data-label="Feels Like">🌡 Feels Like</button>
+    <button class="wx-btn"           data-var="air_quality"       data-label="Air Quality">🍃 Air Quality</button>
+    <button class="wx-btn"           data-var="ozone_surface"     data-label="Ozone (Surface)">🔬 Ozone Sfc</button>
+    <button class="wx-btn"           data-var="ozone_total"       data-label="Ozone (Total)">🔬 Ozone Total</button>
+    <button class="wx-btn"           data-var="no2"               data-label="NO₂">🏭 NO₂</button>
+    <button class="wx-btn"           data-var="pm2.5"             data-label="PM2.5">🌫 PM2.5</button>
   </div>
 
   <!-- Time slider -->
@@ -907,6 +913,30 @@ def main():
     pressure:          {{ label:"Pressure",       unit:"hPa",  wave:false, legend:[
       {{c:"#800000",v:"980"}},{{c:"#ff4400",v:"995"}},{{c:"#ffff00",v:"1010"}},
       {{c:"#00aaff",v:"1020"}},{{c:"#0000aa",v:"1030+"}},
+    ]}},
+    feels_like_temperature: {{ label:"Feels Like",    unit:"°C",   wave:false, legend:[
+      {{c:"#0000ff",v:"-10"}},{{c:"#00aaff",v:"0"}},{{c:"#00ff88",v:"10"}},
+      {{c:"#ffff00",v:"20"}},{{c:"#ff0000",v:"30+"}},
+    ]}},
+    air_quality:       {{ label:"Air Quality",    unit:"AQI",  wave:false, legend:[
+      {{c:"#00e400",v:"0–50"}},{{c:"#ffff00",v:"51–100"}},{{c:"#ff7e00",v:"101–150"}},
+      {{c:"#ff0000",v:"151–200"}},{{c:"#8f3f97",v:"201+"}},
+    ]}},
+    ozone_surface:     {{ label:"Ozone (Sfc)",    unit:"µg/m³",wave:false, legend:[
+      {{c:"#ffffcc",v:"0"}},{{c:"#a1dab4",v:"50"}},{{c:"#41b6c4",v:"100"}},
+      {{c:"#2c7fb8",v:"150"}},{{c:"#253494",v:"200+"}},
+    ]}},
+    ozone_total:       {{ label:"Ozone (Total)",  unit:"DU",   wave:false, legend:[
+      {{c:"#ffffcc",v:"250"}},{{c:"#a1dab4",v:"300"}},{{c:"#41b6c4",v:"350"}},
+      {{c:"#2c7fb8",v:"400"}},{{c:"#253494",v:"450+"}},
+    ]}},
+    no2:               {{ label:"NO₂",            unit:"µg/m³",wave:false, legend:[
+      {{c:"#ffffb2",v:"0"}},{{c:"#fecc5c",v:"20"}},{{c:"#fd8d3c",v:"40"}},
+      {{c:"#f03b20",v:"80"}},{{c:"#bd0026",v:"200+"}},
+    ]}},
+    "pm2.5":           {{ label:"PM2.5",          unit:"µg/m³",wave:false, legend:[
+      {{c:"#ffffb2",v:"0"}},{{c:"#fecc5c",v:"12"}},{{c:"#fd8d3c",v:"35"}},
+      {{c:"#f03b20",v:"55"}},{{c:"#bd0026",v:"150+"}},
     ]}},
   }};
 
