@@ -548,16 +548,17 @@ def main():
 
   <!-- Layer selector -->
   <div id="wx-layer-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
-    <button class="wx-btn wx-active" data-var="wind_speed"    data-label="Wind Speed">💨 Wind Speed</button>
-    <button class="wx-btn"           data-var="wind_gust"     data-label="Wind Gusts">💨 Wind Gusts</button>
-    <button class="wx-btn"           data-var="wave_height"   data-label="Wave Height">🌊 Wave Height</button>
-    <button class="wx-btn"           data-var="wave_period"   data-label="Wave Period">🌊 Wave Period</button>
-    <button class="wx-btn"           data-var="humidity"      data-label="Humidity">💧 Humidity</button>
-    <button class="wx-btn"           data-var="temperature"   data-label="Temperature">🌡 Temperature</button>
-    <button class="wx-btn"           data-var="sea_temperature" data-label="Sea Temp">🌡 Sea Temp</button>
-    <button class="wx-btn"           data-var="precipitation" data-label="Precipitation">🌧 Precip</button>
-    <button class="wx-btn"           data-var="clouds"        data-label="Cloud Cover">☁️ Clouds</button>
-    <button class="wx-btn"           data-var="pressure"      data-label="Pressure">🔵 Pressure</button>
+    <button class="wx-btn wx-active" data-var="wind_speed"        data-label="Wind Speed">💨 Wind Speed</button>
+    <button class="wx-btn"           data-var="wind_gust"         data-label="Wind Gusts">💨 Wind Gusts</button>
+    <button class="wx-btn"           data-var="waves_height"      data-label="Wave Height">🌊 Wave Height</button>
+    <button class="wx-btn"           data-var="waves_swell_height" data-label="Swell Height">🌊 Swell Height</button>
+    <button class="wx-btn"           data-var="waves_period"      data-label="Wave Period">🌊 Wave Period</button>
+    <button class="wx-btn"           data-var="humidity"          data-label="Humidity">💧 Humidity</button>
+    <button class="wx-btn"           data-var="temperature"       data-label="Temperature">🌡 Temperature</button>
+    <button class="wx-btn"           data-var="sea_temperature"   data-label="Sea Temp">🌡 Sea Temp</button>
+    <button class="wx-btn"           data-var="precipitation"     data-label="Precipitation">🌧 Precip</button>
+    <button class="wx-btn"           data-var="clouds"            data-label="Cloud Cover">☁️ Clouds</button>
+    <button class="wx-btn"           data-var="pressure"          data-label="Pressure">🔵 Pressure</button>
   </div>
 
   <!-- Time slider -->
@@ -592,6 +593,14 @@ def main():
       <div id="wx-legend-title" style="font-weight:700;margin-bottom:6px;color:#0d3d6b;">Wind Speed</div>
       <div id="wx-legend-body"></div>
     </div>
+
+    <!-- Wave layer unavailable notice (hidden by default) -->
+    <div id="wx-wave-notice"
+         style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                z-index:910;background:rgba(13,61,107,0.9);color:#fff;border-radius:8px;
+                padding:14px 20px;text-align:center;font-size:0.88rem;max-width:280px;pointer-events:none;">
+      🌊 Wave / swell tiles are not available for this API tier or location.
+    </div>
   </div>
 
   <div style="padding:8px 16px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:0.78rem;color:#6b7280;">
@@ -619,53 +628,59 @@ def main():
 
   // ── Layer metadata ──────────────────────────────────────────────────────────
   var LAYERS = {{
-    wind_speed:      {{ label:"Wind Speed",    unit:"m/s",  legend:[
+    wind_speed:        {{ label:"Wind Speed",     unit:"m/s",  wave:false, legend:[
       {{c:"#0000ff",v:"0"}},{{c:"#00aaff",v:"3"}},{{c:"#00ff88",v:"6"}},
       {{c:"#ffff00",v:"10"}},{{c:"#ff8800",v:"15"}},{{c:"#ff0000",v:"20+"}},
     ]}},
-    wind_gust:       {{ label:"Wind Gusts",    unit:"m/s",  legend:[
+    wind_gust:         {{ label:"Wind Gusts",     unit:"m/s",  wave:false, legend:[
       {{c:"#0000ff",v:"0"}},{{c:"#00aaff",v:"5"}},{{c:"#00ff88",v:"10"}},
       {{c:"#ffff00",v:"15"}},{{c:"#ff8800",v:"20"}},{{c:"#ff0000",v:"25+"}},
     ]}},
-    wave_height:     {{ label:"Wave Height",   unit:"m",    legend:[
+    waves_height:      {{ label:"Wave Height",    unit:"m",    wave:true,  legend:[
       {{c:"#b3e0ff",v:"0"}},{{c:"#66b8ff",v:"0.5"}},{{c:"#1a90ff",v:"1"}},
       {{c:"#005eb8",v:"2"}},{{c:"#002080",v:"3+"}},
     ]}},
-    wave_period:     {{ label:"Wave Period",   unit:"s",    legend:[
+    waves_swell_height:{{ label:"Swell Height",   unit:"m",    wave:true,  legend:[
+      {{c:"#e0f8e0",v:"0"}},{{c:"#80e080",v:"0.5"}},{{c:"#20b020",v:"1"}},
+      {{c:"#006800",v:"2"}},{{c:"#003000",v:"3+"}},
+    ]}},
+    waves_period:      {{ label:"Wave Period",    unit:"s",    wave:true,  legend:[
       {{c:"#ffffcc",v:"0"}},{{c:"#a1dab4",v:"5"}},{{c:"#41b6c4",v:"10"}},
       {{c:"#2c7fb8",v:"15"}},{{c:"#253494",v:"20+"}},
     ]}},
-    humidity:        {{ label:"Humidity",      unit:"%",    legend:[
+    humidity:          {{ label:"Humidity",       unit:"%",    wave:false, legend:[
       {{c:"#f7fbff",v:"0"}},{{c:"#c6dbef",v:"20"}},{{c:"#6baed6",v:"40"}},
       {{c:"#2171b5",v:"60"}},{{c:"#08306b",v:"80+"}},
     ]}},
-    temperature:     {{ label:"Temperature",   unit:"°C",   legend:[
+    temperature:       {{ label:"Temperature",    unit:"°C",   wave:false, legend:[
       {{c:"#0000ff",v:"-10"}},{{c:"#00aaff",v:"0"}},{{c:"#00ff88",v:"10"}},
       {{c:"#ffff00",v:"20"}},{{c:"#ff0000",v:"30+"}},
     ]}},
-    sea_temperature: {{ label:"Sea Temp",      unit:"°C",   legend:[
+    sea_temperature:   {{ label:"Sea Temp",       unit:"°C",   wave:false, legend:[
       {{c:"#0000ff",v:"5"}},{{c:"#00aaff",v:"10"}},{{c:"#00ff88",v:"15"}},
       {{c:"#ffff00",v:"20"}},{{c:"#ff0000",v:"25+"}},
     ]}},
-    precipitation:   {{ label:"Precipitation", unit:"mm/h", legend:[
+    precipitation:     {{ label:"Precipitation",  unit:"mm/h", wave:false, legend:[
       {{c:"#e0f3ff",v:"0"}},{{c:"#74c6ff",v:"1"}},{{c:"#0080ff",v:"3"}},
       {{c:"#004fa3",v:"8"}},{{c:"#800080",v:"15+"}},
     ]}},
-    clouds:          {{ label:"Cloud Cover",   unit:"%",    legend:[
+    clouds:            {{ label:"Cloud Cover",    unit:"%",    wave:false, legend:[
       {{c:"#ffffff",v:"0"}},{{c:"#cccccc",v:"25"}},{{c:"#999999",v:"50"}},
       {{c:"#555555",v:"75"}},{{c:"#222222",v:"100"}},
     ]}},
-    pressure:        {{ label:"Pressure",      unit:"hPa",  legend:[
+    pressure:          {{ label:"Pressure",       unit:"hPa",  wave:false, legend:[
       {{c:"#800000",v:"980"}},{{c:"#ff4400",v:"995"}},{{c:"#ffff00",v:"1010"}},
       {{c:"#00aaff",v:"1020"}},{{c:"#0000aa",v:"1030+"}},
     ]}},
   }};
 
   // ── Constants ───────────────────────────────────────────────────────────────
-  // Cork Harbour map centre and default zoom
-  var MAP_CENTER_LAT  = 51.845;
-  var MAP_CENTER_LON  = -8.25;
-  var MAP_DEFAULT_ZOOM = 10;
+  // Zoomed out to show Ireland + surrounding Atlantic so weather gradients are
+  // visible across the full tile colour scale (the previous zoom 10 only showed
+  // Cork Harbour, too small an area for colour variation to be apparent).
+  var MAP_CENTER_LAT  = 52.0;
+  var MAP_CENTER_LON  = -8.5;
+  var MAP_DEFAULT_ZOOM = 7;
   // Whitegate Observatory coordinates
   var OBS_LAT = 51.825256;
   var OBS_LON = -8.240009;
@@ -705,6 +720,7 @@ def main():
   // ── Update weather tile layer ───────────────────────────────────────────────
   function updateLayer() {{
     if (wxLayer) {{ map.removeLayer(wxLayer); wxLayer = null; }}
+    document.getElementById('wx-wave-notice').style.display = 'none';
     if (!MS_KEY || MS_KEY === 'PASTE-YOUR-API-KEY-HERE') {{
       // No key — show a placeholder message and skip tile fetch
       document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label + ' (API key required)';
@@ -712,10 +728,33 @@ def main():
     }}
     wxLayer = L.tileLayer(tileUrl(activeVar, forecastHrs), {{
       tileSize: 256,
-      opacity: 0.65,
+      opacity: 0.75,
       attribution: '&copy; Meteosource',
       maxNativeZoom: 14,
     }});
+    // Detect when wave/swell tiles fail to load (404 / no data for this tier)
+    var isWaveLayer = LAYERS[activeVar] && LAYERS[activeVar].wave;
+    if (isWaveLayer) {{
+      var errorCount = 0; var loadCount = 0; var tileTotal = 0;
+      wxLayer.on('tileload',  function() {{ loadCount++;  }});
+      wxLayer.on('tileerror', function() {{
+        errorCount++;
+        // If more than half the tiles fail, assume the variable is unavailable
+        if (tileTotal > 0 && errorCount / tileTotal > 0.5) {{
+          document.getElementById('wx-wave-notice').style.display = 'block';
+        }}
+      }});
+      wxLayer.on('loading', function(e) {{
+        tileTotal = 0; loadCount = 0; errorCount = 0;
+        document.getElementById('wx-wave-notice').style.display = 'none';
+      }});
+      wxLayer.on('load', function() {{
+        tileTotal = loadCount + errorCount;
+        if (tileTotal > 0 && errorCount / tileTotal > 0.5) {{
+          document.getElementById('wx-wave-notice').style.display = 'block';
+        }}
+      }});
+    }}
     wxLayer.addTo(map);
     document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label;
     updateLegend();
