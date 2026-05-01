@@ -727,7 +727,8 @@ def main():
       return;
     }}
     wxLayer = L.tileLayer(tileUrl(activeVar, forecastHrs), {{
-      tileSize: 256,
+      tileSize: 512,
+      zoomOffset: -1,
       opacity: 0.75,
       attribution: '&copy; Meteosource',
       maxNativeZoom: 14,
