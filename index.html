@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
       .top-menu {
         background: #1a1a1a;
@@ -41,45 +39,50 @@
         margin: 2rem auto;
         padding: 0 2rem;
       }
-      .map-container {
-        margin: 2rem 0;
+      .about-section {
         background: #fff;
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        overflow: hidden;
+        padding: 2rem;
+        margin-bottom: 2rem;
       }
-      .map-header {
-        padding: 1.5rem;
-        background: #f8f9fa;
-        border-bottom: 1px solid #dee2e6;
+      .about-section h1 {
+        color: #4a9eff;
+        margin: 0 0 1rem 0;
+        font-size: 2rem;
       }
-      .map-header h2 {
-        margin: 0 0 0.5rem 0;
+      .about-section h2 {
         color: #1a1a1a;
-        font-size: 1.5rem;
+        margin: 1.5rem 0 0.5rem 0;
+        font-size: 1.25rem;
       }
-      .map-header p {
+      .about-section p {
+        color: #374151;
+        line-height: 1.7;
+        margin: 0 0 1rem 0;
+      }
+      .about-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+      .about-card {
+        background: #f8f9fb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.25rem;
+      }
+      .about-card h3 {
+        margin: 0 0 0.5rem 0;
+        color: #4a9eff;
+        font-size: 1rem;
+      }
+      .about-card p {
         margin: 0;
-        color: #6c757d;
-        font-size: 0.95rem;
-      }
-      #map {
-        height: 600px;
-        width: 100%;
-      }
-      .fishing-popup h3 {
-        margin: 0 0 0.5rem 0;
-        color: #1a1a1a;
-      }
-      .fishing-popup ul {
-        margin: 0.5rem 0 0 0;
-        padding-left: 1.2rem;
-      }
-      .fishing-popup li {
-        margin: 0.3rem 0;
-      }
-      .leaflet-control-layers {
-        font-family: inherit;
+        font-size: 0.9rem;
+        color: #6b7280;
+        line-height: 1.5;
       }
     </style>
   </head>
@@ -87,7 +90,7 @@
     <div class="top-menu">
       <nav>
         <a href="index.html" class="logo">Whitegate Observatory</a>
-        <a href="combined.html">Conditions</a>
+        <a href="marine.html">Marine</a>
         <a href="radio.html">Radio</a>
         <a href="radio-astronomy.html">Radio Astronomy</a>
         <a href="astro-photography.html">Astro Photography</a>
@@ -96,122 +99,50 @@
     </div>
 
     <div class="content-wrapper">
-      <div class="map-container">
-        <div class="map-header">
-          <h2>Observatory Location</h2>
-          <p>Whitegate, East Cork and Cork Harbour</p>
+      <div class="about-section">
+        <h1>Whitegate Observatory</h1>
+        <p>
+          Located in Whitegate, East Cork, Ireland, on the shores of Cork Harbour, Whitegate Observatory
+          is a private amateur observatory dedicated to astronomy, radio science, and marine observation.
+          The site benefits from relatively dark skies for an Irish coastal location, with the expanse of
+          Cork Harbour providing excellent horizons for both optical and radio work.
+        </p>
+        <p>
+          The observatory runs automated forecasts and data collection around the clock, combining
+          weather modelling, tide data, and astronomical calculations to plan observing sessions and
+          marine activities.
+        </p>
+
+        <h2>What you'll find here</h2>
+        <div class="about-grid">
+          <div class="about-card">
+            <h3>🌊 Marine</h3>
+            <p>Cork Harbour weather forecast with wave and swell data, fishing forecast, tide chart, and observatory location map.</p>
+          </div>
+          <div class="about-card">
+            <h3>📡 Radio</h3>
+            <p>HF and VHF radio operations including amateur radio contacts and propagation monitoring.</p>
+          </div>
+          <div class="about-card">
+            <h3>🔭 Radio Astronomy</h3>
+            <p>Passive radio astronomy observations including solar and Jupiter noise storm monitoring.</p>
+          </div>
+          <div class="about-card">
+            <h3>📷 Astro Photography</h3>
+            <p>Astrophotography outlook with a nightly scoring forecast for cloud cover, sky darkness, and seeing conditions.</p>
+          </div>
+          <div class="about-card">
+            <h3>🛰 TinyGS</h3>
+            <p>Ground station data from the TinyGS network of LoRa satellite receivers.</p>
+          </div>
         </div>
-        <div id="map"></div>
+
+        <h2>Location</h2>
+        <p>
+          Whitegate, East Cork, Ireland — 51°49'N, 8°14'W. Situated on the eastern shore of Cork Harbour,
+          one of the largest natural harbours in the world.
+        </p>
       </div>
     </div>
-
-    <script>
-      // Initialize the map centered on offset position for better visual layout
-      const map = L.map('map').setView([51.863212, -8.120911], 11);
-
-      // Add OpenStreetMap tiles
-      const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
-      }).addTo(map);
-
-      // Add a marker for Whitegate Observatory
-      const marker = L.marker([51.825256, -8.240009]).addTo(map);
-      marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
-
-      // Add a circle to highlight the observatory area
-      const circle = L.circle([51.825256, -8.240009], {
-        color: '#4a9eff',
-        fillColor: '#4a9eff',
-        fillOpacity: 0.2,
-        radius: 100
-      }).addTo(map);
-
-      // Create fishing spots layer
-      const fishingLayer = L.layerGroup();
-
-      // Create custom fishing icon (using emoji in divIcon)
-      const fishingIcon = L.divIcon({
-        html: '🎣',
-        className: 'fishing-marker',
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
-        popupAnchor: [0, -15]
-      });
-
-      // Fetch tide data
-      let tideData = null;
-      fetch('fishing/fishing.json')
-        .then(response => {
-          if (!response.ok) {
-            console.log('Tide data not available (HTTP ' + response.status + ')');
-            return null;
-          }
-          return response.json();
-        })
-        .then(data => {
-          if (data) {
-            tideData = data;
-            console.log('Tide data loaded:', tideData);
-          }
-        })
-        .catch(error => console.log('Tide data fetch error:', error));
-
-      // Fetch and display fishing spots
-      fetch('assets/data/fishing-spots.json')
-        .then(response => response.json())
-        .then(data => {
-          data.spots.forEach(spot => {
-            // Create popup content
-            let catchList = '';
-            if (spot.catches && spot.catches.length > 0) {
-              catchList = '<ul>';
-              spot.catches.forEach(species => {
-                catchList += `<li>${species}</li>`;
-              });
-              catchList += '</ul>';
-            } else {
-              catchList = '<p><em>No catches recorded yet</em></p>';
-            }
-            
-            // Get today's tide info if available
-            let tideInfo = '';
-            if (tideData && tideData.windows && tideData.windows.length > 0) {
-              const today = tideData.windows[0];
-              if (today.high_tide || today.low_tide) {
-                tideInfo = '<div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #ddd;">';
-                tideInfo += '<strong>Today\'s Tides:</strong><br>';
-                if (today.high_tide && today.high_tide !== '—') tideInfo += `High: ${today.high_tide}<br>`;
-                if (today.low_tide && today.low_tide !== '—') tideInfo += `Low: ${today.low_tide}`;
-                tideInfo += '</div>';
-              }
-            }
-
-            const seasonsInfo = spot.seasons ? `<div style="margin-top: 0.5rem;"><strong>Best Seasons:</strong> ${spot.seasons}</div>` : '';
-            
-            const popupContent = `
-              <div class="fishing-popup">
-                <h3>🎣 ${spot.name}</h3>
-                ${catchList}
-                ${seasonsInfo}
-                ${tideInfo}
-              </div>
-            `;
-
-            // Add marker to fishing layer
-            const fishMarker = L.marker([spot.lat, spot.lon], { icon: fishingIcon })
-              .bindPopup(popupContent);
-            fishingLayer.addLayer(fishMarker);
-          });
-        })
-        .catch(error => console.error('Error loading fishing spots:', error));
-
-      // Add layer control
-      const overlays = {
-        "🎣 Fishing Spots": fishingLayer
-      };
-
-      L.control.layers(null, overlays, { collapsed: false }).addTo(map);
-    </script>
   </body>
 </html>

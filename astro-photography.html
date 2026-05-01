@@ -47,13 +47,22 @@
         line-height: 1.6;
         margin-bottom: 1rem;
       }
+      .outlook-frame {
+        width: 100%;
+        min-height: 520px;
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+        display: block;
+        margin-top: 1.5rem;
+      }
     </style>
   </head>
   <body>
     <div class="top-menu">
       <nav>
         <a href="index.html" class="logo">Whitegate Observatory</a>
-        <a href="combined.html">Conditions</a>
+        <a href="marine.html">Marine</a>
         <a href="radio.html">Radio</a>
         <a href="radio-astronomy.html">Radio Astronomy</a>
         <a href="astro-photography.html">Astro Photography</a>
@@ -62,7 +71,14 @@
     </div>
     <div class="content">
       <h1>Astro Photography</h1>
-      <p>Information about astrophotography at Whitegate Observatory.</p>
+      <p>Astrophotography outlook for Whitegate Observatory — nightly scoring based on cloud cover, sky darkness (SQM), dew spread, wind, precipitation, and moon brightness.</p>
+      <iframe
+        src="astro/astro.html"
+        class="outlook-frame"
+        title="Astrophotography Outlook"
+        scrolling="no"
+        onload="this.style.height=(this.contentWindow.document.documentElement.scrollHeight+32)+'px'"
+      ></iframe>
     </div>
   </body>
 </html>

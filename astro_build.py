@@ -292,8 +292,8 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
     
     body = f'<div class="weather-card-section"><div class="weather-h">{location_name}</div>'
     
-    # Header row
-    body += '<div class="day-row header-row"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div><div class="weather-val">Humidity</div><div class="weather-val">Pressure</div></div>'
+    # Header row — includes Wave column
+    body += '<div class="day-row header-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div><div class="weather-val">Humidity</div><div class="weather-val">Pressure</div><div class="weather-val">Wave</div></div>'
     
     for day_key in sorted(days.keys())[:7]:
         day_hours = days[day_key]
@@ -308,6 +308,15 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         clouds = [c if isinstance(c, (int, float)) else 0 for c in [_get(h, "cloud_cover.total") for h in day_hours]]
         humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
         pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
+
+        # Wave/swell height — try common Meteosource field names, fall back to N/A
+        wave_heights = [
+            v for v in [
+                _get(h, "wave_height") or _get(h, "swell.height") or _get(h, "waves.height")
+                for h in day_hours
+            ]
+            if isinstance(v, (int, float))
+        ]
         
         temp_str = f"{int(min(temps))}°/{int(max(temps))}°C" if temps else "N/A"
         precip_str = f"{sum(precips):.1f}mm" if precips else "0mm"
@@ -315,8 +324,9 @@ def render_weather_card(location_name: str, hourly_data: list) -> str:
         cloud_str = f"{int(mean(clouds) if clouds else 0)}%"
         humid_str = f"{int(mean(humidity) if humidity else 0)}%"
         press_str = f"{int(mean(pressure) if pressure else 0)} hPa"
+        wave_str = f"{mean(wave_heights):.1f}m" if wave_heights else "N/A"
         
-        body += f'<div class="day-row"><div>{day_label}</div><div class="weather-val">{temp_str}</div><div class="weather-val">{precip_str}</div><div class="weather-val">{wind_str}</div><div class="weather-val">{cloud_str}</div><div class="weather-val">{humid_str}</div><div class="weather-val">{press_str}</div></div>'
+        body += f'<div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>{day_label}</div><div class="weather-val">{temp_str}</div><div class="weather-val">{precip_str}</div><div class="weather-val">{wind_str}</div><div class="weather-val">{cloud_str}</div><div class="weather-val">{humid_str}</div><div class="weather-val">{press_str}</div><div class="weather-val">{wave_str}</div></div>'
     
     body += '</div>'
     return body
@@ -473,33 +483,32 @@ def main():
 
     print(f"Wrote: {json_out} and {html_out}")
     
-    # Generate combined weather card for both locations
+    # Generate Cork Harbour weather card (single location replacing Whitegate + Cork City)
     weather_dir = os.path.join(os.path.dirname(outdir), "weather")
     os.makedirs(weather_dir, exist_ok=True)
     
-    # Fetch Cork weather data
-    CORK_LAT, CORK_LON = 51.8985, -8.4756  # Cork City
-    fc_cork = ms.get_point_forecast(lat=CORK_LAT, lon=CORK_LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
-                                     sections=(sections.HOURLY,))
-    cork_hourly = fc_cork.hourly.data or []
+    # Fetch Cork Harbour weather data (centre of the harbour)
+    HARBOUR_LAT, HARBOUR_LON = 51.835, -8.28  # Cork Harbour
+    fc_harbour = ms.get_point_forecast(lat=HARBOUR_LAT, lon=HARBOUR_LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
+                                       sections=(sections.HOURLY,))
+    harbour_hourly = fc_harbour.hourly.data or []
     
-    # Generate single combined weather file with both locations
-    combined_html_tmp = os.path.join(weather_dir, "forecast.tmp.html")
-    combined_html_out = os.path.join(weather_dir, "forecast.html")
+    # Generate weather file for Cork Harbour
+    harbour_html_tmp = os.path.join(weather_dir, "forecast.tmp.html")
+    harbour_html_out = os.path.join(weather_dir, "forecast.html")
     locations_data = [
-        ("Whitegate, Co. Cork", hourly),
-        ("Cork City", cork_hourly)
+        ("Cork Harbour", harbour_hourly)
     ]
-    with open(combined_html_tmp, "w", encoding="utf-8") as f:
+    with open(harbour_html_tmp, "w", encoding="utf-8") as f:
         f.write(render_combined_weather(locations_data))
-    os.replace(combined_html_tmp, combined_html_out)
+    os.replace(harbour_html_tmp, harbour_html_out)
     
-    print(f"Wrote combined weather: {combined_html_out}")
+    print(f"Wrote Cork Harbour weather: {harbour_html_out}")
     
-    # Generate combined page with all three forecasts
-    combined_dir = os.path.dirname(outdir)
-    combined_html_path = os.path.join(combined_dir, "combined.html")
-    combined_tmp_path = os.path.join(combined_dir, "combined.tmp.html")
+    # Generate marine page (weather + fishing + map — astronomy moves to astro-photography page)
+    marine_dir = os.path.dirname(outdir)
+    marine_html_path = os.path.join(marine_dir, "marine.html")
+    marine_tmp_path = os.path.join(marine_dir, "marine.tmp.html")
     
     # Read fishing data
     import sys
@@ -510,22 +519,43 @@ def main():
     
     # Extract body content without body tag
     def extract_body_content(html):
-        # Remove everything before <body...> and after </body>
         match = re.search(r'<body[^>]*>(.*)</body>', html, re.DOTALL)
         return match.group(1) if match else html
     
-    astro_content = extract_body_content(render_html_card(payload))
     weather_content = extract_body_content(render_combined_weather(locations_data))
     fishing_content = extract_body_content(render_fishing_card(fishing_payload))
     
-    # Build combined HTML
+    map_section = '''<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+  <div style="padding:1.5rem;background:#f8f9fa;border-bottom:1px solid #dee2e6;">
+    <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Observatory Location</h2>
+    <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour</p>
+  </div>
+  <div id="obs-map" style="height:420px;width:100%;"></div>
+</div>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function() {
+  var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '\xa9 OpenStreetMap contributors', maxZoom: 19
+  }).addTo(map);
+  var marker = L.marker([51.825256, -8.240009]).addTo(map);
+  marker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
+  L.circle([51.825256, -8.240009], {
+    color: '#4a9eff', fillColor: '#4a9eff', fillOpacity: 0.2, radius: 100
+  }).addTo(map);
+})();
+</script>'''
+
+    # Build marine page HTML
     updated_time = datetime.now().strftime("%a %d %b %H:%M")
-    combined_html = f'''<!DOCTYPE html>
+    marine_html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Whitegate Observatory</title>
+    <title>Marine - Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <style>
       .top-menu {{
@@ -562,7 +592,7 @@ def main():
 <div class="top-menu">
   <nav>
     <a href="index.html" class="logo">Whitegate Observatory</a>
-    <a href="combined.html">Conditions</a>
+    <a href="marine.html">Marine</a>
     <a href="radio.html">Radio</a>
     <a href="radio-astronomy.html">Radio Astronomy</a>
     <a href="astro-photography.html">Astro Photography</a>
@@ -570,17 +600,17 @@ def main():
   </nav>
 </div>
 <div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides</span></div>
-{astro_content}
 {weather_content}
 {fishing_content}
+{map_section}
 </body>
 </html>'''
     
-    with open(combined_tmp_path, "w", encoding="utf-8") as f:
-        f.write(combined_html)
-    os.replace(combined_tmp_path, combined_html_path)
+    with open(marine_tmp_path, "w", encoding="utf-8") as f:
+        f.write(marine_html)
+    os.replace(marine_tmp_path, marine_html_path)
     
-    print(f"Wrote combined page: {combined_html_path}")
+    print(f"Wrote marine page: {marine_html_path}")
 
 if __name__ == "__main__":
     main()
