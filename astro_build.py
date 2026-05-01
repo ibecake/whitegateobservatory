@@ -550,9 +550,8 @@ def main():
   <div id="wx-layer-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
     <button class="wx-btn wx-active" data-var="wind_speed"        data-label="Wind Speed">💨 Wind Speed</button>
     <button class="wx-btn"           data-var="wind_gust"         data-label="Wind Gusts">💨 Wind Gusts</button>
-    <button class="wx-btn"           data-var="waves_height"      data-label="Wave Height">🌊 Wave Height</button>
-    <button class="wx-btn"           data-var="waves_swell_height" data-label="Swell Height">🌊 Swell Height</button>
-    <button class="wx-btn"           data-var="waves_period"      data-label="Wave Period">🌊 Wave Period</button>
+    <button class="wx-btn"           data-var="wave_height"       data-label="Wave Height">🌊 Wave Height</button>
+    <button class="wx-btn"           data-var="wave_period"       data-label="Wave Period">🌊 Wave Period</button>
     <button class="wx-btn"           data-var="humidity"          data-label="Humidity">💧 Humidity</button>
     <button class="wx-btn"           data-var="temperature"       data-label="Temperature">🌡 Temperature</button>
     <button class="wx-btn"           data-var="sea_temperature"   data-label="Sea Temp">🌡 Sea Temp</button>
@@ -636,15 +635,11 @@ def main():
       {{c:"#0000ff",v:"0"}},{{c:"#00aaff",v:"5"}},{{c:"#00ff88",v:"10"}},
       {{c:"#ffff00",v:"15"}},{{c:"#ff8800",v:"20"}},{{c:"#ff0000",v:"25+"}},
     ]}},
-    waves_height:      {{ label:"Wave Height",    unit:"m",    wave:true,  legend:[
+    wave_height:       {{ label:"Wave Height",    unit:"m",    wave:true,  legend:[
       {{c:"#b3e0ff",v:"0"}},{{c:"#66b8ff",v:"0.5"}},{{c:"#1a90ff",v:"1"}},
       {{c:"#005eb8",v:"2"}},{{c:"#002080",v:"3+"}},
     ]}},
-    waves_swell_height:{{ label:"Swell Height",   unit:"m",    wave:true,  legend:[
-      {{c:"#e0f8e0",v:"0"}},{{c:"#80e080",v:"0.5"}},{{c:"#20b020",v:"1"}},
-      {{c:"#006800",v:"2"}},{{c:"#003000",v:"3+"}},
-    ]}},
-    waves_period:      {{ label:"Wave Period",    unit:"s",    wave:true,  legend:[
+    wave_period:       {{ label:"Wave Period",    unit:"s",    wave:true,  legend:[
       {{c:"#ffffcc",v:"0"}},{{c:"#a1dab4",v:"5"}},{{c:"#41b6c4",v:"10"}},
       {{c:"#2c7fb8",v:"15"}},{{c:"#253494",v:"20+"}},
     ]}},
@@ -727,8 +722,7 @@ def main():
       return;
     }}
     wxLayer = L.tileLayer(tileUrl(activeVar, forecastHrs), {{
-      tileSize: 512,
-      zoomOffset: -1,
+      tileSize: 256,
       opacity: 0.75,
       attribution: '&copy; Meteosource',
       maxNativeZoom: 14,
