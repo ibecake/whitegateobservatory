@@ -184,9 +184,7 @@
 
         function renderFromJson(payload, sourcePath) {
           const nights = Array.isArray(payload.nights) ? payload.nights : [];
-          if (!nights.length) return false;
-
-          const rows = nights.map(function (n) {
+          const rows = nights.length ? nights.map(function (n) {
             const score = Number(n.score || 0);
             const cls = scoreClass(score);
             return '<tr>' +
@@ -198,7 +196,8 @@
               '<td>' + escapeHtml(n.worst || '—') + '</td>' +
               '<td>' + escapeHtml(n.best2h || '—') + '</td>' +
               '</tr>';
-          }).join('');
+          }).join('') :
+            '<tr><td colspan="7">Generated data loaded from ' + escapeHtml(sourcePath) + ', but no qualifying night windows were present in this dataset.</td></tr>';
 
           dataRoot.innerHTML =
             '<div class="outlook-card">' +
