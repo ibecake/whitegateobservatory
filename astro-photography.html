@@ -131,6 +131,170 @@
         color: #ddd;
         display: none;
       }
+      .gallery-section {
+        margin-top: 2rem;
+      }
+      .gallery-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+      .gallery-header h2 {
+        margin: 0;
+        color: #4a9eff;
+      }
+      .gallery-controls {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .gallery-controls label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+        color: #d1d5db;
+      }
+      .gallery-controls select {
+        min-width: 160px;
+        background: #111827;
+        color: #e5e7eb;
+        border: 1px solid #374151;
+        border-radius: 6px;
+        padding: 0.45rem 0.5rem;
+      }
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+      .gallery-card {
+        border: 1px solid #1f2937;
+        background: #111827;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.28);
+      }
+      .gallery-thumb {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        object-fit: cover;
+        display: block;
+        background: #0b1220;
+      }
+      .gallery-card button {
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+      }
+      .gallery-meta {
+        padding: 0.75rem 0.85rem 0.9rem;
+      }
+      .gallery-meta h3 {
+        margin: 0 0 0.3rem;
+        font-size: 1rem;
+        color: #f9fafb;
+      }
+      .gallery-meta p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #9ca3af;
+      }
+      .gallery-status {
+        border: 1px solid #374151;
+        border-radius: 8px;
+        background: #111827;
+        color: #e5e7eb;
+        padding: 0.9rem;
+      }
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 7, 18, 0.92);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.2rem;
+        z-index: 1000;
+      }
+      .lightbox.open {
+        display: flex;
+      }
+      .lightbox-dialog {
+        width: min(1100px, 100%);
+        max-height: 100%;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        background: #020617;
+        overflow: auto;
+      }
+      .lightbox-top {
+        display: flex;
+        justify-content: end;
+        padding: 0.4rem;
+      }
+      .lightbox-close {
+        color: #e5e7eb;
+        background: #1f2937;
+        border: 1px solid #374151;
+        border-radius: 6px;
+        padding: 0.35rem 0.6rem;
+        cursor: pointer;
+      }
+      .lightbox-body {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+        padding: 0 1rem 1rem;
+      }
+      .lightbox-image {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+        background: #0b1220;
+      }
+      .lightbox-panel h3 {
+        margin: 0 0 0.5rem;
+        color: #93c5fd;
+      }
+      .lightbox-panel p {
+        margin: 0.35rem 0;
+        color: #e5e7eb;
+        font-size: 0.92rem;
+      }
+      .lightbox-panel .label {
+        color: #9ca3af;
+      }
+      @media (max-width: 980px) {
+        .gallery-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .lightbox-body {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 640px) {
+        .content {
+          padding: 0 1rem;
+        }
+        .top-menu {
+          padding: 0.85rem 1rem;
+        }
+        .top-menu nav {
+          gap: 0.35rem;
+          flex-wrap: wrap;
+        }
+        .gallery-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
@@ -155,6 +319,40 @@
         scrolling="no"
       ></iframe>
       <div id="astroOutlookError" class="outlook-error"></div>
+
+      <section class="gallery-section" aria-labelledby="galleryTitle">
+        <div class="gallery-header">
+          <h2 id="galleryTitle">Astrophotography Gallery</h2>
+          <div class="gallery-controls">
+            <label for="filterTarget">
+              Target
+              <select id="filterTarget">
+                <option value="">All targets</option>
+              </select>
+            </label>
+            <label for="filterYear">
+              Year
+              <select id="filterYear">
+                <option value="">All years</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="galleryStatus" class="gallery-status">Loading gallery manifest...</div>
+        <div id="galleryGrid" class="gallery-grid" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Astrophotography image viewer">
+      <div class="lightbox-dialog">
+        <div class="lightbox-top">
+          <button id="lightboxClose" class="lightbox-close" type="button" aria-label="Close image viewer">Close</button>
+        </div>
+        <div class="lightbox-body">
+          <img id="lightboxImage" class="lightbox-image" alt="" />
+          <div id="lightboxPanel" class="lightbox-panel"></div>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -162,9 +360,19 @@
         const dataRoot = document.getElementById('astroOutlookData');
         const frame = document.getElementById('astroOutlookFrame');
         const errorBox = document.getElementById('astroOutlookError');
+        const galleryStatus = document.getElementById('galleryStatus');
+        const galleryGrid = document.getElementById('galleryGrid');
+        const filterTarget = document.getElementById('filterTarget');
+        const filterYear = document.getElementById('filterYear');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxClose = document.getElementById('lightboxClose');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxPanel = document.getElementById('lightboxPanel');
         const htmlSources = ['astro/astro.html', 'dist/astro/astro.html'];
         const jsonSources = ['astro/astro.json', 'dist/astro/astro.json'];
+        const galleryManifestSources = ['astrophoto/manifest.json', './astrophoto/manifest.json'];
         let sourceIndex = 0;
+        let galleryItems = [];
 
         function scoreClass(score) {
           if (score >= 80) return 'score-best';
@@ -254,13 +462,161 @@
 
         function trySource(index) {
           sourceIndex = index;
-          if (sourceIndex >= sources.length) {
+          if (sourceIndex >= htmlSources.length) {
             frame.style.display = 'none';
             errorBox.style.display = 'block';
             errorBox.textContent = 'Astrophotography outlook was not found. Expected existing build files: astro/astro.json or astro/astro.html (or dist/astro variants).';
             return;
           }
           frame.src = htmlSources[sourceIndex];
+        }
+
+        function safeText(value) {
+          return (value == null || value === '') ? 'Unknown' : String(value);
+        }
+
+        function yearFromDate(dateValue) {
+          const text = safeText(dateValue);
+          const match = text.match(/^(\d{4})/);
+          return match ? match[1] : 'Unknown';
+        }
+
+        function populateFilters(items) {
+          const targets = Array.from(new Set(items.map(function (item) {
+            return safeText(item.target);
+          }))).sort();
+          const years = Array.from(new Set(items.map(function (item) {
+            return yearFromDate(item.date);
+          }))).sort().reverse();
+
+          targets.forEach(function (target) {
+            const option = document.createElement('option');
+            option.value = target;
+            option.textContent = target;
+            filterTarget.appendChild(option);
+          });
+
+          years.forEach(function (year) {
+            const option = document.createElement('option');
+            option.value = year;
+            option.textContent = year;
+            filterYear.appendChild(option);
+          });
+        }
+
+        function updateGalleryStatus(message, isError) {
+          galleryStatus.textContent = message;
+          galleryStatus.style.display = 'block';
+          galleryStatus.style.borderColor = isError ? '#7f1d1d' : '#374151';
+          galleryStatus.style.background = isError ? '#1f1012' : '#111827';
+          galleryStatus.style.color = isError ? '#fecaca' : '#e5e7eb';
+        }
+
+        function openLightbox(item) {
+          lightboxImage.src = item.full || item.thumb || '';
+          lightboxImage.alt = safeText(item.title);
+          lightboxPanel.innerHTML =
+            '<h3>' + escapeHtml(safeText(item.title)) + '</h3>' +
+            '<p><span class="label">Target:</span> ' + escapeHtml(safeText(item.target)) + '</p>' +
+            '<p><span class="label">Date:</span> ' + escapeHtml(safeText(item.date)) + '</p>' +
+            '<p><span class="label">Camera:</span> ' + escapeHtml(safeText(item.camera)) + '</p>' +
+            '<p><span class="label">Telescope:</span> ' + escapeHtml(safeText(item.telescope)) + '</p>' +
+            '<p><span class="label">Integration:</span> ' + escapeHtml(safeText(item.integration)) + '</p>' +
+            '<p>' + escapeHtml(safeText(item.description)) + '</p>';
+          lightbox.classList.add('open');
+          lightbox.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeLightbox() {
+          lightbox.classList.remove('open');
+          lightbox.setAttribute('aria-hidden', 'true');
+          lightboxImage.src = '';
+          lightboxPanel.innerHTML = '';
+        }
+
+        function renderGallery(items) {
+          galleryGrid.innerHTML = '';
+          if (!items.length) {
+            updateGalleryStatus('No images match the current filters.', false);
+            return;
+          }
+
+          galleryStatus.style.display = 'none';
+          const fragment = document.createDocumentFragment();
+          items.forEach(function (item) {
+            const card = document.createElement('article');
+            card.className = 'gallery-card';
+
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.addEventListener('click', function () {
+              openLightbox(item);
+            });
+
+            const thumb = document.createElement('img');
+            thumb.className = 'gallery-thumb';
+            thumb.loading = 'lazy';
+            thumb.decoding = 'async';
+            thumb.src = item.thumb || item.full || '';
+            thumb.alt = safeText(item.title);
+            button.appendChild(thumb);
+
+            const meta = document.createElement('div');
+            meta.className = 'gallery-meta';
+            meta.innerHTML =
+              '<h3>' + escapeHtml(safeText(item.title)) + '</h3>' +
+              '<p>' + escapeHtml(safeText(item.target)) + ' | ' + escapeHtml(safeText(item.date)) + '</p>';
+
+            card.appendChild(button);
+            card.appendChild(meta);
+            fragment.appendChild(card);
+          });
+
+          galleryGrid.appendChild(fragment);
+        }
+
+        function applyGalleryFilters() {
+          const targetFilter = filterTarget.value;
+          const yearFilter = filterYear.value;
+          const filtered = galleryItems.filter(function (item) {
+            if (targetFilter && safeText(item.target) !== targetFilter) return false;
+            if (yearFilter && yearFromDate(item.date) !== yearFilter) return false;
+            return true;
+          });
+          renderGallery(filtered);
+        }
+
+        async function loadGalleryManifest() {
+          let payload = null;
+          let sourceUsed = '';
+
+          for (const source of galleryManifestSources) {
+            try {
+              const response = await fetch(source, { cache: 'no-store' });
+              if (!response.ok) {
+                continue;
+              }
+              payload = await response.json();
+              sourceUsed = source;
+              break;
+            } catch (err) {
+              continue;
+            }
+          }
+
+          if (!Array.isArray(payload)) {
+            updateGalleryStatus('Gallery manifest could not be loaded. Expected astrophoto/manifest.json to contain a JSON array.', true);
+            return;
+          }
+
+          galleryItems = payload;
+          if (!galleryItems.length) {
+            updateGalleryStatus('Gallery manifest loaded from ' + sourceUsed + ', but no images are listed yet.', false);
+            return;
+          }
+
+          populateFilters(galleryItems);
+          applyGalleryFilters();
         }
 
         frame.addEventListener('load', function () {
@@ -275,12 +631,27 @@
           trySource(sourceIndex + 1);
         });
 
+        filterTarget.addEventListener('change', applyGalleryFilters);
+        filterYear.addEventListener('change', applyGalleryFilters);
+        lightboxClose.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', function (event) {
+          if (event.target === lightbox) {
+            closeLightbox();
+          }
+        });
+        window.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape' && lightbox.classList.contains('open')) {
+            closeLightbox();
+          }
+        });
+
         window.addEventListener('resize', setFrameHeight);
         tryJson(0).then(function (loaded) {
           if (!loaded) {
             trySource(0);
           }
         });
+        loadGalleryManifest();
       })();
     </script>
   </body>
