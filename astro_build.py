@@ -1153,6 +1153,21 @@ def main():
       &nbsp;
       <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid #16a34a;vertical-align:middle;margin-right:4px;"></span>Fishing spot
     </p>
+    <div style="margin-top:0.75rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
+        Type
+        <select id="fish-type-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+          <option value="">All types</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
+        Species
+        <select id="fish-species-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+          <option value="">All species</option>
+        </select>
+      </label>
+      <span id="fish-filter-status" style="font-size:0.82rem;color:#6b7280;">Loading spots...</span>
+    </div>
   </div>
   <div id="obs-map" style="height:420px;width:100%;"></div>
 </div>
@@ -1161,7 +1176,11 @@ def main():
   // Whitegate Observatory coordinates (same as weather map above)
   var OBS_LAT = 51.825256;
   var OBS_LON = -8.240009;
-  var boundsPoints = [[OBS_LAT, OBS_LON]];
+  var spotLayers = [];
+
+  var typeSelect = document.getElementById('fish-type-filter');
+  var speciesSelect = document.getElementById('fish-species-filter');
+  var filterStatus = document.getElementById('fish-filter-status');
 
   var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
   L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
@@ -1207,10 +1226,77 @@ def main():
     return trySource(0);
   }}
 
+  function normalizeText(value) {{
+    return String(value || '').trim().toLowerCase();
+  }}
+
+  function updateStatus(visible, total) {{
+    filterStatus.textContent = visible + ' of ' + total + ' spots shown';
+  }}
+
+  function applyFilters() {{
+    var typeFilter = normalizeText(typeSelect.value);
+    var speciesFilter = normalizeText(speciesSelect.value);
+    var filteredBounds = [[OBS_LAT, OBS_LON]];
+    var visibleCount = 0;
+
+    spotLayers.forEach(function(entry) {{
+      var spot = entry.spot;
+      var typeText = normalizeText(spot.type);
+      var speciesList = Array.isArray(spot.catches) ? spot.catches.map(normalizeText) : [];
+
+      var typeMatch = !typeFilter || typeText === typeFilter;
+      var speciesMatch = !speciesFilter || speciesList.indexOf(speciesFilter) !== -1;
+      var show = typeMatch && speciesMatch;
+
+      if (show) {{
+        if (!map.hasLayer(entry.marker)) {{
+          entry.marker.addTo(map);
+        }}
+        filteredBounds.push([spot.lat, spot.lon]);
+        visibleCount += 1;
+      }} else if (map.hasLayer(entry.marker)) {{
+        map.removeLayer(entry.marker);
+      }}
+    }});
+
+    updateStatus(visibleCount, spotLayers.length);
+    if (filteredBounds.length > 1) {{
+      map.fitBounds(filteredBounds, {{ padding: [24, 24] }});
+    }}
+  }}
+
+  function populateFilterOptions(spots) {{
+    var typeSet = new Set();
+    var speciesSet = new Set();
+
+    spots.forEach(function(spot) {{
+      if (spot.type) typeSet.add(String(spot.type).trim());
+      (spot.catches || []).forEach(function(species) {{
+        if (species) speciesSet.add(String(species).trim());
+      }});
+    }});
+
+    Array.from(typeSet).sort().forEach(function(typeName) {{
+      var option = document.createElement('option');
+      option.value = typeName;
+      option.textContent = typeName;
+      typeSelect.appendChild(option);
+    }});
+
+    Array.from(speciesSet).sort().forEach(function(speciesName) {{
+      var option = document.createElement('option');
+      option.value = speciesName;
+      option.textContent = speciesName;
+      speciesSelect.appendChild(option);
+    }});
+  }}
+
   loadSpots()
     .then(function(spots) {{
+      populateFilterOptions(spots);
+
       spots.forEach(function(spot) {{
-        boundsPoints.push([spot.lat, spot.lon]);
         var catches = (spot.catches || []).join(', ') || '—';
         var seasons = spot.seasons || '—';
         var type    = spot.type    || '';
@@ -1221,21 +1307,23 @@ def main():
           '<br><span style="color:#555">Fish: </span>'   + catches +
           '<br><span style="color:#555">Best: </span>'   + seasons +
           (notes   ? '<br><span style="color:#555">Notes: </span>'   + notes   : '');
-        L.circleMarker([spot.lat, spot.lon], {{
+        var marker = L.circleMarker([spot.lat, spot.lon], {{
           radius: 8,
           color: '#16a34a',
           fillColor: '#22c55e',
           fillOpacity: 0.85,
           weight: 2
-        }}).addTo(map).bindPopup(popup);
+        }}).bindPopup(popup);
+        spotLayers.push({{ marker: marker, spot: spot }});
       }});
 
-      if (boundsPoints.length > 1) {{
-        map.fitBounds(boundsPoints, {{ padding: [24, 24] }});
-      }}
+      typeSelect.addEventListener('change', applyFilters);
+      speciesSelect.addEventListener('change', applyFilters);
+      applyFilters();
     }})
     .catch(function(e) {{
       console.warn('Could not load fishing spots overlay:', e);
+      filterStatus.textContent = 'Could not load fishing spots';
     }});
 }})();
 </script>'''
