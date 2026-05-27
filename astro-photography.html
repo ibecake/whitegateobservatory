@@ -409,7 +409,7 @@
               '<td>' + escapeHtml(n.best2h || '—') + '</td>' +
               '</tr>';
           }).join('') :
-            '<tr><td colspan="7">Generated data loaded from ' + escapeHtml(sourcePath) + ', but no qualifying night windows were present in this dataset.</td></tr>';
+            '<tr><td colspan="7">Generated data loaded from ' + escapeHtml(sourcePath) + '. No qualifying night windows were present in this dataset (this is common near late spring and summer at this latitude).</td></tr>';
 
           dataRoot.innerHTML =
             '<div class="outlook-card">' +
