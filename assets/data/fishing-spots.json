@@ -5,37 +5,37 @@
       "lat": 51.8626,
       "lon": -8.0495,
       "name": "Knockadoon",
-      "type": "Rock and surf marks",
-      "catches": ["Bass", "Pollack", "Wrasse", "Mackerel"],
-      "seasons": "Spring to Autumn",
-      "notes": "Rock and headland marks around Knockadoon; fish safely in settled conditions. Source: fishinginireland.info/sea/where/sea-fishing-in-the-south-east/knockadoon/"
+      "type": "Headland, rock and surf marks",
+      "catches": ["Bass", "Pollack", "Wrasse", "Mackerel", "Garfish"],
+      "seasons": "Late spring to autumn",
+      "notes": "Strong shore options around the point; best with moderate sea movement and safe footing."
     },
     {
       "lat": 51.9860,
       "lon": -7.5870,
       "name": "Mine Head",
-      "type": "Cliff and rock marks",
-      "catches": ["Bass", "Conger", "Dogfish", "Bull Huss"],
-      "seasons": "Spring to Autumn",
-      "notes": "Exposed cliff and rock marks near Mine Head; access and swell conditions are critical. Source: fishinginireland.info/sea/where/sea-fishing-in-the-south-east/mine/"
+      "type": "Cliff and deep-water rock marks",
+      "catches": ["Bass", "Conger", "Bull Huss", "Dogfish", "Ray"],
+      "seasons": "Spring to autumn",
+      "notes": "Highly exposed mark; only fish in settled weather with careful access planning."
     },
     {
       "lat": 51.8237,
       "lon": -8.0007,
       "name": "Cork Harbour to Ballycotton (Ram Point sector)",
-      "type": "Mixed harbour and open-coast marks",
-      "catches": ["Bass", "Mackerel", "Pollack", "Flatfish"],
+      "type": "Harbour and open-coast mixed marks",
+      "catches": ["Bass", "Mackerel", "Pollack", "Flounder", "Whiting"],
       "seasons": "Year-round",
-      "notes": "Represents the Ram Point to Ballycotton stretch with mixed shore and harbour opportunities. Source: fishinginireland.info/sea/where/southwest/cork-harbour-ram-point-to-ballycotton/"
+      "notes": "Covers mixed marks from inner harbour out toward Ballycotton; fish species shift with tide and exposure."
     },
     {
       "lat": 51.5060,
       "lon": -9.1290,
       "name": "Galley Head to Ballymacus Point",
       "type": "Open Atlantic rock and surf marks",
-      "catches": ["Bass", "Pollack", "Wrasse", "Ray"],
-      "seasons": "Spring to Autumn",
-      "notes": "Represents the Galley Head to Ballymacus Point coastline; open Atlantic exposure. Source: fishinginireland.info/sea/where/southwest/galley-head-to-ballymacus-point/"
+      "catches": ["Bass", "Pollack", "Wrasse", "Ray", "Dogfish"],
+      "seasons": "Spring to late autumn",
+      "notes": "Atlantic-facing coastline with productive rough ground; monitor swell and wind direction closely."
     }
   ]
 }
