@@ -1,59 +1,41 @@
 {
-  "_comment": "Edit this file to add, remove or update fishing spots. Each spot appears as a green marker on the marine page map.",
+  "_comment": "Fishing locations used by the marine map. Spot names aligned to requested regional guide pages.",
   "spots": [
     {
-      "lat": 51.825256,
-      "lon": -8.240009,
-      "name": "Whitegate Pier",
-      "type": "Pier",
-      "catches": ["Bass", "Mackerel", "Flounder", "Mullet"],
-      "seasons": "Spring, Summer, Autumn",
-      "notes": "Good at dusk on a flooding tide"
+      "lat": 51.8626,
+      "lon": -8.0495,
+      "name": "Knockadoon",
+      "type": "Rock and surf marks",
+      "catches": ["Bass", "Pollack", "Wrasse", "Mackerel"],
+      "seasons": "Spring to Autumn",
+      "notes": "Rock and headland marks around Knockadoon; fish safely in settled conditions. Source: fishinginireland.info/sea/where/sea-fishing-in-the-south-east/knockadoon/"
     },
     {
-      "lat": 51.830,
-      "lon": -8.235,
-      "name": "East Shore Mark",
-      "type": "Shore (rocks)",
-      "catches": ["Pollack", "Wrasse", "Coalfish"],
+      "lat": 51.9860,
+      "lon": -7.5870,
+      "name": "Mine Head",
+      "type": "Cliff and rock marks",
+      "catches": ["Bass", "Conger", "Dogfish", "Bull Huss"],
+      "seasons": "Spring to Autumn",
+      "notes": "Exposed cliff and rock marks near Mine Head; access and swell conditions are critical. Source: fishinginireland.info/sea/where/sea-fishing-in-the-south-east/mine/"
+    },
+    {
+      "lat": 51.8237,
+      "lon": -8.0007,
+      "name": "Cork Harbour to Ballycotton (Ram Point sector)",
+      "type": "Mixed harbour and open-coast marks",
+      "catches": ["Bass", "Mackerel", "Pollack", "Flatfish"],
       "seasons": "Year-round",
-      "notes": "Best 2 hours either side of high water"
+      "notes": "Represents the Ram Point to Ballycotton stretch with mixed shore and harbour opportunities. Source: fishinginireland.info/sea/where/southwest/cork-harbour-ram-point-to-ballycotton/"
     },
     {
-      "lat": 51.845,
-      "lon": -8.195,
-      "name": "Cuskinny Rock",
-      "type": "Shore (rocks)",
-      "catches": ["Bass", "Pollack", "Wrasse"],
-      "seasons": "Spring, Summer, Autumn",
-      "notes": "Sheltered from westerly wind; spinning and lure work well"
-    },
-    {
-      "lat": 51.808,
-      "lon": -8.262,
-      "name": "Roches Point Rocks",
-      "type": "Shore (rocks)",
-      "catches": ["Pollack", "Bass", "Mackerel", "Garfish"],
-      "seasons": "Spring, Summer, Autumn",
-      "notes": "Exposed mark — check conditions before going; excellent in calm weather"
-    },
-    {
-      "lat": 51.855,
-      "lon": -8.290,
-      "name": "Ringaskiddy Pier",
-      "type": "Pier",
-      "catches": ["Flounder", "Dab", "Codling", "Whiting"],
-      "seasons": "Autumn, Winter",
-      "notes": "Night fishing for codling and whiting from October onwards"
-    },
-    {
-      "lat": 51.862,
-      "lon": -8.142,
-      "name": "Cobh Promenade",
-      "type": "Pier / promenade",
-      "catches": ["Flounder", "Dab", "Mullet", "Bass"],
-      "seasons": "Spring, Summer, Autumn",
-      "notes": "Flounder on the bottom; mullet with bread on top"
+      "lat": 51.5060,
+      "lon": -9.1290,
+      "name": "Galley Head to Ballymacus Point",
+      "type": "Open Atlantic rock and surf marks",
+      "catches": ["Bass", "Pollack", "Wrasse", "Ray"],
+      "seasons": "Spring to Autumn",
+      "notes": "Represents the Galley Head to Ballymacus Point coastline; open Atlantic exposure. Source: fishinginireland.info/sea/where/southwest/galley-head-to-ballymacus-point/"
     }
   ]
 }

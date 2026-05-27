@@ -1161,6 +1161,7 @@ def main():
   // Whitegate Observatory coordinates (same as weather map above)
   var OBS_LAT = 51.825256;
   var OBS_LON = -8.240009;
+  var boundsPoints = [[OBS_LAT, OBS_LON]];
 
   var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
   L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
@@ -1181,6 +1182,7 @@ def main():
     .then(function(r) {{ return r.json(); }})
     .then(function(data) {{
       (data.spots || []).forEach(function(spot) {{
+        boundsPoints.push([spot.lat, spot.lon]);
         var catches = (spot.catches || []).join(', ') || '—';
         var seasons = spot.seasons || '—';
         var type    = spot.type    || '';
@@ -1199,6 +1201,10 @@ def main():
           weight: 2
         }}).addTo(map).bindPopup(popup);
       }});
+
+      if (boundsPoints.length > 1) {{
+        map.fitBounds(boundsPoints, {{ padding: [24, 24] }});
+      }}
     }})
     .catch(function(e) {{
       console.warn('Could not load fishing spots overlay:', e);
