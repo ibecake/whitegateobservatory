@@ -1,41 +1,1558 @@
 {
-  "_comment": "Manual fishing map manifest. Edit this file directly to add, remove or update map spots.",
+  "_comment": "Manual fishing map manifest. Edit this file directly to add, remove or update map spots. Coordinates are approximate map-pin locations derived from the supplied notes and map images, not navigation-grade positions.",
   "spots": [
     {
       "lat": 51.8626,
       "lon": -8.0495,
-      "name": "Knockadoon",
-      "type": "Headland, rock and surf marks",
-      "catches": ["Bass", "Pollack", "Wrasse", "Mackerel", "Garfish"],
-      "seasons": "Late spring to autumn",
-      "notes": "Strong shore options around the point; best with moderate sea movement and safe footing."
+      "name": "Knockadoon Area",
+      "type": "Area summary, headland, rock, beach and surf marks",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Wrasse",
+        "Mackerel",
+        "Mullet",
+        "Conger",
+        "Rockling",
+        "Dogfish",
+        "Ray",
+        "Flounder",
+        "Codling",
+        "Coalfish"
+      ],
+      "seasons": "Year-round, strongest late spring to autumn; codling/coalfish in autumn and winter",
+      "notes": "Parent area for Knockadoon Head to Ballycotton marks. Productive but exposed in places; wear a lifejacket on rocks and watch surf, swell and access."
     },
     {
-      "lat": 51.9860,
-      "lon": -7.5870,
-      "name": "Mine Head",
-      "type": "Cliff and deep-water rock marks",
-      "catches": ["Bass", "Conger", "Bull Huss", "Dogfish", "Ray"],
+      "lat": 51.861,
+      "lon": -7.856,
+      "name": "Knockadoon Head",
+      "type": "Headland rock mark",
+      "catches": [
+        "Pollack",
+        "Wrasse",
+        "Mackerel",
+        "Mullet",
+        "Conger",
+        "Rockling"
+      ],
+      "seasons": "Late spring to autumn; rough-ground species possible year-round",
+      "notes": "Track across the headland leads down to the mark. Spinning and float fishing for pollack, wrasse, mackerel and mullet; bottom fishing for conger and rockling."
+    },
+    {
+      "lat": 51.8565,
+      "lon": -7.87,
+      "name": "Old Signal Tower, Knockadoon Head",
+      "type": "Rock and weed ground with sandy patches",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse",
+        "Conger",
+        "Cod",
+        "Coalfish"
+      ],
+      "seasons": "Spring to winter depending on target species",
+      "notes": "Southern corner of Knockadoon Head below the old signal tower. Spinning and float fishing over mixed ground; bottom fishing can produce conger, cod and coalfish."
+    },
+    {
+      "lat": 51.8568,
+      "lon": -7.887,
+      "name": "Ballymakeragh Rocks",
+      "type": "Low rock and small headland mark",
+      "catches": [
+        "Wrasse",
+        "Dogfish",
+        "Rockling",
+        "Bass",
+        "Codling",
+        "Coalfish"
+      ],
+      "seasons": "Summer for bass and wrasse; late autumn for codling and coalfish",
+      "notes": "Eastern side of the small headland is noted as productive. Best baits include crab, lugworm, mackerel and squid."
+    },
+    {
+      "lat": 51.8548,
+      "lon": -7.9025,
+      "name": "Ballycrenane Beach",
+      "type": "Long surf beach with mixed sand, rock and weed",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Codling",
+        "Coalfish",
+        "Rockling",
+        "Conger",
+        "Wrasse",
+        "Dab",
+        "Plaice",
+        "Thornback Ray",
+        "Painted Ray",
+        "Dogfish"
+      ],
+      "seasons": "Spring and summer for lure bass; autumn/winter for bass, flounder and codling; summer for ray and flats",
+      "notes": "East end is rougher; west becomes cleaner sand. Bass on plugs/spinners near high water in spring/summer. Surf helps bass and flounder. Lugworm and sandeel can be dug on the beach."
+    },
+    {
+      "lat": 51.8532,
+      "lon": -7.923,
+      "name": "Ballinwilling Reef",
+      "type": "Rock reef casting over sand",
+      "catches": [
+        "Dogfish",
+        "Rockling",
+        "Flounder",
+        "Bass"
+      ],
       "seasons": "Spring to autumn",
-      "notes": "Highly exposed mark; only fish in settled weather with careful access planning."
+      "notes": "Bottom fishing from the rocks at the seaward end; casting over sand gives best results. Crab can be collected near the car park area in summer."
+    },
+    {
+      "lat": 51.856,
+      "lon": -7.936,
+      "name": "Ballinwilling Strand",
+      "type": "Surf strand and stream/outflow mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Conger",
+        "Coalfish",
+        "Codling"
+      ],
+      "seasons": "Spring to autumn; codling possible in autumn",
+      "notes": "Bottom fishing in front of the car park and between the stream and marsh outflow. Crab, lugworm and mackerel are top baits."
+    },
+    {
+      "lat": 51.861,
+      "lon": -7.958,
+      "name": "Garryvoe Strand",
+      "type": "Specimen surf beach",
+      "catches": [
+        "Bass",
+        "Painted Ray",
+        "Flounder",
+        "Dogfish"
+      ],
+      "seasons": "Spring to autumn; night tides can be strong in summer",
+      "notes": "Well-known specimen shore mark with strong tournament history. Best baits include lugworm, squid, crab and mackerel."
+    },
+    {
+      "lat": 51.8588,
+      "lon": -7.9825,
+      "name": "Ardnahinch Strand",
+      "type": "Surf beach between Garryvoe and Shanagarry",
+      "catches": [
+        "Turbot",
+        "Thornback Ray",
+        "Flounder",
+        "Conger",
+        "Codling",
+        "Bass",
+        "Painted Ray"
+      ],
+      "seasons": "Spring to autumn; night tides generally best in midsummer",
+      "notes": "Similar quality to Garryvoe and has produced specimen fish including painted ray. Lugworm can be dug near Shanagarry car park."
+    },
+    {
+      "lat": 51.856,
+      "lon": -8.0005,
+      "name": "Ballynamona Lagoon Entrance",
+      "type": "Beach, lagoon entrance and surf mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Codling",
+        "Seatrout"
+      ],
+      "seasons": "Autumn/winter for surf species; summer for occasional seatrout",
+      "notes": "Fish two hours either side of high water. Sensitive bird/wetland area; avoid disturbing roosting birds, especially in winter."
+    },
+    {
+      "lat": 51.837,
+      "lon": -8.0135,
+      "name": "Silver Strand, Ballycotton Approach",
+      "type": "Small beach with rocky southern end",
+      "catches": [
+        "Conger",
+        "Bass",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Lane down to beach before Ballycotton. Southern rocky end has produced large conger; bass common on flood tide over sand."
+    },
+    {
+      "lat": 51.8286,
+      "lon": -8.0048,
+      "name": "Ballycotton Harbour",
+      "type": "Harbour, breakwater and boat-angling base",
+      "catches": [
+        "Mullet",
+        "Flounder",
+        "Dab",
+        "Conger",
+        "Rockling",
+        "Pollack",
+        "Mackerel",
+        "Plaice",
+        "Black Sole"
+      ],
+      "seasons": "Year-round; charter season usually May to September; mullet in summer",
+      "notes": "Historic sea-angling location. Shore fishing from harbour/breakwater; mullet on float-fished fish strips in summer. Spring tides are about Cobh +00:11."
+    },
+    {
+      "lat": 51.986,
+      "lon": -7.587,
+      "name": "Mine Head Area",
+      "type": "Area summary, surf beach, estuary, harbour and rock marks",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Wrasse",
+        "Mackerel",
+        "Conger",
+        "Dogfish",
+        "Ray",
+        "Flounder",
+        "Plaice",
+        "Codling",
+        "Coalfish",
+        "Seatrout"
+      ],
+      "seasons": "Year-round, with beach and rock species strongest from late spring to autumn",
+      "notes": "Parent area for Mine Head to Knockadoon Pier marks. Exposed open-coast and estuary fishing; choose marks based on wind, surf and tide."
+    },
+    {
+      "lat": 51.965,
+      "lon": -7.646,
+      "name": "Ballyquinn Strand",
+      "type": "Specimen surf strand",
+      "catches": [
+        "Painted Ray",
+        "Plaice",
+        "Black Sole",
+        "Dogfish",
+        "Flounder",
+        "Thornback Ray",
+        "Bass",
+        "Dab"
+      ],
+      "seasons": "June to September best; also fishes in settled surf outside summer",
+      "notes": "Flooding tide into darkness is best. Crab, sandeel, mackerel and ragworm all take fish."
+    },
+    {
+      "lat": 51.963,
+      "lon": -7.666,
+      "name": "Black Rocks",
+      "type": "Low rock and boulder mark",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Mackerel",
+        "Dogfish",
+        "Conger"
+      ],
+      "seasons": "Summer for mackerel; spring to autumn for bass and pollack",
+      "notes": "Plugging and spinning can produce bass and pollack; bottom fishing gives dogfish and occasional conger."
+    },
+    {
+      "lat": 51.951,
+      "lon": -7.725,
+      "name": "Ardmore Beach",
+      "type": "Beach mark",
+      "catches": [
+        "Painted Ray",
+        "Thornback Ray",
+        "Plaice",
+        "Flounder",
+        "Sole"
+      ],
+      "seasons": "Spring to autumn; darkness preferred",
+      "notes": "Popular beach by day, fishes best during darkness. Lugworm can be dug north of the car park."
+    },
+    {
+      "lat": 51.9467,
+      "lon": -7.724,
+      "name": "Ardmore Pier",
+      "type": "Pier and small-boat launch",
+      "catches": [
+        "Bass",
+        "Sole",
+        "Plaice",
+        "Ray",
+        "Dogfish",
+        "Seatrout",
+        "Mackerel",
+        "Mullet",
+        "Cod",
+        "Whiting",
+        "Pouting",
+        "Conger",
+        "Ling",
+        "Pollack"
+      ],
+      "seasons": "Year-round; boat/wreck species best in settled weather",
+      "notes": "Pier bottom fishing for bass, flats, ray and dogfish; spinning for seatrout and mackerel. Small boats can access mixed ground and wrecks."
+    },
+    {
+      "lat": 51.9405,
+      "lon": -7.708,
+      "name": "Ardmore Head",
+      "type": "Rock headland",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse",
+        "Seatrout",
+        "Garfish"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Spinning and float fishing from rocks. Watch swell and footing."
+    },
+    {
+      "lat": 51.928,
+      "lon": -7.7265,
+      "name": "Fr. O'Donnell's Well, Rams Head",
+      "type": "Rock vantage point",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse",
+        "Conger"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "One of the Rams Head rock marks. Float fish crab/ragworm for wrasse; squid or mackerel baits for occasional conger."
+    },
+    {
+      "lat": 51.9295,
+      "lon": -7.742,
+      "name": "Fallawaderra, Rams Head",
+      "type": "Rock vantage point",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse",
+        "Conger"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Productive spinning/float mark on southern Rams Head."
+    },
+    {
+      "lat": 51.9308,
+      "lon": -7.758,
+      "name": "Fall an Iarann, Rams Head",
+      "type": "Rock vantage point",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse",
+        "Conger"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Similar Rams Head rock fishing; only fish in safe settled conditions."
+    },
+    {
+      "lat": 51.933,
+      "lon": -7.777,
+      "name": "Goat Island",
+      "type": "Sand/rock transition beach mark",
+      "catches": [
+        "Bass",
+        "Dab",
+        "Flounder",
+        "Dogfish",
+        "Coalfish",
+        "Mackerel",
+        "Seatrout"
+      ],
+      "seasons": "Spring to autumn; mackerel in season",
+      "notes": "Bottom fishing produces bass, flats, dogfish and coalfish; high-water spinning can produce mackerel and occasional seatrout."
+    },
+    {
+      "lat": 51.926,
+      "lon": -7.806,
+      "name": "Whiting Bay",
+      "type": "South-facing surf beach",
+      "catches": [
+        "Bass",
+        "Plaice",
+        "Flounder",
+        "Dogfish",
+        "Seatrout"
+      ],
+      "seasons": "Spring to autumn; surf conditions helpful",
+      "notes": "West side of the car park is cleaner with less stone and weed. Sandeel, crab and ragworm are best baits."
+    },
+    {
+      "lat": 51.9185,
+      "lon": -7.833,
+      "name": "Calliso Bay",
+      "type": "Small surf bay with mixed ends",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Dogfish",
+        "Conger",
+        "Wrasse",
+        "Rockling",
+        "Seatrout"
+      ],
+      "seasons": "Late summer and autumn for spinning; surf conditions for bass/flounder",
+      "notes": "Crab or sandeel over sand; mixed sand and rock at eastern end for conger, wrasse and rockling."
+    },
+    {
+      "lat": 51.9235,
+      "lon": -7.854,
+      "name": "Mangan's Cove",
+      "type": "Mixed ground cove",
+      "catches": [
+        "Bass",
+        "Ray",
+        "Dogfish",
+        "Flounder",
+        "Codling"
+      ],
+      "seasons": "Summer for bass/ray/dogfish; autumn and winter for flounder/codling",
+      "notes": "Crab, sandeel and ragworm for summer species; lugworm and crab for flounder and codling."
+    },
+    {
+      "lat": 51.936,
+      "lon": -7.8515,
+      "name": "East Point to Monatrae House",
+      "type": "Estuary channel rough-to-sand mark",
+      "catches": [
+        "Bass",
+        "Dogfish",
+        "Plaice",
+        "Ray",
+        "Flounder",
+        "Codling",
+        "Eel"
+      ],
+      "seasons": "Summer for bass/dogfish/ray; autumn and winter for flounder/codling/eels",
+      "notes": "Cast 80 to 120 metres into the Blackwater channel where rough ground gives way to mud and sand."
+    },
+    {
+      "lat": 51.949,
+      "lon": -7.851,
+      "name": "Ferry Point",
+      "type": "Estuary shingle spit and narrows",
+      "catches": [
+        "Codling",
+        "Flounder",
+        "Bass",
+        "Plaice",
+        "Dogfish",
+        "Seatrout",
+        "Mackerel",
+        "Conger"
+      ],
+      "seasons": "Year-round; codling/flounder winter and spring; bass/plaice/dogfish summer",
+      "notes": "Best from half flood through high water and two hours into the ebb. Slack low water can be good for flounder. Slipway can be slippery with weed."
+    },
+    {
+      "lat": 51.959,
+      "lon": -7.8485,
+      "name": "Old Bridge, Youghal",
+      "type": "Estuary bridge mark",
+      "catches": [
+        "Flounder",
+        "Bass",
+        "Codling",
+        "Pollack"
+      ],
+      "seasons": "Year-round, species shift by season",
+      "notes": "Bottom fishing two hours either side of high water with crab and worm baits; spinning can account for small pollack."
+    },
+    {
+      "lat": 51.958,
+      "lon": -7.866,
+      "name": "Tourig River / Rincrew Bridge",
+      "type": "River mouth and estuary channel",
+      "catches": [
+        "Bass",
+        "Seatrout",
+        "Flounder",
+        "Eel"
+      ],
+      "seasons": "Spring to autumn for bass and seatrout; flats/eels by season",
+      "notes": "Spinning at high water for bass and seatrout; bottom fishing for flounder and eels."
+    },
+    {
+      "lat": 51.951,
+      "lon": -7.868,
+      "name": "Youghal Dyke Wall",
+      "type": "Estuary wall and marsh edge",
+      "catches": [
+        "Flounder",
+        "Codling",
+        "Plaice",
+        "Bass"
+      ],
+      "seasons": "Year-round; codling strongest in colder months",
+      "notes": "First-class fishing along the wall south of the old road landfall. Crab is the best bottom bait; spinning is worth trying for bass."
+    },
+    {
+      "lat": 51.945,
+      "lon": -7.872,
+      "name": "Old Carpet Factory Pier, Youghal",
+      "type": "Pier and estuary wall mark",
+      "catches": [
+        "Flounder",
+        "Codling",
+        "Plaice",
+        "Bass"
+      ],
+      "seasons": "Year-round",
+      "notes": "Continuation of the dyke wall stretch. Bottom fishing and occasional spinning for bass."
+    },
+    {
+      "lat": 51.95,
+      "lon": -7.85,
+      "name": "Youghal Quays / Green Park Corner",
+      "type": "Town quays and harbour mark",
+      "catches": [
+        "Flounder",
+        "Bass",
+        "Codling",
+        "Plaice",
+        "Conger",
+        "Dogfish",
+        "Ray",
+        "Dab"
+      ],
+      "seasons": "Year-round; night tides productive in midsummer",
+      "notes": "Shore fishing best on flooding tide. Crab, sandeel, mackerel and ragworm are good baits. Youghal tides are about Cobh +00:14."
+    },
+    {
+      "lat": 51.923,
+      "lon": -7.88,
+      "name": "Youghal / Redbarn Strand",
+      "type": "Long south-east facing surf beach",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Coalfish"
+      ],
+      "seasons": "Flood tides year-round; coalfish October to December",
+      "notes": "Best on flood tide with rolling surf. Busy beach in holiday periods, so night tides or off-peak periods are better."
+    },
+    {
+      "lat": 51.91,
+      "lon": -7.914,
+      "name": "Pillmore Strand",
+      "type": "Estuary entrance strand",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Plaice",
+        "Codling",
+        "Seatrout"
+      ],
+      "seasons": "Year-round; codling in winter",
+      "notes": "Flooding tide produces bass, flounder and occasional plaice; spinning in the channel can produce seatrout. Lugworm available on channel banks."
+    },
+    {
+      "lat": 51.9,
+      "lon": -7.946,
+      "name": "Pillmore Estuary",
+      "type": "Estuary channel",
+      "catches": [
+        "Bass",
+        "Seatrout",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn; avoid weed-heavy spring tides",
+      "notes": "Spinning in the channel on a flood tide. Bottom-fished crab baits can take bass and flounder. Heavy floating weed on spring tides can be a problem."
+    },
+    {
+      "lat": 51.895,
+      "lon": -7.925,
+      "name": "Ballymacoda Estuary South Side",
+      "type": "Estuary and flatfish mark",
+      "catches": [
+        "Bass",
+        "Flatfish"
+      ],
+      "seasons": "Spring to autumn; night tides best",
+      "notes": "Fish arrive for a short period of about an hour around high water; crab or worm baits recommended."
+    },
+    {
+      "lat": 51.8605,
+      "lon": -7.882,
+      "name": "Knockadoon Pier / Capel Island Area",
+      "type": "Pier, harbour wall and small-boat area",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Mullet",
+        "Dogfish",
+        "Ballan Wrasse",
+        "Corkwing Wrasse",
+        "Tompot Blenny",
+        "Black Goby",
+        "Codling",
+        "Conger",
+        "Coalfish"
+      ],
+      "seasons": "High tide for spinning; mackerel in season",
+      "notes": "Spinning at high tide for pollack and mackerel; float fishing for mullet. Small-boat fishing around Capel Island for codling, wrasse, pollack, conger and coalfish."
     },
     {
       "lat": 51.8237,
       "lon": -8.0007,
-      "name": "Cork Harbour to Ballycotton (Ram Point sector)",
-      "type": "Harbour and open-coast mixed marks",
-      "catches": ["Bass", "Mackerel", "Pollack", "Flounder", "Whiting"],
-      "seasons": "Year-round",
-      "notes": "Covers mixed marks from inner harbour out toward Ballycotton; fish species shift with tide and exposure."
+      "name": "Cork Harbour to Ballycotton Area",
+      "type": "Area summary, harbour, estuary, beach and rock marks",
+      "catches": [
+        "Bass",
+        "Mackerel",
+        "Pollack",
+        "Flounder",
+        "Whiting",
+        "Ray",
+        "Dogfish",
+        "Mullet",
+        "Gilthead Bream",
+        "Wrasse",
+        "Conger"
+      ],
+      "seasons": "Year-round, with harbour winter species and open-coast summer/autumn species",
+      "notes": "Parent area for Ram Point to Ballycotton marks. Includes sheltered harbour fishing and more exposed open-coast marks."
     },
     {
-      "lat": 51.5060,
-      "lon": -9.1290,
-      "name": "Galley Head to Ballymacus Point",
-      "type": "Open Atlantic rock and surf marks",
-      "catches": ["Bass", "Pollack", "Wrasse", "Ray", "Dogfish"],
-      "seasons": "Spring to late autumn",
-      "notes": "Atlantic-facing coastline with productive rough ground; monitor swell and wind direction closely."
+      "lat": 51.803,
+      "lon": -8.297,
+      "name": "Ram Point Strand",
+      "type": "Strand and mixed shore mark",
+      "catches": [
+        "Bass",
+        "Ray",
+        "Dogfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning, float fishing and bottom fishing for bass; bottom fishing for ray and dogfish. Flood and ebb tide best."
+    },
+    {
+      "lat": 51.809,
+      "lon": -8.3005,
+      "name": "Camden",
+      "type": "Harbour shore mark",
+      "catches": [
+        "Ray",
+        "Bass",
+        "Dogfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for ray, bass and dogfish."
+    },
+    {
+      "lat": 51.812,
+      "lon": -8.305,
+      "name": "Lough Beg",
+      "type": "Harbour inlet mark",
+      "catches": [
+        "Flounder",
+        "Bass",
+        "Mullet"
+      ],
+      "seasons": "Year-round",
+      "notes": "Bottom fishing for flounder, bass and mullet."
+    },
+    {
+      "lat": 51.817,
+      "lon": -8.312,
+      "name": "Lough More",
+      "type": "Harbour inlet mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Plaice",
+        "Ray"
+      ],
+      "seasons": "Year-round",
+      "notes": "Bottom fishing for bass, flounder, plaice and occasional ray."
+    },
+    {
+      "lat": 51.821,
+      "lon": -8.318,
+      "name": "Paddy's Point",
+      "type": "Harbour point mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Ray",
+        "Dab"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning for bass; bottom fishing for flounder, ray and dabs. Crab bait is productive."
+    },
+    {
+      "lat": 51.85,
+      "lon": -8.333,
+      "name": "Monkstown Pier",
+      "type": "Pier and harbour wall",
+      "catches": [
+        "Conger",
+        "Pollack",
+        "Wrasse",
+        "Flounder",
+        "Dab",
+        "Codling",
+        "Whiting"
+      ],
+      "seasons": "Year-round; codling and whiting November to February",
+      "notes": "Conger, small pollack and wrasse around the pier; bottom fishing for flounder and dabs."
+    },
+    {
+      "lat": 51.849,
+      "lon": -8.365,
+      "name": "Cork Harbour Sea Wall",
+      "type": "Harbour sea wall",
+      "catches": [
+        "Codling",
+        "Conger",
+        "Ray",
+        "Dab",
+        "Dogfish"
+      ],
+      "seasons": "Codling November to February; conger/ray/dabs/dogfish June to September",
+      "notes": "Seasonal bottom fishing from the sea wall."
+    },
+    {
+      "lat": 51.831,
+      "lon": -8.317,
+      "name": "Deepwater Quay",
+      "type": "Deep harbour quay",
+      "catches": [
+        "Conger",
+        "Ray",
+        "Codling",
+        "Whiting",
+        "Dab",
+        "Flounder",
+        "Coalfish",
+        "Three-bearded Rockling"
+      ],
+      "seasons": "Year-round with winter codling/whiting and summer ray/dogfish patterns",
+      "notes": "Best baits include crab, fish bait and mussel. Specimen flounder, dab, whiting and three-bearded rockling recorded."
+    },
+    {
+      "lat": 51.835,
+      "lon": -8.303,
+      "name": "Lynch's Quay",
+      "type": "Harbour quay",
+      "catches": [
+        "Codling",
+        "Dab",
+        "Coalfish",
+        "Flounder",
+        "Dogfish",
+        "Ray"
+      ],
+      "seasons": "Codling/dabs/coalfish November to February; flounder/dogfish/ray in summer",
+      "notes": "Seasonal bottom fishing from the quay."
+    },
+    {
+      "lat": 51.866,
+      "lon": -8.262,
+      "name": "East Ferry Mouth",
+      "type": "Estuary mouth/channel mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Dogfish",
+        "Ray"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning for bass; bottom fishing for flounder, dogfish and excellent ray fishing."
+    },
+    {
+      "lat": 51.887,
+      "lon": -8.23,
+      "name": "Brown Island",
+      "type": "Estuary island/channel mark",
+      "catches": [
+        "Thornback Ray",
+        "Plaice",
+        "Flounder",
+        "Bass",
+        "Dogfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Crab and fish bait best. Start of flood tide is most productive for flatfish."
+    },
+    {
+      "lat": 51.875,
+      "lon": -8.193,
+      "name": "Bawnard",
+      "type": "Estuary shore mark",
+      "catches": [
+        "Mullet",
+        "Gilthead Bream",
+        "Bass"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Mullet and gilthead bream possible along with bass."
+    },
+    {
+      "lat": 51.834,
+      "lon": -8.201,
+      "name": "Gold Point",
+      "type": "Slipway and point mark",
+      "catches": [
+        "Bass",
+        "Seatrout",
+        "Ray",
+        "Dogfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning for bass and seatrout at the slipway; bottom fishing for rays and dogfish. Specimen bass recorded."
+    },
+    {
+      "lat": 51.834,
+      "lon": -8.183,
+      "name": "Saleen Estuary",
+      "type": "Estuary mark",
+      "catches": [
+        "Mullet",
+        "Bass",
+        "Flounder"
+      ],
+      "seasons": "Year-round, strongest spring to autumn",
+      "notes": "Lugworm and crab can be gathered here."
+    },
+    {
+      "lat": 51.817,
+      "lon": -8.182,
+      "name": "Rostellan Estuary",
+      "type": "Estuary mark",
+      "catches": [
+        "Flounder",
+        "Bass",
+        "Mullet"
+      ],
+      "seasons": "Year-round",
+      "notes": "Lugworm and ragworm can be dug here."
+    },
+    {
+      "lat": 51.803,
+      "lon": -8.26,
+      "name": "Lower Aghada Pier",
+      "type": "Pier mark",
+      "catches": [
+        "Flounder",
+        "Dab",
+        "Dogfish",
+        "Conger",
+        "Codling",
+        "Mullet"
+      ],
+      "seasons": "Year-round; conger at night; codling November to February",
+      "notes": "Bottom fishing for flats and dogfish; occasional winter codling; float fishing for mullet."
+    },
+    {
+      "lat": 51.8,
+      "lon": -8.275,
+      "name": "Whitegate Bay",
+      "type": "Bay and shore mark",
+      "catches": [
+        "Bass",
+        "Gilthead Bream",
+        "Golden Grey Mullet",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for bass, gilthead bream, golden grey mullet and flounder."
+    },
+    {
+      "lat": 51.795,
+      "lon": -8.285,
+      "name": "Corkbeg Strand",
+      "type": "Strand mark",
+      "catches": [
+        "Bass",
+        "Dogfish",
+        "Ray",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for bass, dogfish, occasional ray and flounder."
+    },
+    {
+      "lat": 51.7895,
+      "lon": -8.275,
+      "name": "White Bay Rocks",
+      "type": "Rock mark",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Mackerel"
+      ],
+      "seasons": "Late spring to autumn; mackerel in season",
+      "notes": "Spinning for bass, small pollack and mackerel from rocks."
+    },
+    {
+      "lat": 51.785,
+      "lon": -8.255,
+      "name": "White Bay",
+      "type": "Surf beach",
+      "catches": [
+        "Bass",
+        "Flatfish",
+        "Dogfish",
+        "Ray",
+        "Plaice"
+      ],
+      "seasons": "Spring to autumn; surf improves fishing",
+      "notes": "Surf fishing for bass, flatfish, dogfish and occasional ray. Specimen plaice recorded."
+    },
+    {
+      "lat": 51.787,
+      "lon": -8.235,
+      "name": "Canavan's Point",
+      "type": "Point and rock mark",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Mackerel"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Float/lure fishing for bass; spinning for pollack and mackerel."
+    },
+    {
+      "lat": 51.793,
+      "lon": -8.25,
+      "name": "Roche's Point",
+      "type": "Exposed headland and rock mark",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Mackerel",
+        "Conger",
+        "Three-bearded Rockling",
+        "Wrasse"
+      ],
+      "seasons": "Late spring to autumn; bottom species possible year-round",
+      "notes": "Spinning for bass, pollack and mackerel; bottom fishing for conger and rockling; float fishing for wrasse. Specimen bass and wrasse recorded."
+    },
+    {
+      "lat": 51.793,
+      "lon": -8.215,
+      "name": "Trabolgan Strand",
+      "type": "Surf strand",
+      "catches": [
+        "Bass",
+        "Flatfish",
+        "Dogfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Surf fishing for bass, flatfish and dogfish."
+    },
+    {
+      "lat": 51.781,
+      "lon": -8.19,
+      "name": "Guileen",
+      "type": "Mixed shore and rock mark",
+      "catches": [
+        "Bass",
+        "Flatfish",
+        "Wrasse",
+        "Pollack"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Lure, float and bottom fishing for bass, flatfish, wrasse and pollack."
+    },
+    {
+      "lat": 51.779,
+      "lon": -8.17,
+      "name": "Inch",
+      "type": "Beach mark",
+      "catches": [
+        "Bass",
+        "Flatfish",
+        "Codling",
+        "Flounder"
+      ],
+      "seasons": "Year-round; codling in colder months",
+      "notes": "Bottom fishing for bass, flatfish and codling. Sandeel available in season; specimen bass and flounder recorded."
+    },
+    {
+      "lat": 51.775,
+      "lon": -8.15,
+      "name": "Power Head",
+      "type": "Headland rock mark",
+      "catches": [
+        "Mackerel",
+        "Pollack",
+        "Wrasse",
+        "Bass",
+        "Flatfish"
+      ],
+      "seasons": "Late spring to autumn; mackerel in season",
+      "notes": "Spinning and float fishing for mackerel, pollack and wrasse; bottom fishing for bass and flatfish."
+    },
+    {
+      "lat": 51.783,
+      "lon": -8.12,
+      "name": "Ballybrannigan",
+      "type": "Beach and rock mark",
+      "catches": [
+        "Bass",
+        "Flatfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for bass and flatfish. Float and lure fishing for bass on the first quarter of the flood."
+    },
+    {
+      "lat": 51.79,
+      "lon": -8.095,
+      "name": "Ballycroneen",
+      "type": "Surf beach and eastern rock mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Pollack",
+        "Mackerel"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Surf fishing for bass and flounder; lure fishing for bass, pollack and mackerel from rocks on the eastern side."
+    },
+    {
+      "lat": 51.794,
+      "lon": -8.07,
+      "name": "Ballylanders",
+      "type": "Rock mark, currently inaccessible warning",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Mackerel",
+        "Wrasse"
+      ],
+      "seasons": "Late spring to autumn when accessible",
+      "notes": "Lure fishing for bass, pollack and mackerel; bait fishing for wrasse on crab baits. Reported inaccessible due to storm damage in the provided notes."
+    },
+    {
+      "lat": 51.804,
+      "lon": -8.045,
+      "name": "Ballyandereen",
+      "type": "Rock and sand mark",
+      "catches": [
+        "Pollack",
+        "Wrasse",
+        "Flounder",
+        "Bass",
+        "Codling",
+        "Coalfish"
+      ],
+      "seasons": "Spring to autumn; codling/coalfish possible colder months",
+      "notes": "Spinning/float fishing for pollack and wrasse. Bottom fishing from the right side over sand for flounder, bass, codling and coalfish."
+    },
+    {
+      "lat": 51.506,
+      "lon": -9.129,
+      "name": "Galley Head to Ballymacus Point Area",
+      "type": "Area summary, Atlantic rock, surf, estuary and harbour marks",
+      "catches": [
+        "Bass",
+        "Pollack",
+        "Wrasse",
+        "Ray",
+        "Dogfish",
+        "Flounder",
+        "Mackerel",
+        "Conger",
+        "Gilthead Bream",
+        "Mullet"
+      ],
+      "seasons": "Spring to late autumn; some winter codling and estuary species",
+      "notes": "Parent area for the Galley Head to Ballymacus Point map. Atlantic-facing coastline with productive rough ground; monitor swell, tide cut-offs and wind direction closely."
+    },
+    {
+      "lat": 51.527,
+      "lon": -8.952,
+      "name": "Galley Head",
+      "type": "Atlantic rock headland",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Spinning from rocks for pollack and mackerel; float fishing for wrasse with crab or worm baits."
+    },
+    {
+      "lat": 51.531,
+      "lon": -8.973,
+      "name": "Redstrand",
+      "type": "Surf strand",
+      "catches": [
+        "Flatfish",
+        "Dogfish",
+        "Golden Grey Mullet",
+        "Gilthead Bream",
+        "Bass"
+      ],
+      "seasons": "Spring to autumn; surf conditions helpful",
+      "notes": "Surf fishing for flatfish, dogfish, mullet, gilthead bream and bass."
+    },
+    {
+      "lat": 51.55,
+      "lon": -8.948,
+      "name": "Dunnycove Bay",
+      "type": "Bay and beach mark",
+      "catches": [
+        "Flatfish",
+        "Dogfish",
+        "Bass",
+        "Ray"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for flatfish, dogfish and bass. Distance casting can produce ray. Fishable at all stages of tide."
+    },
+    {
+      "lat": 51.557,
+      "lon": -8.942,
+      "name": "Dunnycove North",
+      "type": "Mixed shore mark",
+      "catches": [
+        "Flounder",
+        "Dogfish",
+        "Bass",
+        "Pollack"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for flounder, dogfish and bass; spinning for pollack."
+    },
+    {
+      "lat": 51.558,
+      "lon": -8.927,
+      "name": "Muckross Head",
+      "type": "Headland and mixed ground",
+      "catches": [
+        "Flounder",
+        "Bass",
+        "Pollack",
+        "Mackerel",
+        "Wrasse"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for flounder and bass on last hour of ebb and first two hours of flood. Float fishing and spinning at high water."
+    },
+    {
+      "lat": 51.56,
+      "lon": -8.915,
+      "name": "Muckross Estuary",
+      "type": "Small estuary mark",
+      "catches": [
+        "Flounder",
+        "Bass"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing for flounder and bass. Early flood is best."
+    },
+    {
+      "lat": 51.586,
+      "lon": -8.899,
+      "name": "Virgin Mary's Point",
+      "type": "Point and mixed shore mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Gilthead Bream"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing, spinning and float fishing for bass and flounder; occasional gilthead bream. All stages of tide."
+    },
+    {
+      "lat": 51.592,
+      "lon": -8.877,
+      "name": "Clonakilty Estuary Lower Channel",
+      "type": "Estuary channel mark",
+      "catches": [
+        "Bass",
+        "Golden Grey Mullet",
+        "Thick-lipped Mullet",
+        "Gilthead Bream",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing; last of ebb and first two hours of flood are best."
+    },
+    {
+      "lat": 51.599,
+      "lon": -8.858,
+      "name": "Clonakilty Estuary Inner Channel",
+      "type": "Estuary channel mark",
+      "catches": [
+        "Flounder",
+        "Thick-lipped Mullet",
+        "Golden Grey Mullet",
+        "Gilthead Bream",
+        "Bass"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Fish into the channel from early flood to high water. Crab is the best bait."
+    },
+    {
+      "lat": 51.602,
+      "lon": -8.833,
+      "name": "Ring Harbour",
+      "type": "Harbour and channel mark",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Gilthead Bream",
+        "Mullet"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Drift lining sandeel, crab or shrimp for bass; bottom fishing for flounder, bream, mullet and bass. Early flood and late ebb best."
+    },
+    {
+      "lat": 51.595,
+      "lon": -8.818,
+      "name": "Bar Rock",
+      "type": "Rock and channel mark",
+      "catches": [
+        "Bass",
+        "Gilthead Bream",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning and bottom fishing; last hour of ebb and first two hours of flood. Large bass have been recorded."
+    },
+    {
+      "lat": 51.61,
+      "lon": -8.754,
+      "name": "Barry's Cove",
+      "type": "Cove with rocks and beach",
+      "catches": [
+        "Pollack",
+        "Mackerel",
+        "Wrasse",
+        "Conger"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Spinning and float fishing for pollack, mackerel and wrasse; bottom fishing for conger either side of beach."
+    },
+    {
+      "lat": 51.632,
+      "lon": -8.723,
+      "name": "Barry's Point",
+      "type": "Rock mark",
+      "catches": [
+        "Pollack",
+        "Wrasse",
+        "Mackerel",
+        "Dogfish"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Rock fishing for pollack, wrasse, mackerel and dogfish."
+    },
+    {
+      "lat": 51.639,
+      "lon": -8.71,
+      "name": "Quarry Point",
+      "type": "Rock mark",
+      "catches": [
+        "Pollack",
+        "Wrasse",
+        "Mackerel",
+        "Dogfish"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Rock fishing for pollack, wrasse, mackerel and dogfish."
+    },
+    {
+      "lat": 51.644,
+      "lon": -8.694,
+      "name": "Broadstrand Bay",
+      "type": "Beach mark",
+      "catches": [
+        "Bass",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Beach fishing for bass and flounder."
+    },
+    {
+      "lat": 51.649,
+      "lon": -8.681,
+      "name": "Land Point",
+      "type": "Point and rock mark",
+      "catches": [
+        "Pollack",
+        "Bass",
+        "Mackerel",
+        "Dogfish"
+      ],
+      "seasons": "Late spring to autumn",
+      "notes": "Spinning for pollack, bass and mackerel; bottom fishing for dogfish."
+    },
+    {
+      "lat": 51.64,
+      "lon": -8.704,
+      "name": "Courtmacsherry Strand",
+      "type": "Beach strand",
+      "catches": [
+        "Bass",
+        "Gilthead Bream",
+        "Flounder",
+        "Codling"
+      ],
+      "seasons": "Spring to autumn; codling in winter on worm and crab baits",
+      "notes": "Beach fishing for bass, bream and flounder."
+    },
+    {
+      "lat": 51.637,
+      "lon": -8.7,
+      "name": "Courtmacsherry Pier",
+      "type": "Pier mark",
+      "catches": [
+        "Conger",
+        "Bass",
+        "Mullet",
+        "Flounder"
+      ],
+      "seasons": "Year-round",
+      "notes": "Bottom fishing for conger, bass, mullet and flounder."
+    },
+    {
+      "lat": 51.642,
+      "lon": -8.742,
+      "name": "School House Channel",
+      "type": "Channel and estuary mark",
+      "catches": [
+        "Bass",
+        "Gilthead Bream",
+        "Mullet",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Fish into the channel. Late ebb to early flood is best; specimen bass and flounder recorded."
+    },
+    {
+      "lat": 51.643,
+      "lon": -8.766,
+      "name": "Timoleague",
+      "type": "River bridge, pool, quay and channel mark",
+      "catches": [
+        "Bass",
+        "Mullet",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing and driftlining for bass below Argideen River Bridge and in the channel. Two hours either side of high water best."
+    },
+    {
+      "lat": 51.648,
+      "lon": -8.755,
+      "name": "Burren Pier",
+      "type": "Pier and estuary mark",
+      "catches": [
+        "Bass",
+        "Gilthead Bream",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "First three hours of flood best. Crab can be picked in weeds, but do not interfere with anglers' crab traps."
+    },
+    {
+      "lat": 51.662,
+      "lon": -8.717,
+      "name": "Harbour View",
+      "type": "Rocks over sand",
+      "catches": [
+        "Bass",
+        "Flounder",
+        "Codling",
+        "Painted Ray"
+      ],
+      "seasons": "Spring to autumn; codling possible in colder months",
+      "notes": "Spinning and bottom fishing from rocks over sand; bottom fishing for flounder."
+    },
+    {
+      "lat": 51.675,
+      "lon": -8.696,
+      "name": "Kilbrittain Creek",
+      "type": "Creek, pools and channel mark",
+      "catches": [
+        "Flounder",
+        "Mullet",
+        "Seatrout",
+        "Bass"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Fish pools on either side of the road for flounder and mullet; spin in channel for seatrout and bass."
+    },
+    {
+      "lat": 51.651,
+      "lon": -8.61,
+      "name": "Laherne Rocks",
+      "type": "Tidal rock mark",
+      "catches": [
+        "Bass",
+        "Wrasse",
+        "Codling",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn; codling in winter",
+      "notes": "Float fishing on first two hours of flood for bass and wrasse. Danger of being cut off by rising tide."
+    },
+    {
+      "lat": 51.65,
+      "lon": -8.595,
+      "name": "Garretstown Strand",
+      "type": "Surf beach",
+      "catches": [
+        "Bass",
+        "Flatfish",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn; surf required",
+      "notes": "Stretch beside Laherne Rocks is best. Good surf necessary; specimen flounder recorded."
+    },
+    {
+      "lat": 51.646,
+      "lon": -8.58,
+      "name": "Orlaun Rock",
+      "type": "Rock mark",
+      "catches": [
+        "Bass",
+        "Seatrout"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning for bass and seatrout. Dusk on a flooding tide is most productive."
+    },
+    {
+      "lat": 51.652,
+      "lon": -8.55,
+      "name": "White Strand",
+      "type": "Surf beach and stream mouth",
+      "catches": [
+        "Bass",
+        "Flatfish"
+      ],
+      "seasons": "Spring to autumn; good surf necessary",
+      "notes": "Surf fishing especially at the mouth of the stream."
+    },
+    {
+      "lat": 51.632,
+      "lon": -8.535,
+      "name": "Old Head West - No Public Fishing Access",
+      "type": "No fishing / no public right of access",
+      "catches": [],
+      "seasons": "N/A",
+      "notes": "Provided information states no fishing and no public right of access at the Old Head."
+    },
+    {
+      "lat": 51.626,
+      "lon": -8.515,
+      "name": "Old Head South - No Public Fishing Access",
+      "type": "No fishing / no public right of access",
+      "catches": [],
+      "seasons": "N/A",
+      "notes": "Provided information states no fishing and no public right of access at the Old Head."
+    },
+    {
+      "lat": 51.635,
+      "lon": -8.495,
+      "name": "Old Head East - No Public Fishing Access",
+      "type": "No fishing / no public right of access",
+      "catches": [],
+      "seasons": "N/A",
+      "notes": "Provided information states no fishing and no public right of access at the Old Head."
+    },
+    {
+      "lat": 51.691,
+      "lon": -8.495,
+      "name": "Sandy Cove",
+      "type": "Rock outcrops over sand",
+      "catches": [
+        "Dogfish",
+        "Flatfish"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Fish from rock outcrops on southern shore over sand. Lugworm can be dug here."
+    },
+    {
+      "lat": 51.695,
+      "lon": -8.505,
+      "name": "Old Bridge, Kinsale Area",
+      "type": "Bridge, channel and bass mark",
+      "catches": [
+        "Bass",
+        "Flounder"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Bottom fishing and driftlining for bass and flounder. Crab baits best; high water best."
+    },
+    {
+      "lat": 51.705,
+      "lon": -8.54,
+      "name": "Gully Bridge",
+      "type": "Lagoon, river and tidal flow mark",
+      "catches": [
+        "Mullet",
+        "Flounder",
+        "Bass"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Mullet in lagoon, flounder in main river, bass in tidal flow under road. Late ebb or early flood best."
+    },
+    {
+      "lat": 51.71,
+      "lon": -8.525,
+      "name": "Jagoe's Point",
+      "type": "Point and estuary mark",
+      "catches": [
+        "Seatrout",
+        "Flounder",
+        "Bass"
+      ],
+      "seasons": "Spring to autumn",
+      "notes": "Spinning for seatrout on ebb tide at dusk; bottom fishing for flounder and bass. Crab baits best."
+    },
+    {
+      "lat": 51.69,
+      "lon": -8.44,
+      "name": "New Bridge",
+      "type": "Bridge and deep-water mark",
+      "catches": [
+        "Codling",
+        "Pollack",
+        "Coalfish",
+        "Whiting",
+        "Dogfish",
+        "Flounder",
+        "Bass"
+      ],
+      "seasons": "Year-round; two hours either side of high water best",
+      "notes": "Fish into deep water at southern end of bridge."
+    },
+    {
+      "lat": 51.72,
+      "lon": -8.41,
+      "name": "Middle Cove",
+      "type": "Cove and bottom fishing mark",
+      "catches": [
+        "Dogfish",
+        "Bull Huss",
+        "Ray",
+        "Codling"
+      ],
+      "seasons": "Spring to autumn; codling possible in colder months",
+      "notes": "Bottom fishing with fish baits best."
+    },
+    {
+      "lat": 51.7,
+      "lon": -8.35,
+      "name": "Ballymacus Point",
+      "type": "Point and rock mark",
+      "catches": [
+        "Mackerel",
+        "Pollack"
+      ],
+      "seasons": "Late spring to autumn; mackerel in season",
+      "notes": "Spinning for mackerel and pollack."
     }
   ]
 }
