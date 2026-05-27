@@ -418,7 +418,7 @@ def _render_wave_chart(chart_data: dict) -> str:
     chart_json = json.dumps(chart_data)
     return f"""<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
   <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
-    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">🌊 Wave &amp; Swell Forecast</h2>
+    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Wave &amp; Swell Forecast</h2>
     <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour entrance &mdash; Open-Meteo Marine data &mdash; 7-day hourly forecast</p>
   </div>
   <div style="padding:16px;">
@@ -825,28 +825,28 @@ def main():
      ═══════════════════════════════════════════════════════════════════════ -->
 <div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
   <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
-    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">⛵ Sailing Weather Map</h2>
+    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Sailing Weather Map</h2>
     <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour &amp; Coast &mdash; select a layer and step through the forecast</p>
   </div>
 
   <!-- Layer selector -->
   <div id="wx-layer-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
-    <button class="wx-btn wx-active" data-var="wind_speed"        data-label="Wind Speed">💨 Wind Speed</button>
-    <button class="wx-btn"           data-var="wind_gust"         data-label="Wind Gusts">💨 Wind Gusts</button>
-    <button class="wx-btn"           data-var="wave_height"       data-label="Wave Height">🌊 Wave Height</button>
-    <button class="wx-btn"           data-var="wave_period"       data-label="Wave Period">🌊 Wave Period</button>
-    <button class="wx-btn"           data-var="humidity"          data-label="Humidity">💧 Humidity</button>
-    <button class="wx-btn"           data-var="temperature"       data-label="Temperature">🌡 Temperature</button>
-    <button class="wx-btn"           data-var="sea_temperature"   data-label="Sea Temp">🌡 Sea Temp</button>
-    <button class="wx-btn"           data-var="precipitation"     data-label="Precipitation">🌧 Precip</button>
-    <button class="wx-btn"           data-var="clouds"            data-label="Cloud Cover">☁️ Clouds</button>
-    <button class="wx-btn"           data-var="pressure"          data-label="Pressure">🔵 Pressure</button>
-    <button class="wx-btn"           data-var="feels_like_temperature" data-label="Feels Like">🌡 Feels Like</button>
-    <button class="wx-btn"           data-var="air_quality"       data-label="Air Quality">🍃 Air Quality</button>
-    <button class="wx-btn"           data-var="ozone_surface"     data-label="Ozone (Surface)">🔬 Ozone Sfc</button>
-    <button class="wx-btn"           data-var="ozone_total"       data-label="Ozone (Total)">🔬 Ozone Total</button>
-    <button class="wx-btn"           data-var="no2"               data-label="NO₂">🏭 NO₂</button>
-    <button class="wx-btn"           data-var="pm2.5"             data-label="PM2.5">🌫 PM2.5</button>
+    <button class="wx-btn wx-active" data-var="wind_speed"        data-label="Wind Speed">Wind Speed</button>
+    <button class="wx-btn"           data-var="wind_gust"         data-label="Wind Gusts">Wind Gusts</button>
+    <button class="wx-btn"           data-var="wave_height"       data-label="Wave Height">Wave Height</button>
+    <button class="wx-btn"           data-var="wave_period"       data-label="Wave Period">Wave Period</button>
+    <button class="wx-btn"           data-var="humidity"          data-label="Humidity">Humidity</button>
+    <button class="wx-btn"           data-var="temperature"       data-label="Temperature">Temperature</button>
+    <button class="wx-btn"           data-var="sea_temperature"   data-label="Sea Temp">Sea Temp</button>
+    <button class="wx-btn"           data-var="precipitation"     data-label="Precipitation">Precip</button>
+    <button class="wx-btn"           data-var="clouds"            data-label="Cloud Cover">Clouds</button>
+    <button class="wx-btn"           data-var="pressure"          data-label="Pressure">Pressure</button>
+    <button class="wx-btn"           data-var="feels_like_temperature" data-label="Feels Like">Feels Like</button>
+    <button class="wx-btn"           data-var="air_quality"       data-label="Air Quality">Air Quality</button>
+    <button class="wx-btn"           data-var="ozone_surface"     data-label="Ozone (Surface)">Ozone Sfc</button>
+    <button class="wx-btn"           data-var="ozone_total"       data-label="Ozone (Total)">Ozone Total</button>
+    <button class="wx-btn"           data-var="no2"               data-label="NO₂">NO₂</button>
+    <button class="wx-btn"           data-var="pm2.5"             data-label="PM2.5">PM2.5</button>
   </div>
 
   <!-- Time slider -->
@@ -887,7 +887,7 @@ def main():
          style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
                 z-index:910;background:rgba(13,61,107,0.9);color:#fff;border-radius:8px;
                 padding:14px 20px;text-align:center;font-size:0.88rem;max-width:280px;pointer-events:none;">
-      🌊 Wave / swell tiles are not available for this API tier or location.
+      Wave / swell tiles are not available for this API tier or location.
     </div>
 
     <!-- Sea temperature info notice (hidden by default) -->
@@ -895,7 +895,7 @@ def main():
          style="display:none;position:absolute;top:10px;right:10px;z-index:910;
                 background:rgba(13,61,107,0.85);color:#fff;border-radius:6px;
                 padding:6px 12px;font-size:0.78rem;max-width:220px;text-align:center;pointer-events:none;">
-      🌡 Sea temperature data covers open ocean only — coastal &amp; land areas show no colour.
+      Sea temperature data covers open ocean only — coastal &amp; land areas show no colour.
     </div>
   </div>
 
@@ -1186,7 +1186,7 @@ def main():
         var type    = spot.type    || '';
         var notes   = spot.notes   || '';
         var popup =
-          '<b>🎣 ' + spot.name + '</b>' +
+          '<b>' + spot.name + '</b>' +
           (type    ? '<br><span style="color:#555">Type: </span>'    + type    : '') +
           '<br><span style="color:#555">Fish: </span>'   + catches +
           '<br><span style="color:#555">Best: </span>'   + seasons +
