@@ -1158,6 +1158,9 @@ def main():
         Type
         <select id="fish-type-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
           <option value="">All types</option>
+          <option value="sea">Sea</option>
+          <option value="shore">Shore</option>
+          <option value="pier">Pier</option>
         </select>
       </label>
       <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
@@ -1234,6 +1237,18 @@ def main():
     filterStatus.textContent = visible + ' of ' + total + ' spots shown';
   }}
 
+  function classifySpotType(typeValue) {{
+    var t = normalizeText(typeValue);
+    if (!t) return 'shore';
+    if (t.indexOf('pier') !== -1 || t.indexOf('jetty') !== -1 || t.indexOf('quay') !== -1 || t.indexOf('harbour wall') !== -1) {{
+      return 'pier';
+    }}
+    if (t.indexOf('boat') !== -1 || t.indexOf('offshore') !== -1 || t.indexOf('charter') !== -1 || t.indexOf('reef') !== -1) {{
+      return 'sea';
+    }}
+    return 'shore';
+  }}
+
   function applyFilters() {{
     var typeFilter = normalizeText(typeSelect.value);
     var speciesFilter = normalizeText(speciesSelect.value);
@@ -1242,10 +1257,10 @@ def main():
 
     spotLayers.forEach(function(entry) {{
       var spot = entry.spot;
-      var typeText = normalizeText(spot.type);
+      var typeCategory = classifySpotType(spot.type);
       var speciesList = Array.isArray(spot.catches) ? spot.catches.map(normalizeText) : [];
 
-      var typeMatch = !typeFilter || typeText === typeFilter;
+      var typeMatch = !typeFilter || typeCategory === typeFilter;
       var speciesMatch = !speciesFilter || speciesList.indexOf(speciesFilter) !== -1;
       var show = typeMatch && speciesMatch;
 
@@ -1267,21 +1282,12 @@ def main():
   }}
 
   function populateFilterOptions(spots) {{
-    var typeSet = new Set();
     var speciesSet = new Set();
 
     spots.forEach(function(spot) {{
-      if (spot.type) typeSet.add(String(spot.type).trim());
       (spot.catches || []).forEach(function(species) {{
         if (species) speciesSet.add(String(species).trim());
       }});
-    }});
-
-    Array.from(typeSet).sort().forEach(function(typeName) {{
-      var option = document.createElement('option');
-      option.value = typeName;
-      option.textContent = typeName;
-      typeSelect.appendChild(option);
     }});
 
     Array.from(speciesSet).sort().forEach(function(speciesName) {{
