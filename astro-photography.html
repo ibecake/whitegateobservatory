@@ -370,7 +370,7 @@
         const lightboxPanel = document.getElementById('lightboxPanel');
         const htmlSources = ['astro/astro.html', 'dist/astro/astro.html'];
         const jsonSources = ['astro/astro.json', 'dist/astro/astro.json'];
-        const galleryManifestSources = ['astrophoto/manifest.json', './astrophoto/manifest.json'];
+        const galleryManifestSources = ['./astrophoto/manifest.json'];
         let sourceIndex = 0;
         let galleryItems = [];
 
@@ -589,23 +589,33 @@
         async function loadGalleryManifest() {
           let payload = null;
           let sourceUsed = '';
+          const errors = [];
 
           for (const source of galleryManifestSources) {
             try {
               const response = await fetch(source, { cache: 'no-store' });
               if (!response.ok) {
+                errors.push(source + ' -> HTTP ' + response.status);
                 continue;
               }
               payload = await response.json();
               sourceUsed = source;
               break;
             } catch (err) {
+              errors.push(source + ' -> ' + ((err && err.name) ? err.name : 'FetchError'));
               continue;
             }
           }
 
           if (!Array.isArray(payload)) {
-            updateGalleryStatus('Gallery manifest could not be loaded. Expected astrophoto/manifest.json to contain a JSON array.', true);
+            const isFileProtocol = window.location.protocol === 'file:';
+            const redacted = errors.length ? errors.map(function (entry) {
+              return entry.replace(/https?:\/\/[^\s]+/g, '[redacted-url]');
+            }).join('; ') : 'No source returned parseable JSON.';
+            const help = isFileProtocol
+              ? ' Running from file:// blocks fetch in many browsers. Serve the site over http:// (for example: python3 -m http.server).'
+              : '';
+            updateGalleryStatus('Gallery manifest could not be loaded from known paths. ' + help + ' Redacted errors: ' + redacted, true);
             return;
           }
 
