@@ -370,7 +370,11 @@
         const lightboxPanel = document.getElementById('lightboxPanel');
         const htmlSources = ['astro/astro.html', 'dist/astro/astro.html'];
         const jsonSources = ['astro/astro.json', 'dist/astro/astro.json'];
-        const galleryManifestSources = ['./astrophoto/manifest.json'];
+        const galleryManifestSources = [
+          'astrophoto/manifest.json',
+          './astrophoto/manifest.json',
+          'dist/astrophoto/manifest.json'
+        ];
         let sourceIndex = 0;
         let galleryItems = [];
 

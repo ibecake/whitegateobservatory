@@ -1,1 +1,101 @@
-[]
+[
+	{
+		"title": "NGC 7000 - North America Nebula",
+		"target": "NGC 7000",
+		"date": "2025-08-12",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1959.jpg",
+		"full": "astrophoto/full/IMG_1959.jpg"
+	},
+	{
+		"title": "IC 1396 - Elephant Trunk Region",
+		"target": "IC 1396",
+		"date": "2025-08-19",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1960.jpg",
+		"full": "astrophoto/full/IMG_1960.jpg"
+	},
+	{
+		"title": "M31 - Andromeda Galaxy",
+		"target": "M31",
+		"date": "2025-09-03",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1964.jpg",
+		"full": "astrophoto/full/IMG_1964.jpg"
+	},
+	{
+		"title": "M45 - Pleiades",
+		"target": "M45",
+		"date": "2025-09-10",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1965.jpg",
+		"full": "astrophoto/full/IMG_1965.jpg"
+	},
+	{
+		"title": "NGC 6960 - Veil Nebula",
+		"target": "NGC 6960",
+		"date": "2025-09-17",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1968.jpg",
+		"full": "astrophoto/full/IMG_1968.jpg"
+	},
+	{
+		"title": "M27 - Dumbbell Nebula",
+		"target": "M27",
+		"date": "2025-09-24",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1970.jpg",
+		"full": "astrophoto/full/IMG_1970.jpg"
+	},
+	{
+		"title": "IC 5070 - Pelican Nebula",
+		"target": "IC 5070",
+		"date": "2025-10-01",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1972.jpg",
+		"full": "astrophoto/full/IMG_1972.jpg"
+	},
+	{
+		"title": "NGC 1499 - California Nebula",
+		"target": "NGC 1499",
+		"date": "2025-10-08",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1975.jpg",
+		"full": "astrophoto/full/IMG_1975.jpg"
+	},
+	{
+		"title": "M42 - Orion Nebula",
+		"target": "M42",
+		"date": "2025-10-15",
+		"camera": "Unknown",
+		"telescope": "Unknown",
+		"integration": "Unknown",
+		"description": "Captured from Whitegate Observatory.",
+		"thumb": "astrophoto/full/IMG_1979.jpg",
+		"full": "astrophoto/full/IMG_1979.jpg"
+	}
+]
