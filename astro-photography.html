@@ -396,6 +396,7 @@
 
         function renderFromJson(payload, sourcePath) {
           const nights = Array.isArray(payload.nights) ? payload.nights : [];
+          const mode = payload.darkness_mode ? (' | Mode: ' + payload.darkness_mode) : '';
           const rows = nights.length ? nights.map(function (n) {
             const score = Number(n.score || 0);
             const cls = scoreClass(score);
@@ -415,7 +416,7 @@
             '<div class="outlook-card">' +
               '<div class="outlook-title">' +
                 '<h2>Astrophotography Outlook</h2>' +
-                '<div class="outlook-meta">Updated: ' + escapeHtml(payload.generated_at_local || payload.generated_at || 'Unknown') + ' | Source: ' + escapeHtml(sourcePath) + '</div>' +
+                '<div class="outlook-meta">Updated: ' + escapeHtml(payload.generated_at_local || payload.generated_at || 'Unknown') + ' | Source: ' + escapeHtml(sourcePath) + escapeHtml(mode) + '</div>' +
               '</div>' +
               '<table class="outlook-table">' +
                 '<thead><tr><th>Night</th><th>Score</th><th>Cloud</th><th>Dew Spread</th><th>Precip</th><th>Worst Metric</th><th>Best 2h Window</th></tr></thead>' +

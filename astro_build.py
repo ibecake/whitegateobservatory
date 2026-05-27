@@ -23,6 +23,13 @@ TZ       = "Europe/Dublin"
 SUNSET_BUFFER_H  = 1.0
 SUNRISE_BUFFER_H = 1.0
 
+# Darkness tiers used when strict astronomical night is unavailable seasonally.
+DARKNESS_TIERS = [
+    {"name": "astronomical", "sun_alt_max_deg": -18.0, "sunset_buffer_h": 1.0, "sunrise_buffer_h": 1.0},
+    {"name": "nautical", "sun_alt_max_deg": -12.0, "sunset_buffer_h": 0.5, "sunrise_buffer_h": 0.5},
+    {"name": "civil", "sun_alt_max_deg": -6.0, "sunset_buffer_h": 0.0, "sunrise_buffer_h": 0.0},
+]
+
 # Optional target (improves brightness model). Leave None if generic.
 TARGET_RA  = None  # e.g. "05:35:17"
 TARGET_DEC = None  # e.g. "-05:23:28"
@@ -166,29 +173,46 @@ class NightWindow:
     end: object
     label: str
 
-def build_night_windows_from_hourly(hourly_section, geo: Geo) -> List[NightWindow]:
+def build_night_windows_from_hourly(hourly_section, geo: Geo,
+                                    sun_alt_max_deg: float = -18.0,
+                                    sunset_buffer_h: float = SUNSET_BUFFER_H,
+                                    sunrise_buffer_h: float = SUNRISE_BUFFER_H) -> List[NightWindow]:
     hours = sorted((hourly_section.data or []), key=lambda h: _get(h, "date"))
     wins: List[NightWindow] = []
-    in_dark = False; start_dt = None; prev_dt = None
+    in_dark = False
+    start_dt = None
+    prev_dt = None
+
     for h in hours:
         dt_local = _get(h, "date")
-        if not dt_local: continue
+        if not dt_local:
+            continue
+
         sun, _, _ = geo.compute(_to_utc(dt_local), None)
         sun_alt_deg = float(sun.alt) * 180.0 / 3.141592653589793
-        dark = sun_alt_deg <= -18.0
+        dark = sun_alt_deg <= sun_alt_max_deg
+
         if dark and not in_dark:
-            in_dark = True; start_dt = dt_local
+            in_dark = True
+            start_dt = dt_local
+
         if in_dark and not dark:
             end_dt = prev_dt or dt_local
-            start = start_dt + timedelta(hours=SUNSET_BUFFER_H)
-            end   = end_dt   - timedelta(hours=SUNRISE_BUFFER_H)
-            if start < end: wins.append(NightWindow(start, end, f"{start.date()} night"))
-            in_dark = False; start_dt = None
+            start = start_dt + timedelta(hours=sunset_buffer_h)
+            end = end_dt - timedelta(hours=sunrise_buffer_h)
+            if start < end:
+                wins.append(NightWindow(start, end, f"{start.date()} night"))
+            in_dark = False
+            start_dt = None
+
         prev_dt = dt_local
+
     if in_dark and start_dt and prev_dt:
-        start = start_dt + timedelta(hours=SUNSET_BUFFER_H)
-        end   = prev_dt   - timedelta(hours=SUNRISE_BUFFER_H)
-        if start < end: wins.append(NightWindow(start, end, f"{start.date()} night"))
+        start = start_dt + timedelta(hours=sunset_buffer_h)
+        end = prev_dt - timedelta(hours=sunrise_buffer_h)
+        if start < end:
+            wins.append(NightWindow(start, end, f"{start.date()} night"))
+
     return wins
 
 def hour_quality(h, geo: Geo, target_ra_dec):
@@ -589,7 +613,20 @@ def main():
                                sections=(sections.HOURLY,))
     geo = Geo(LAT, LON, ELEV_M)
     target_ra_dec = (TARGET_RA, TARGET_DEC) if (TARGET_RA and TARGET_DEC) else None
-    windows = build_night_windows_from_hourly(fc.hourly, geo)
+    windows = []
+    darkness_mode = "none"
+    for tier in DARKNESS_TIERS:
+        windows = build_night_windows_from_hourly(
+            fc.hourly,
+            geo,
+            sun_alt_max_deg=tier["sun_alt_max_deg"],
+            sunset_buffer_h=tier["sunset_buffer_h"],
+            sunrise_buffer_h=tier["sunrise_buffer_h"],
+        )
+        if windows:
+            darkness_mode = tier["name"]
+            break
+
     hourly = fc.hourly.data or []
 
     nights_out = []
@@ -687,6 +724,7 @@ def main():
         "generated_at_local": datetime.now().strftime("%a %d %b %H:%M"),
         "location": "Whitegate, Co. Cork, IE",
         "nights": sorted(nights_out, key=lambda x: x["score"], reverse=True),
+        "darkness_mode": darkness_mode,
         "baseline_sqm": BASELINE_SQM,
         "target": {"ra": TARGET_RA, "dec": TARGET_DEC} if (TARGET_RA and TARGET_DEC) else None,
     }
