@@ -1175,13 +1175,41 @@ def main():
     color: '#4a9eff', fillColor: '#4a9eff', fillOpacity: 0.2, radius: 100
   }}).addTo(map);
 
-  // Fishing spots overlay — loaded from external JSON so spots can be updated
-  // without modifying any Python build script.  Edit assets/data/fishing-spots.json
-  // to add, remove or update spots.
-  fetch('assets/data/fishing-spots.json')
-    .then(function(r) {{ return r.json(); }})
-    .then(function(data) {{
-      (data.spots || []).forEach(function(spot) {{
+  // Fishing spots overlay — uses a manual manifest first, then legacy fallback.
+  // Edit assets/data/fishing-manifest.json to add, remove or update spots.
+  function loadSpots() {{
+    var sources = ['assets/data/fishing-manifest.json', 'assets/data/fishing-spots.json'];
+
+    function parseSpots(data) {{
+      if (Array.isArray(data)) return data;
+      return Array.isArray(data && data.spots) ? data.spots : [];
+    }}
+
+    function trySource(index) {{
+      if (index >= sources.length) {{
+        throw new Error('No fishing spots source could be loaded');
+      }}
+      return fetch(sources[index], {{ cache: 'no-store' }})
+        .then(function(r) {{
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + sources[index]);
+          return r.json();
+        }})
+        .then(function(data) {{
+          var spots = parseSpots(data);
+          if (!spots.length) throw new Error('No spots in ' + sources[index]);
+          return spots;
+        }})
+        .catch(function() {{
+          return trySource(index + 1);
+        }});
+    }}
+
+    return trySource(0);
+  }}
+
+  loadSpots()
+    .then(function(spots) {{
+      spots.forEach(function(spot) {{
         boundsPoints.push([spot.lat, spot.lon]);
         var catches = (spot.catches || []).join(', ') || '—';
         var seasons = spot.seasons || '—';

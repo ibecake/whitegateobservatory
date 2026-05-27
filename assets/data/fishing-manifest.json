@@ -1,0 +1,41 @@
+{
+  "_comment": "Manual fishing map manifest. Edit this file directly to add, remove or update map spots.",
+  "spots": [
+    {
+      "lat": 51.8626,
+      "lon": -8.0495,
+      "name": "Knockadoon",
+      "type": "Headland, rock and surf marks",
+      "catches": ["Bass", "Pollack", "Wrasse", "Mackerel", "Garfish"],
+      "seasons": "Late spring to autumn",
+      "notes": "Strong shore options around the point; best with moderate sea movement and safe footing."
+    },
+    {
+      "lat": 51.9860,
+      "lon": -7.5870,
+      "name": "Mine Head",
+      "type": "Cliff and deep-water rock marks",
+      "catches": ["Bass", "Conger", "Bull Huss", "Dogfish", "Ray"],
+      "seasons": "Spring to autumn",
+      "notes": "Highly exposed mark; only fish in settled weather with careful access planning."
+    },
+    {
+      "lat": 51.8237,
+      "lon": -8.0007,
+      "name": "Cork Harbour to Ballycotton (Ram Point sector)",
+      "type": "Harbour and open-coast mixed marks",
+      "catches": ["Bass", "Mackerel", "Pollack", "Flounder", "Whiting"],
+      "seasons": "Year-round",
+      "notes": "Covers mixed marks from inner harbour out toward Ballycotton; fish species shift with tide and exposure."
+    },
+    {
+      "lat": 51.5060,
+      "lon": -9.1290,
+      "name": "Galley Head to Ballymacus Point",
+      "type": "Open Atlantic rock and surf marks",
+      "catches": ["Bass", "Pollack", "Wrasse", "Ray", "Dogfish"],
+      "seasons": "Spring to late autumn",
+      "notes": "Atlantic-facing coastline with productive rough ground; monitor swell and wind direction closely."
+    }
+  ]
+}
