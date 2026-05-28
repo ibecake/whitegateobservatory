@@ -17,6 +17,7 @@
         display: flex;
         gap: 2rem;
         align-items: center;
+        flex-wrap: wrap;
       }
       .top-menu a {
         color: #fff;
@@ -33,6 +34,7 @@
         font-size: 1.2rem;
         font-weight: 700;
         color: #4a9eff;
+        margin-right: auto;
       }
       .content {
         max-width: 1200px;
@@ -285,11 +287,37 @@
           padding: 0 1rem;
         }
         .top-menu {
-          padding: 0.85rem 1rem;
+          padding: 0.75rem 1rem;
         }
         .top-menu nav {
-          gap: 0.35rem;
-          flex-wrap: wrap;
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: stretch;
+          gap: 0.5rem;
+        }
+        .top-menu .logo {
+          grid-column: 1 / -1;
+          margin-right: 0;
+          text-align: center;
+          margin-bottom: 0.15rem;
+        }
+        .top-menu a {
+          text-align: center;
+          font-size: 0.92rem;
+          padding: 0.45rem 0.65rem;
+        }
+        .outlook-frame {
+          min-height: 460px;
+        }
+        .gallery-controls {
+          width: 100%;
+        }
+        .gallery-controls label {
+          flex: 1 1 100%;
+        }
+        .gallery-controls select {
+          width: 100%;
+          min-width: 0;
         }
         .gallery-grid {
           grid-template-columns: 1fr;

@@ -35,3 +35,28 @@ After pushing, clear your browser cache or use a private/incognito window to ens
 - **DNS propagation**: if you changed DNS settings, allow time for propagation.
 
 For additional deployment automation, consider configuring a CI workflow that builds and publishes the site whenever changes are merged into the deployment branch.
+
+## API Keys and Secrets
+
+Do not store live API keys in tracked source files.
+
+Use environment variables instead:
+
+```bash
+export METEOSOURCE_API_KEY="your-real-key"
+export WORLD_TIDES_KEY="your-real-key"
+```
+
+For local convenience, use an untracked `.env` file:
+
+1. Copy [.env.example](.env.example) to `.env`.
+2. Fill in real values in `.env`.
+3. Load it in your shell before running builders:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+The repository includes [.gitignore](.gitignore) rules to keep `.env` files out of git.

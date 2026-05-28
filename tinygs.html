@@ -17,6 +17,7 @@
         display: flex;
         gap: 2rem;
         align-items: center;
+        flex-wrap: wrap;
       }
       .top-menu a {
         color: #fff;
@@ -33,10 +34,12 @@
         font-size: 1.2rem;
         font-weight: 700;
         color: #4a9eff;
+        margin-right: auto;
       }
       .iframe-container {
         width: 100%;
-        height: calc(100vh - 60px);
+        height: calc(100dvh - 72px);
+        min-height: 420px;
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -50,7 +53,44 @@
       body {
         margin: 0;
         padding: 0;
-        overflow: hidden;
+        overflow-x: hidden;
+      }
+      @media (max-width: 900px) {
+        .top-menu {
+          padding: 0.75rem 1rem;
+        }
+        .top-menu nav {
+          gap: 0.5rem;
+        }
+        .top-menu a {
+          padding: 0.45rem 0.65rem;
+          font-size: 0.95rem;
+        }
+        .iframe-container {
+          height: calc(100dvh - 120px);
+        }
+      }
+      @media (max-width: 640px) {
+        .top-menu nav {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: stretch;
+          gap: 0.5rem;
+        }
+        .top-menu .logo {
+          grid-column: 1 / -1;
+          margin-right: 0;
+          text-align: center;
+          margin-bottom: 0.15rem;
+        }
+        .top-menu a {
+          text-align: center;
+          font-size: 0.92rem;
+        }
+        .iframe-container {
+          height: calc(100dvh - 176px);
+          min-height: 340px;
+        }
       }
     </style>
   </head>

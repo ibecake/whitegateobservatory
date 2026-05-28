@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marine - Whitegate Observatory</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <style>
+      .top-menu {
+        background: #1a1a1a;
+        padding: 0.85rem 2rem;
+        border-bottom: 2px solid #333;
+      }
+      .top-menu nav {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        gap: 2rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .top-menu a {
+        color: #fff;
+        text-decoration: none;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background 0.2s;
+      }
+      .top-menu a:hover {
+        background: #333;
+      }
+      .top-menu .logo {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #4a9eff;
+        margin-right: auto;
+      }
+      @media (max-width: 900px) {
+        .top-menu {
+          padding: 0.75rem 1rem;
+        }
+        .top-menu nav {
+          gap: 0.5rem;
+        }
+        .top-menu a {
+          padding: 0.45rem 0.65rem;
+          font-size: 0.95rem;
+        }
+      }
+      @media (max-width: 640px) {
+        .top-menu nav {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: stretch;
+          gap: 0.5rem;
+        }
+        .top-menu .logo {
+          grid-column: 1 / -1;
+          margin-right: 0;
+          text-align: center;
+          margin-bottom: 0.15rem;
+        }
+        .top-menu a {
+          text-align: center;
+          font-size: 0.92rem;
+        }
+      }
+    </style>
+</head>
+<body>
+<div class="top-menu">
+  <nav>
+    <a href="index.html" class="logo">Whitegate Observatory</a>
+    <a href="marine.html">Marine</a>
+    <a href="radio.html">Radio</a>
+    <a href="radio-astronomy.html">Radio Astronomy</a>
+    <a href="astro-photography.html">Astro Photography</a>
+    <a href="tinygs.html">TinyGS</a>
+  </nav>
+</div>
+<div class="update-timestamp">Last updated: Thu 28 May 09:36<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides • Wave/swell data © Open-Meteo</span></div>
+
+<div class="weather-container"><div class="weather-grid"><div class="weather-card-section"><div class="weather-h">Cork Harbour</div><div class="day-row header-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div><div class="weather-val">Humidity</div><div class="weather-val">Pressure</div><div class="weather-val">Wave</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Thu 28 May</div><div class="weather-val">13°/17°C</div><div class="weather-val">0.0mm</div><div class="weather-val">21 km/h</div><div class="weather-val">94%</div><div class="weather-val">84%</div><div class="weather-val">1017 hPa</div><div class="weather-val">0.7m</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Fri 29 May</div><div class="weather-val">11°/19°C</div><div class="weather-val">0.0mm</div><div class="weather-val">15 km/h</div><div class="weather-val">71%</div><div class="weather-val">78%</div><div class="weather-val">1021 hPa</div><div class="weather-val">0.7m</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Sat 30 May</div><div class="weather-val">11°/16°C</div><div class="weather-val">3.2mm</div><div class="weather-val">14 km/h</div><div class="weather-val">81%</div><div class="weather-val">91%</div><div class="weather-val">1019 hPa</div><div class="weather-val">0.7m</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Sun 31 May</div><div class="weather-val">10°/18°C</div><div class="weather-val">0.0mm</div><div class="weather-val">16 km/h</div><div class="weather-val">91%</div><div class="weather-val">86%</div><div class="weather-val">1016 hPa</div><div class="weather-val">0.9m</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Mon 01 Jun</div><div class="weather-val">12°/18°C</div><div class="weather-val">9.1mm</div><div class="weather-val">19 km/h</div><div class="weather-val">91%</div><div class="weather-val">93%</div><div class="weather-val">1008 hPa</div><div class="weather-val">1.1m</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Tue 02 Jun</div><div class="weather-val">11°/16°C</div><div class="weather-val">0.7mm</div><div class="weather-val">19 km/h</div><div class="weather-val">86%</div><div class="weather-val">83%</div><div class="weather-val">1005 hPa</div><div class="weather-val">1.1m</div></div><div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Wed 03 Jun</div><div class="weather-val">10°/14°C</div><div class="weather-val">1.7mm</div><div class="weather-val">25 km/h</div><div class="weather-val">92%</div><div class="weather-val">87%</div><div class="weather-val">1001 hPa</div><div class="weather-val">1.4m</div></div></div></div></div>
+
+<div id="fish-root" class="wrap"><div class="card"><div class="h">Whitegate Fishing Forecast — Best Times & Targets</div><div class="sub">Updated Thu 28 May 09:36. Score blends wind, clouds, rain, pressure trend, humidity, waves, sea temp, tides via WorldTides.</div><div class="tblwrap"><table><colgroup><col style='width:11ch'><col style='width:18ch'><col style='width:6ch'><col style='width:7ch'><col style='width:26ch'><col style='width:8ch'><col style='width:8ch'><col style='width:7ch'><col style='width:7ch'></colgroup><thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th class="num">High Tide</th><th class="num">Low Tide</th><th class="num">Wind (m/s)</th><th class="num">Gust (m/s)</th></tr></thead><tbody><tr><td>Thu 28 May</td><td>21:00–22:59</td><td class='num'><strong>86</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>04:07 / 16:28</td><td class='num'>10:29 / 22:49</td><td class='num'>5.5</td><td class='num'>10.9</td></tr><tr><td>Fri 29 May</td><td>21:00–22:59</td><td class='num'><strong>93</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>04:49 / 17:09</td><td class='num'>11:10 / 23:30</td><td class='num'>3.6</td><td class='num'>8.2</td></tr><tr><td>Sat 30 May</td><td>21:00–22:59</td><td class='num'><strong>92</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>05:28 / 17:47</td><td class='num'>11:49</td><td class='num'>4.5</td><td class='num'>9.7</td></tr><tr><td>Sun 31 May</td><td>04:00–05:59</td><td class='num'><strong>88</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>06:05 / 18:23</td><td class='num'>00:08 / 12:26</td><td class='num'>2.4</td><td class='num'>5.5</td></tr><tr><td>Mon 01 Jun</td><td>21:00–22:59</td><td class='num'><strong>90</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>06:40 / 18:59</td><td class='num'>00:46 / 13:03</td><td class='num'>4.8</td><td class='num'>10.1</td></tr><tr><td>Tue 02 Jun</td><td>21:00–22:59</td><td class='num'><strong>89</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>07:15 / 19:34</td><td class='num'>01:23 / 13:39</td><td class='num'>4.7</td><td class='num'>9.5</td></tr><tr><td>Wed 03 Jun</td><td>05:00–06:59</td><td class='num'><strong>84</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>07:50 / 20:10</td><td class='num'>02:01 / 14:16</td><td class='num'>5.8</td><td class='num'>11.0</td></tr><tr><td>Thu 04 Jun</td><td>05:00–06:59</td><td class='num'><strong>81</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>—</td><td class='num'>02:38</td><td class='num'>5.3</td><td class='num'>8.9</td></tr></tbody></table></div><div class="credit">Check Irish regs before fishing.</div></div><div class="card" style="margin-top:16px">
+  <div class="h">Cork Harbour — Tide Heights</div>
+  <div class="sub">Hourly tide heights (metres).
+    <span aria-hidden="true">●</span><span class="sr-only">Orange dot:</span> High tide
+    &nbsp;<span aria-hidden="true">●</span><span class="sr-only">Blue dot:</span> Low tide
+  </div>
+  <div style="position:relative;width:100%;height:260px">
+    <canvas id="tideChart"
+      aria-label="Tide height chart for Cork Harbour showing hourly heights in metres with high and low tide markers"
+      role="img"></canvas>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  var raw = {"labels": ["Thu 28 May 04:00", "Thu 28 May 04:07", "Thu 28 May 05:00", "Thu 28 May 06:00", "Thu 28 May 07:00", "Thu 28 May 08:00", "Thu 28 May 09:00", "Thu 28 May 10:00", "Thu 28 May 10:29", "Thu 28 May 11:00", "Thu 28 May 12:00", "Thu 28 May 13:00", "Thu 28 May 14:00", "Thu 28 May 15:00", "Thu 28 May 16:00", "Thu 28 May 16:28", "Thu 28 May 17:00", "Thu 28 May 18:00", "Thu 28 May 19:00", "Thu 28 May 20:00", "Thu 28 May 21:00", "Thu 28 May 22:00", "Thu 28 May 22:49", "Thu 28 May 23:00", "Fri 29 May 00:00", "Fri 29 May 01:00", "Fri 29 May 02:00", "Fri 29 May 03:00", "Fri 29 May 04:00", "Fri 29 May 04:49", "Fri 29 May 05:00", "Fri 29 May 06:00", "Fri 29 May 07:00", "Fri 29 May 08:00", "Fri 29 May 09:00", "Fri 29 May 10:00", "Fri 29 May 11:00", "Fri 29 May 11:10", "Fri 29 May 12:00", "Fri 29 May 13:00", "Fri 29 May 14:00", "Fri 29 May 15:00", "Fri 29 May 16:00", "Fri 29 May 17:00", "Fri 29 May 17:09", "Fri 29 May 18:00", "Fri 29 May 19:00", "Fri 29 May 20:00", "Fri 29 May 21:00", "Fri 29 May 22:00", "Fri 29 May 23:00", "Fri 29 May 23:30", "Sat 30 May 00:00", "Sat 30 May 01:00", "Sat 30 May 02:00", "Sat 30 May 03:00", "Sat 30 May 04:00", "Sat 30 May 05:00", "Sat 30 May 05:28", "Sat 30 May 06:00", "Sat 30 May 07:00", "Sat 30 May 08:00", "Sat 30 May 09:00", "Sat 30 May 10:00", "Sat 30 May 11:00", "Sat 30 May 11:49", "Sat 30 May 12:00", "Sat 30 May 13:00", "Sat 30 May 14:00", "Sat 30 May 15:00", "Sat 30 May 16:00", "Sat 30 May 17:00", "Sat 30 May 17:47", "Sat 30 May 18:00", "Sat 30 May 19:00", "Sat 30 May 20:00", "Sat 30 May 21:00", "Sat 30 May 22:00", "Sat 30 May 23:00", "Sun 31 May 00:00", "Sun 31 May 00:08", "Sun 31 May 01:00", "Sun 31 May 02:00", "Sun 31 May 03:00", "Sun 31 May 04:00", "Sun 31 May 05:00", "Sun 31 May 06:00", "Sun 31 May 06:05", "Sun 31 May 07:00", "Sun 31 May 08:00", "Sun 31 May 09:00", "Sun 31 May 10:00", "Sun 31 May 11:00", "Sun 31 May 12:00", "Sun 31 May 12:26", "Sun 31 May 13:00", "Sun 31 May 14:00", "Sun 31 May 15:00", "Sun 31 May 16:00", "Sun 31 May 17:00", "Sun 31 May 18:00", "Sun 31 May 18:23", "Sun 31 May 19:00", "Sun 31 May 20:00", "Sun 31 May 21:00", "Sun 31 May 22:00", "Sun 31 May 23:00", "Mon 01 Jun 00:00", "Mon 01 Jun 00:46", "Mon 01 Jun 01:00", "Mon 01 Jun 02:00", "Mon 01 Jun 03:00", "Mon 01 Jun 04:00", "Mon 01 Jun 05:00", "Mon 01 Jun 06:00", "Mon 01 Jun 06:40", "Mon 01 Jun 07:00", "Mon 01 Jun 08:00", "Mon 01 Jun 09:00", "Mon 01 Jun 10:00", "Mon 01 Jun 11:00", "Mon 01 Jun 12:00", "Mon 01 Jun 13:00", "Mon 01 Jun 13:03", "Mon 01 Jun 14:00", "Mon 01 Jun 15:00", "Mon 01 Jun 16:00", "Mon 01 Jun 17:00", "Mon 01 Jun 18:00", "Mon 01 Jun 18:59", "Mon 01 Jun 19:00", "Mon 01 Jun 20:00", "Mon 01 Jun 21:00", "Mon 01 Jun 22:00", "Mon 01 Jun 23:00", "Tue 02 Jun 00:00", "Tue 02 Jun 01:00", "Tue 02 Jun 01:23", "Tue 02 Jun 02:00", "Tue 02 Jun 03:00", "Tue 02 Jun 04:00", "Tue 02 Jun 05:00", "Tue 02 Jun 06:00", "Tue 02 Jun 07:00", "Tue 02 Jun 07:15", "Tue 02 Jun 08:00", "Tue 02 Jun 09:00", "Tue 02 Jun 10:00", "Tue 02 Jun 11:00", "Tue 02 Jun 12:00", "Tue 02 Jun 13:00", "Tue 02 Jun 13:39", "Tue 02 Jun 14:00", "Tue 02 Jun 15:00", "Tue 02 Jun 16:00", "Tue 02 Jun 17:00", "Tue 02 Jun 18:00", "Tue 02 Jun 19:00", "Tue 02 Jun 19:34", "Tue 02 Jun 20:00", "Tue 02 Jun 21:00", "Tue 02 Jun 22:00", "Tue 02 Jun 23:00", "Wed 03 Jun 00:00", "Wed 03 Jun 01:00", "Wed 03 Jun 02:00", "Wed 03 Jun 02:01", "Wed 03 Jun 03:00", "Wed 03 Jun 04:00", "Wed 03 Jun 05:00", "Wed 03 Jun 06:00", "Wed 03 Jun 07:00", "Wed 03 Jun 07:50", "Wed 03 Jun 08:00", "Wed 03 Jun 09:00", "Wed 03 Jun 10:00", "Wed 03 Jun 11:00", "Wed 03 Jun 12:00", "Wed 03 Jun 13:00", "Wed 03 Jun 14:00", "Wed 03 Jun 14:16", "Wed 03 Jun 15:00", "Wed 03 Jun 16:00", "Wed 03 Jun 17:00", "Wed 03 Jun 18:00", "Wed 03 Jun 19:00", "Wed 03 Jun 20:00", "Wed 03 Jun 20:10", "Wed 03 Jun 21:00", "Wed 03 Jun 22:00", "Wed 03 Jun 23:00", "Thu 04 Jun 00:00", "Thu 04 Jun 01:00", "Thu 04 Jun 02:00", "Thu 04 Jun 02:38", "Thu 04 Jun 03:00", "Thu 04 Jun 04:00"], "heights": [1.19, 1.2, 1.05, 0.62, 0.04, -0.54, -1.02, -1.3, -1.34, -1.3, -0.97, -0.41, 0.25, 0.83, 1.17, 1.22, 1.16, 0.8, 0.23, -0.38, -0.92, -1.29, -1.4, -1.39, -1.16, -0.64, 0.03, 0.68, 1.15, 1.28, 1.27, 1.01, 0.47, -0.17, -0.76, -1.21, -1.42, -1.43, -1.31, -0.86, -0.2, 0.5, 1.06, 1.31, 1.32, 1.17, 0.69, 0.03, -0.6, -1.12, -1.42, -1.47, -1.42, -1.07, -0.44, 0.29, 0.93, 1.3, 1.35, 1.29, 0.89, 0.25, -0.42, -1.0, -1.38, -1.5, -1.49, -1.24, -0.67, 0.07, 0.78, 1.27, 1.4, 1.39, 1.09, 0.49, -0.21, -0.84, -1.3, -1.51, -1.52, -1.38, -0.9, -0.18, 0.58, 1.15, 1.39, 1.4, 1.22, 0.69, -0.02, -0.69, -1.22, -1.51, -1.54, -1.49, -1.09, -0.4, 0.39, 1.05, 1.41, 1.44, 1.36, 0.92, 0.24, -0.47, -1.06, -1.44, -1.54, -1.53, -1.26, -0.65, 0.13, 0.85, 1.31, 1.41, 1.38, 1.05, 0.42, -0.31, -0.94, -1.38, -1.56, -1.56, -1.39, -0.86, -0.09, 0.69, 1.25, 1.45, 1.45, 1.24, 0.68, -0.04, -0.72, -1.23, -1.51, -1.53, -1.47, -1.06, -0.35, 0.44, 1.07, 1.37, 1.38, 1.27, 0.81, 0.12, -0.58, -1.14, -1.48, -1.55, -1.53, -1.22, -0.57, 0.24, 0.94, 1.36, 1.43, 1.39, 1.04, 0.41, -0.3, -0.91, -1.33, -1.5, -1.5, -1.32, -0.79, -0.04, 0.7, 1.19, 1.33, 1.32, 1.08, 0.53, -0.15, -0.8, -1.27, -1.5, -1.51, -1.42, -0.98, -0.26, 0.52, 1.11, 1.37, 1.37, 1.25, 0.8, 0.15, -0.51, -1.05, -1.37, -1.43, -1.41, -1.12], "high_data": [null, 1.2, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.22, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.28, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.32, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.35, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.4, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.4, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.44, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.41, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.45, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.38, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.43, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.33, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.37, null, null, null, null, null, null, null, null, null], "low_data": [null, null, null, null, null, null, null, null, -1.34, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.4, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.43, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.47, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.5, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.52, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.54, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.54, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.56, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.53, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.55, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.5, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.51, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.43, null, null]};
+  if (!raw.labels || !raw.labels.length) return;
+
+  // Show a date label only at midnight local time (label ends "00:00").
+  // The hourly height sample at UTC 23:00 is always IST 00:00 (UTC+1 summer /
+  // UTC+0 winter), so there is always an exact midnight label to match against
+  // regardless of any extra extreme data-points inserted between hourly samples.
+  var tickLabels = raw.labels.map(function(lbl) {
+    return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
+  });
+
+  new Chart(document.getElementById("tideChart"), {
+    type: "line",
+    data: {
+      labels: raw.labels,
+      datasets: [
+        {
+          label: "Tide height (m)",
+          data: raw.heights,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59,130,246,0.12)",
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          order: 3
+        },
+        {
+          label: "High tide",
+          data: raw.high_data,
+          type: "scatter",
+          backgroundColor: "#f97316",
+          borderColor: "#f97316",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          showLine: false,
+          spanGaps: false,
+          order: 1
+        },
+        {
+          label: "Low tide",
+          data: raw.low_data,
+          type: "scatter",
+          backgroundColor: "#0ea5e9",
+          borderColor: "#0ea5e9",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          showLine: false,
+          spanGaps: false,
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return items[0].label; },
+            label: function(item) {
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              return item.dataset.label + ": " + v.toFixed(2) + " m";
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            callback: function(val, idx) { return tickLabels[idx]; },
+            maxRotation: 0,
+            autoSkip: false,
+            font: { size: 11 }
+          },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        y: {
+          title: { display: true, text: "Height (m)", font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        }
+      }
+    }
+  });
+})();
+</script></div>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  if (p.get("transparent")==="1") document.body.style.background="transparent";
+  function send(){ try{ parent.postMessage({type:"fishing-card-size", height: document.documentElement.scrollHeight}, "*"); }catch(e){} }
+  window.addEventListener("load", send); setTimeout(send,60); setTimeout(send,300);
+})();
+</script>
+
+<div style="max-width:1200px;margin:0 auto;padding:0 1rem;">
+<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+  <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
+    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Wave &amp; Swell Forecast</h2>
+    <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour entrance &mdash; Open-Meteo Marine data &mdash; 7-day hourly forecast</p>
+  </div>
+  <div style="padding:16px;">
+    <div style="position:relative;width:100%;height:240px;margin-bottom:16px;">
+      <canvas id="waveHeightChart"
+        aria-label="Wave height and sea surface temperature forecast"
+        role="img"></canvas>
+    </div>
+    <div style="position:relative;width:100%;height:160px;">
+      <canvas id="wavePeriodChart"
+        aria-label="Wave period forecast in seconds"
+        role="img"></canvas>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  var raw = {"labels": ["Thu 28 May 01:00", "Thu 28 May 02:00", "Thu 28 May 03:00", "Thu 28 May 04:00", "Thu 28 May 05:00", "Thu 28 May 06:00", "Thu 28 May 07:00", "Thu 28 May 08:00", "Thu 28 May 09:00", "Thu 28 May 10:00", "Thu 28 May 11:00", "Thu 28 May 12:00", "Thu 28 May 13:00", "Thu 28 May 14:00", "Thu 28 May 15:00", "Thu 28 May 16:00", "Thu 28 May 17:00", "Thu 28 May 18:00", "Thu 28 May 19:00", "Thu 28 May 20:00", "Thu 28 May 21:00", "Thu 28 May 22:00", "Thu 28 May 23:00", "Fri 29 May 00:00", "Fri 29 May 01:00", "Fri 29 May 02:00", "Fri 29 May 03:00", "Fri 29 May 04:00", "Fri 29 May 05:00", "Fri 29 May 06:00", "Fri 29 May 07:00", "Fri 29 May 08:00", "Fri 29 May 09:00", "Fri 29 May 10:00", "Fri 29 May 11:00", "Fri 29 May 12:00", "Fri 29 May 13:00", "Fri 29 May 14:00", "Fri 29 May 15:00", "Fri 29 May 16:00", "Fri 29 May 17:00", "Fri 29 May 18:00", "Fri 29 May 19:00", "Fri 29 May 20:00", "Fri 29 May 21:00", "Fri 29 May 22:00", "Fri 29 May 23:00", "Sat 30 May 00:00", "Sat 30 May 01:00", "Sat 30 May 02:00", "Sat 30 May 03:00", "Sat 30 May 04:00", "Sat 30 May 05:00", "Sat 30 May 06:00", "Sat 30 May 07:00", "Sat 30 May 08:00", "Sat 30 May 09:00", "Sat 30 May 10:00", "Sat 30 May 11:00", "Sat 30 May 12:00", "Sat 30 May 13:00", "Sat 30 May 14:00", "Sat 30 May 15:00", "Sat 30 May 16:00", "Sat 30 May 17:00", "Sat 30 May 18:00", "Sat 30 May 19:00", "Sat 30 May 20:00", "Sat 30 May 21:00", "Sat 30 May 22:00", "Sat 30 May 23:00", "Sun 31 May 00:00", "Sun 31 May 01:00", "Sun 31 May 02:00", "Sun 31 May 03:00", "Sun 31 May 04:00", "Sun 31 May 05:00", "Sun 31 May 06:00", "Sun 31 May 07:00", "Sun 31 May 08:00", "Sun 31 May 09:00", "Sun 31 May 10:00", "Sun 31 May 11:00", "Sun 31 May 12:00", "Sun 31 May 13:00", "Sun 31 May 14:00", "Sun 31 May 15:00", "Sun 31 May 16:00", "Sun 31 May 17:00", "Sun 31 May 18:00", "Sun 31 May 19:00", "Sun 31 May 20:00", "Sun 31 May 21:00", "Sun 31 May 22:00", "Sun 31 May 23:00", "Mon 01 Jun 00:00", "Mon 01 Jun 01:00", "Mon 01 Jun 02:00", "Mon 01 Jun 03:00", "Mon 01 Jun 04:00", "Mon 01 Jun 05:00", "Mon 01 Jun 06:00", "Mon 01 Jun 07:00", "Mon 01 Jun 08:00", "Mon 01 Jun 09:00", "Mon 01 Jun 10:00", "Mon 01 Jun 11:00", "Mon 01 Jun 12:00", "Mon 01 Jun 13:00", "Mon 01 Jun 14:00", "Mon 01 Jun 15:00", "Mon 01 Jun 16:00", "Mon 01 Jun 17:00", "Mon 01 Jun 18:00", "Mon 01 Jun 19:00", "Mon 01 Jun 20:00", "Mon 01 Jun 21:00", "Mon 01 Jun 22:00", "Mon 01 Jun 23:00", "Tue 02 Jun 00:00", "Tue 02 Jun 01:00", "Tue 02 Jun 02:00", "Tue 02 Jun 03:00", "Tue 02 Jun 04:00", "Tue 02 Jun 05:00", "Tue 02 Jun 06:00", "Tue 02 Jun 07:00", "Tue 02 Jun 08:00", "Tue 02 Jun 09:00", "Tue 02 Jun 10:00", "Tue 02 Jun 11:00", "Tue 02 Jun 12:00", "Tue 02 Jun 13:00", "Tue 02 Jun 14:00", "Tue 02 Jun 15:00", "Tue 02 Jun 16:00", "Tue 02 Jun 17:00", "Tue 02 Jun 18:00", "Tue 02 Jun 19:00", "Tue 02 Jun 20:00", "Tue 02 Jun 21:00", "Tue 02 Jun 22:00", "Tue 02 Jun 23:00", "Wed 03 Jun 00:00", "Wed 03 Jun 01:00", "Wed 03 Jun 02:00", "Wed 03 Jun 03:00", "Wed 03 Jun 04:00", "Wed 03 Jun 05:00", "Wed 03 Jun 06:00", "Wed 03 Jun 07:00", "Wed 03 Jun 08:00", "Wed 03 Jun 09:00", "Wed 03 Jun 10:00", "Wed 03 Jun 11:00", "Wed 03 Jun 12:00", "Wed 03 Jun 13:00", "Wed 03 Jun 14:00", "Wed 03 Jun 15:00", "Wed 03 Jun 16:00", "Wed 03 Jun 17:00", "Wed 03 Jun 18:00", "Wed 03 Jun 19:00", "Wed 03 Jun 20:00", "Wed 03 Jun 21:00", "Wed 03 Jun 22:00", "Wed 03 Jun 23:00", "Thu 04 Jun 00:00"], "wave_heights": [0.66, 0.64, 0.64, 0.62, 0.62, 0.62, 0.62, 0.64, 0.64, 0.66, 0.66, 0.66, 0.66, 0.68, 0.7, 0.72, 0.74, 0.76, 0.78, 0.78, 0.76, 0.76, 0.74, 0.74, 0.72, 0.72, 0.74, 0.74, 0.72, 0.72, 0.7, 0.68, 0.66, 0.64, 0.64, 0.66, 0.66, 0.66, 0.66, 0.66, 0.64, 0.64, 0.62, 0.6, 0.58, 0.56, 0.56, 0.54, 0.54, 0.54, 0.56, 0.56, 0.56, 0.58, 0.58, 0.6, 0.64, 0.66, 0.7, 0.74, 0.78, 0.82, 0.84, 0.88, 0.9, 0.92, 0.94, 0.94, 0.94, 0.94, 0.92, 0.9, 0.88, 0.86, 0.86, 0.84, 0.86, 0.86, 0.88, 0.88, 0.9, 0.9, 0.92, 0.96, 0.98, 1.0, 1.0, 1.02, 1.0, 0.98, 0.96, 0.96, 0.98, 0.98, 1.0, 1.02, 1.04, 1.04, 1.02, 1.02, 1.0, 0.98, 0.96, 0.94, 0.92, 0.9, 0.92, 0.92, 0.94, 1.02, 1.1, 1.18, 1.2, 1.2, 1.22, 1.2, 1.2, 1.18, 1.18, 1.18, 1.18, 1.16, 1.16, 1.14, 1.12, 1.08, 1.06, 1.06, 1.06, 1.06, 1.1, 1.14, 1.18, 1.2, 1.24, 1.26, 1.24, 1.22, 1.2, 1.16, 1.12, 1.08, 1.06, 1.04, 1.02, 1.04, 1.04, 1.06, 1.12, 1.18, 1.24, 1.3, 1.38, 1.44, 1.5, 1.56, 1.62, 1.62, 1.64, 1.64, 1.62, 1.62, 1.6, 1.56, 1.54, 1.5, 1.46, 1.4], "wave_periods": [5.0, 5.0, 5.1, 5.1, 5.1, 5.1, 5.0, 5.0, 4.8, 4.7, 4.6, 4.6, 4.5, 4.5, 4.4, 4.3, 4.3, 4.4, 4.5, 4.5, 4.6, 4.7, 4.8, 4.8, 4.9, 4.9, 4.9, 5.0, 5.0, 5.2, 5.3, 5.5, 5.5, 5.7, 5.6, 5.5, 5.5, 5.4, 5.3, 5.4, 5.5, 5.7, 5.9, 6.2, 6.5, 6.8, 7.0, 7.2, 7.3, 7.3, 7.4, 7.3, 7.2, 7.0, 6.8, 6.5, 6.3, 6.2, 6.0, 6.0, 5.8, 5.8, 5.8, 5.9, 6.0, 6.0, 6.2, 6.3, 6.5, 6.7, 6.8, 7.0, 7.2, 7.2, 7.2, 7.2, 7.2, 7.2, 7.1, 7.0, 7.0, 6.9, 6.7, 6.3, 6.1, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 5.9, 5.8, 5.8, 5.8, 5.8, 5.8, 6.0, 6.0, 6.0, 6.0, 5.9, 5.9, 6.0, 5.9, 5.8, 5.5, 5.4, 5.3, 5.2, 5.2, 5.2, 5.3, 5.3, 5.3, 5.3, 5.4, 5.5, 5.7, 5.8, 5.8, 5.9, 6.0, 6.0, 6.2, 6.2, 6.3, 6.3, 6.3, 6.3, 6.3, 6.3, 6.4, 6.5, 6.5, 6.5, 6.4, 6.3, 6.3, 6.3, 6.3, 6.3, 6.4, 6.3, 6.2, 6.0, 5.9, 5.8, 5.8, 5.8, 5.8, 5.8, 6.0, 6.0, 6.1, 6.2, 6.3, 6.5, 6.5, 6.7, 6.8, 6.8, 7.0, 7.2, 7.4, 7.6, 7.8], "sea_temps": [15.5, 15.5, 15.4, 15.4, 15.4, 15.4, 15.4, 15.5, 15.5, 15.6, 15.6, 15.6, 15.7, 15.7, 15.8, 15.8, 15.8, 15.8, 15.8, 15.7, 15.7, 15.6, 15.6, 15.5, 15.4, 15.4, 15.4, 15.2, 15.2, 15.1, 15.1, 15.1, 15.2, 15.2, 15.4, 15.4, 15.4, 15.5, 15.6, 15.6, 15.6, 15.6, 15.6, 15.6, 15.5, 15.4, 15.4, 15.2, 15.2, 15.1, 15.1, 15.0, 14.9, 14.9, 14.9, 14.9, 14.9, 14.9, 14.9, 14.9, 14.9, 14.9, 14.9, 14.8, 14.7, 14.6, 14.6, 14.5, 14.4, 14.3, 14.2, 14.1, 14.1, 14.1, 14.0, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.9, 13.8, 13.8, 13.8, 13.7, 13.7, 13.6, 13.6, 13.6, 13.6, 13.6, 13.6, 13.5, 13.4, 13.4, 13.4, 13.3, 13.3, 13.2, 13.2, 13.2, 13.2, 13.2, 13.2, 13.2, 13.1, 13.1, 13.1, 13.1, 13.0, 13.0, 12.9, 12.9, 12.9, 12.9, 12.9, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.8, 12.7, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.6, 12.7, 12.7, 12.8, 12.8, 12.9, 12.9, 12.9, 12.9, 12.9, 12.9, 12.9, 12.9, 12.8, 12.8]};
+  if (!raw.labels || !raw.labels.length) return;
+
+  // Show a date label only at midnight local time (label ends "00:00").
+  var tickLabels = raw.labels.map(function(lbl) {
+    return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
+  });
+
+  var commonScaleX = {
+    ticks: {
+      callback: function(val, idx) { return tickLabels[idx]; },
+      maxRotation: 0, autoSkip: false, font: { size: 11 }
+    },
+    grid: { color: "rgba(0,0,0,0.05)" }
+  };
+
+  // ── Chart 1: Wave Height + Sea Surface Temperature ──────────────────────────
+  new Chart(document.getElementById("waveHeightChart"), {
+    type: "line",
+    data: {
+      labels: raw.labels,
+      datasets: [
+        {
+          label: "Wave Height (m)",
+          data: raw.wave_heights,
+          borderColor: "#1a90ff",
+          backgroundColor: "rgba(26,144,255,0.12)",
+          borderWidth: 2,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          yAxisID: "yH",
+          spanGaps: true,
+        },
+        {
+          label: "Sea Temp (°C)",
+          data: raw.sea_temps,
+          borderColor: "#ef4444",
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointRadius: 0,
+          fill: false,
+          tension: 0.4,
+          yAxisID: "yT",
+          spanGaps: true,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return items[0].label; },
+            label: function(item) {
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              var unit = item.dataset.yAxisID === "yT" ? "°C" : "m";
+              return item.dataset.label + ": " + v.toFixed(item.dataset.yAxisID === "yT" ? 1 : 2) + unit;
+            }
+          }
+        }
+      },
+      scales: {
+        x: commonScaleX,
+        yH: {
+          type: "linear", position: "left",
+          title: { display: true, text: "Wave Height (m)", font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          min: 0,
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        yT: {
+          type: "linear", position: "right",
+          title: { display: true, text: "Sea Temp (°C)", font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          grid: { drawOnChartArea: false }
+        }
+      }
+    }
+  });
+
+  // ── Chart 2: Wave Period ─────────────────────────────────────────────────────
+  new Chart(document.getElementById("wavePeriodChart"), {
+    type: "line",
+    data: {
+      labels: raw.labels,
+      datasets: [
+        {
+          label: "Wave Period (s)",
+          data: raw.wave_periods,
+          borderColor: "#8b5cf6",
+          backgroundColor: "rgba(139,92,246,0.10)",
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          spanGaps: true,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return items[0].label; },
+            label: function(item) {
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              return "Wave Period: " + v.toFixed(1) + "s";
+            }
+          }
+        }
+      },
+      scales: {
+        x: commonScaleX,
+        y: {
+          title: { display: true, text: "Period (s)", font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          min: 0,
+          grid: { color: "rgba(0,0,0,0.05)" }
+        }
+      }
+    }
+  });
+})();
+</script>
+</div>
+<!-- Leaflet CSS/JS shared by both maps on this page -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     SAILING WEATHER MAP
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+  <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
+    <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Sailing Weather Map</h2>
+    <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour &amp; Coast &mdash; select a layer and step through the forecast</p>
+  </div>
+
+  <!-- Layer selector -->
+  <div id="wx-layer-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
+    <button class="wx-btn wx-active" data-var="wind_speed"        data-label="Wind Speed">Wind Speed</button>
+    <button class="wx-btn"           data-var="wind_gust"         data-label="Wind Gusts">Wind Gusts</button>
+    <button class="wx-btn"           data-var="wave_height"       data-label="Wave Height">Wave Height</button>
+    <button class="wx-btn"           data-var="wave_period"       data-label="Wave Period">Wave Period</button>
+    <button class="wx-btn"           data-var="humidity"          data-label="Humidity">Humidity</button>
+    <button class="wx-btn"           data-var="temperature"       data-label="Temperature">Temperature</button>
+    <button class="wx-btn"           data-var="sea_temperature"   data-label="Sea Temp">Sea Temp</button>
+    <button class="wx-btn"           data-var="precipitation"     data-label="Precipitation">Precip</button>
+    <button class="wx-btn"           data-var="clouds"            data-label="Cloud Cover">Clouds</button>
+    <button class="wx-btn"           data-var="pressure"          data-label="Pressure">Pressure</button>
+    <button class="wx-btn"           data-var="feels_like_temperature" data-label="Feels Like">Feels Like</button>
+    <button class="wx-btn"           data-var="air_quality"       data-label="Air Quality">Air Quality</button>
+    <button class="wx-btn"           data-var="ozone_surface"     data-label="Ozone (Surface)">Ozone Sfc</button>
+    <button class="wx-btn"           data-var="ozone_total"       data-label="Ozone (Total)">Ozone Total</button>
+    <button class="wx-btn"           data-var="no2"               data-label="NO₂">NO₂</button>
+    <button class="wx-btn"           data-var="pm2.5"             data-label="PM2.5">PM2.5</button>
+  </div>
+
+  <!-- Time slider -->
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
+    <span style="font-size:0.85rem;color:#374151;white-space:nowrap;font-weight:600;">Forecast time:</span>
+    <input id="wx-time-slider" type="range" min="0" max="48" step="1" value="0"
+           style="flex:1;accent-color:#0d6efd;cursor:pointer;" />
+    <span id="wx-time-label" style="font-size:0.85rem;color:#374151;white-space:nowrap;min-width:60px;text-align:right;">Now</span>
+    <div style="display:flex;gap:4px;">
+      <button id="wx-play-btn" title="Play animation"
+              style="padding:3px 10px;font-size:0.8rem;border:1px solid #0d6efd;border-radius:4px;background:#0d6efd;color:#fff;cursor:pointer;">▶ Play</button>
+      <button id="wx-stop-btn" title="Stop animation"
+              style="padding:3px 10px;font-size:0.8rem;border:1px solid #6c757d;border-radius:4px;background:#6c757d;color:#fff;cursor:pointer;">■ Stop</button>
+    </div>
+  </div>
+
+  <!-- Map + Legend wrapper -->
+  <div style="position:relative;">
+    <div id="wx-map" style="height:520px;width:100%;"></div>
+
+    <!-- Active layer label (top-left over map) -->
+    <div id="wx-layer-label"
+         style="position:absolute;top:10px;left:50px;z-index:900;background:rgba(13,61,107,0.85);
+                color:#fff;font-size:0.82rem;font-weight:600;padding:4px 10px;border-radius:4px;pointer-events:none;">
+      Wind Speed
+    </div>
+
+    <!-- Colour legend (bottom-left over map) -->
+    <div id="wx-legend"
+         style="position:absolute;bottom:30px;left:10px;z-index:900;background:rgba(255,255,255,0.93);
+                border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.18);padding:8px 12px;min-width:160px;font-size:0.78rem;">
+      <div id="wx-legend-title" style="font-weight:700;margin-bottom:6px;color:#0d3d6b;">Wind Speed</div>
+      <div id="wx-legend-body"></div>
+    </div>
+
+    <!-- Wave layer unavailable notice (hidden by default) -->
+    <div id="wx-wave-notice"
+         style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                z-index:910;background:rgba(13,61,107,0.9);color:#fff;border-radius:8px;
+                padding:14px 20px;text-align:center;font-size:0.88rem;max-width:280px;pointer-events:none;">
+      Wave / swell tiles are not available for this API tier or location.
+    </div>
+
+    <!-- Sea temperature info notice (hidden by default) -->
+    <div id="wx-sst-notice"
+         style="display:none;position:absolute;top:10px;right:10px;z-index:910;
+                background:rgba(13,61,107,0.85);color:#fff;border-radius:6px;
+                padding:6px 12px;font-size:0.78rem;max-width:220px;text-align:center;pointer-events:none;">
+      Sea temperature data covers open ocean only — coastal &amp; land areas show no colour.
+    </div>
+  </div>
+
+  <div style="padding:8px 16px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:0.78rem;color:#6b7280;">
+    Weather map tiles &copy; <a href="https://www.meteosource.com" target="_blank" rel="noopener" style="color:#0d6efd;">Meteosource</a>
+    &nbsp;|&nbsp; Base map &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:#0d6efd;">OpenStreetMap</a> contributors
+  </div>
+</div>
+
+<style>
+.wx-btn {
+  padding:5px 12px;font-size:0.82rem;font-weight:500;
+  border:1px solid #0d6efd;border-radius:20px;
+  background:#fff;color:#0d6efd;cursor:pointer;transition:all 0.15s;
+}
+.wx-btn:hover { background:#e8f0fe; }
+.wx-btn.wx-active { background:#0d6efd;color:#fff; }
+.wx-legend-row { display:flex;align-items:center;gap:6px;margin-bottom:3px; }
+.wx-swatch { width:18px;height:12px;border-radius:2px;flex-shrink:0; }
+</style>
+
+<script>
+(function() {
+  var MS_KEY = "kc9w88n8d1eyz35kna3w9y8l9jvoxffoyjenq020";
+  var MS_TIER = "flexi";
+
+  // ── Layer metadata ──────────────────────────────────────────────────────────
+  var LAYERS = {
+    wind_speed:        { label:"Wind Speed",     unit:"m/s",  wave:false, legend:[
+      {c:"#0000ff",v:"0"},{c:"#00aaff",v:"3"},{c:"#00ff88",v:"6"},
+      {c:"#ffff00",v:"10"},{c:"#ff8800",v:"15"},{c:"#ff0000",v:"20+"},
+    ]},
+    wind_gust:         { label:"Wind Gusts",     unit:"m/s",  wave:false, legend:[
+      {c:"#0000ff",v:"0"},{c:"#00aaff",v:"5"},{c:"#00ff88",v:"10"},
+      {c:"#ffff00",v:"15"},{c:"#ff8800",v:"20"},{c:"#ff0000",v:"25+"},
+    ]},
+    wave_height:       { label:"Wave Height",    unit:"m",    wave:true,  legend:[
+      {c:"#b3e0ff",v:"0"},{c:"#66b8ff",v:"0.5"},{c:"#1a90ff",v:"1"},
+      {c:"#005eb8",v:"2"},{c:"#002080",v:"3+"},
+    ]},
+    wave_period:       { label:"Wave Period",    unit:"s",    wave:true,  legend:[
+      {c:"#ffffcc",v:"0"},{c:"#a1dab4",v:"5"},{c:"#41b6c4",v:"10"},
+      {c:"#2c7fb8",v:"15"},{c:"#253494",v:"20+"},
+    ]},
+    humidity:          { label:"Humidity",       unit:"%",    wave:false, legend:[
+      {c:"#f7fbff",v:"0"},{c:"#c6dbef",v:"20"},{c:"#6baed6",v:"40"},
+      {c:"#2171b5",v:"60"},{c:"#08306b",v:"80+"},
+    ]},
+    temperature:       { label:"Temperature",    unit:"°C",   wave:false, legend:[
+      {c:"#0000ff",v:"-10"},{c:"#00aaff",v:"0"},{c:"#00ff88",v:"10"},
+      {c:"#ffff00",v:"20"},{c:"#ff0000",v:"30+"},
+    ]},
+    sea_temperature:   { label:"Sea Temp",       unit:"°C",   wave:false, legend:[
+      {c:"#0000ff",v:"5"},{c:"#00aaff",v:"10"},{c:"#00ff88",v:"15"},
+      {c:"#ffff00",v:"20"},{c:"#ff0000",v:"25+"},
+    ]},
+    precipitation:     { label:"Precipitation",  unit:"mm/h", wave:false, legend:[
+      {c:"#e0f3ff",v:"0"},{c:"#74c6ff",v:"1"},{c:"#0080ff",v:"3"},
+      {c:"#004fa3",v:"8"},{c:"#800080",v:"15+"},
+    ]},
+    clouds:            { label:"Cloud Cover",    unit:"%",    wave:false, legend:[
+      {c:"#ffffff",v:"0"},{c:"#cccccc",v:"25"},{c:"#999999",v:"50"},
+      {c:"#555555",v:"75"},{c:"#222222",v:"100"},
+    ]},
+    pressure:          { label:"Pressure",       unit:"hPa",  wave:false, legend:[
+      {c:"#800000",v:"980"},{c:"#ff4400",v:"995"},{c:"#ffff00",v:"1010"},
+      {c:"#00aaff",v:"1020"},{c:"#0000aa",v:"1030+"},
+    ]},
+    feels_like_temperature: { label:"Feels Like",    unit:"°C",   wave:false, legend:[
+      {c:"#0000ff",v:"-10"},{c:"#00aaff",v:"0"},{c:"#00ff88",v:"10"},
+      {c:"#ffff00",v:"20"},{c:"#ff0000",v:"30+"},
+    ]},
+    air_quality:       { label:"Air Quality",    unit:"AQI",  wave:false, legend:[
+      {c:"#00e400",v:"0–50"},{c:"#ffff00",v:"51–100"},{c:"#ff7e00",v:"101–150"},
+      {c:"#ff0000",v:"151–200"},{c:"#8f3f97",v:"201+"},
+    ]},
+    ozone_surface:     { label:"Ozone (Sfc)",    unit:"µg/m³",wave:false, legend:[
+      {c:"#ffffcc",v:"0"},{c:"#a1dab4",v:"50"},{c:"#41b6c4",v:"100"},
+      {c:"#2c7fb8",v:"150"},{c:"#253494",v:"200+"},
+    ]},
+    ozone_total:       { label:"Ozone (Total)",  unit:"DU",   wave:false, legend:[
+      {c:"#ffffcc",v:"250"},{c:"#a1dab4",v:"300"},{c:"#41b6c4",v:"350"},
+      {c:"#2c7fb8",v:"400"},{c:"#253494",v:"450+"},
+    ]},
+    no2:               { label:"NO₂",            unit:"µg/m³",wave:false, legend:[
+      {c:"#ffffb2",v:"0"},{c:"#fecc5c",v:"20"},{c:"#fd8d3c",v:"40"},
+      {c:"#f03b20",v:"80"},{c:"#bd0026",v:"200+"},
+    ]},
+    "pm2.5":           { label:"PM2.5",          unit:"µg/m³",wave:false, legend:[
+      {c:"#ffffb2",v:"0"},{c:"#fecc5c",v:"12"},{c:"#fd8d3c",v:"35"},
+      {c:"#f03b20",v:"55"},{c:"#bd0026",v:"150+"},
+    ]},
+  };
+
+  // ── Constants ───────────────────────────────────────────────────────────────
+  // Zoomed out to show Ireland + surrounding Atlantic so weather gradients are
+  // visible across the full tile colour scale (the previous zoom 10 only showed
+  // Cork Harbour, too small an area for colour variation to be apparent).
+  var MAP_CENTER_LAT  = 52.0;
+  var MAP_CENTER_LON  = -8.5;
+  var MAP_DEFAULT_ZOOM = 7;
+  // Whitegate Observatory coordinates
+  var OBS_LAT = 51.825256;
+  var OBS_LON = -8.240009;
+  // Animation frame interval in milliseconds
+  var ANIMATION_INTERVAL_MS = 1800;
+
+  // ── State ───────────────────────────────────────────────────────────────────
+  var activeVar   = "wind_speed";
+  var forecastHrs = 0;
+  var wxLayer     = null;
+  var playTimer   = null;
+
+  // ── Map ─────────────────────────────────────────────────────────────────────
+  var map = L.map('wx-map').setView([MAP_CENTER_LAT, MAP_CENTER_LON], MAP_DEFAULT_ZOOM);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 18,
+    opacity: 1,
+  }).addTo(map);
+
+  // Observatory marker
+  L.circleMarker([OBS_LAT, OBS_LON], {
+    radius: 7, color: '#1d6fbd', fillColor: '#4a9eff', fillOpacity: 0.9, weight: 2
+  }).addTo(map).bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
+
+  // ── Tile URL builder ────────────────────────────────────────────────────────
+  function tileUrl(varName, hrs) {
+    var dt = hrs === 0 ? '+0hours' : '+' + hrs + 'hours';
+    return 'https://www.meteosource.com/api/v1/' + MS_TIER + '/map' +
+           '?key=' + MS_KEY +
+           '&tile_x={x}&tile_y={y}&tile_zoom={z}' +
+           '&variable=' + varName +
+           '&datetime=' + dt;
+  }
+
+  // ── Update weather tile layer ───────────────────────────────────────────────
+  function updateLayer() {
+    if (wxLayer) { map.removeLayer(wxLayer); wxLayer = null; }
+    document.getElementById('wx-wave-notice').style.display = 'none';
+    document.getElementById('wx-sst-notice').style.display = 'none';
+    if (!MS_KEY || MS_KEY === 'PASTE-YOUR-API-KEY-HERE') {
+      // No key — show a placeholder message and skip tile fetch
+      document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label + ' (API key required)';
+      return;
+    }
+    // Show sea-temperature info notice (tiles only cover open ocean)
+    if (activeVar === 'sea_temperature') {
+      document.getElementById('wx-sst-notice').style.display = 'block';
+    }
+    wxLayer = L.tileLayer(tileUrl(activeVar, forecastHrs), {
+      tileSize: 256,
+      opacity: 0.75,
+      attribution: '&copy; Meteosource',
+      maxNativeZoom: 14,
+    });
+    // Detect when wave/swell tiles fail to load (404 / no data for this tier).
+    // tileTotal is computed on-demand as loadCount + errorCount so the in-flight
+    // tileerror check is meaningful and the notice can appear as soon as more than
+    // half the tiles in a batch have errored.
+    var isWaveLayer = LAYERS[activeVar] && LAYERS[activeVar].wave;
+    if (isWaveLayer) {
+      var errorCount = 0; var loadCount = 0;
+      wxLayer.on('loading', function() {
+        errorCount = 0; loadCount = 0;
+        document.getElementById('wx-wave-notice').style.display = 'none';
+      });
+      wxLayer.on('tileload', function() {
+        loadCount++;
+      });
+      wxLayer.on('tileerror', function() {
+        errorCount++;
+        var tileTotal = loadCount + errorCount;
+        if (tileTotal > 0 && errorCount / tileTotal > 0.5) {
+          document.getElementById('wx-wave-notice').style.display = 'block';
+        }
+      });
+      wxLayer.on('load', function() {
+        var tileTotal = loadCount + errorCount;
+        if (tileTotal > 0 && errorCount / tileTotal > 0.5) {
+          document.getElementById('wx-wave-notice').style.display = 'block';
+        }
+      });
+    }
+    wxLayer.addTo(map);
+    document.getElementById('wx-layer-label').textContent = LAYERS[activeVar].label;
+    updateLegend();
+  }
+
+  // ── Legend ──────────────────────────────────────────────────────────────────
+  function updateLegend() {
+    var meta = LAYERS[activeVar];
+    document.getElementById('wx-legend-title').textContent = meta.label + ' (' + meta.unit + ')';
+    var html = '';
+    meta.legend.forEach(function(row) {
+      html += '<div class="wx-legend-row"><div class="wx-swatch" style="background:' + row.c + '"></div><span>' + row.v + ' ' + meta.unit + '</span></div>';
+    });
+    document.getElementById('wx-legend-body').innerHTML = html;
+  }
+
+  // ── Time label ──────────────────────────────────────────────────────────────
+  function updateTimeLabel(hrs) {
+    var el = document.getElementById('wx-time-label');
+    if (hrs === 0) { el.textContent = 'Now'; }
+    else { el.textContent = '+' + hrs + 'h'; }
+  }
+
+  // ── Layer buttons ───────────────────────────────────────────────────────────
+  document.querySelectorAll('.wx-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.wx-btn').forEach(function(b) { b.classList.remove('wx-active'); });
+      btn.classList.add('wx-active');
+      activeVar = btn.dataset.var;
+      updateLayer();
+    });
+  });
+
+  // ── Time slider ─────────────────────────────────────────────────────────────
+  var slider = document.getElementById('wx-time-slider');
+  slider.addEventListener('input', function() {
+    forecastHrs = parseInt(this.value);
+    updateTimeLabel(forecastHrs);
+    updateLayer();
+  });
+
+  // ── Play/Stop animation ─────────────────────────────────────────────────────
+  document.getElementById('wx-play-btn').addEventListener('click', function() {
+    if (playTimer) return;
+    playTimer = setInterval(function() {
+      forecastHrs = forecastHrs >= 48 ? 0 : forecastHrs + 3;
+      slider.value = forecastHrs;
+      updateTimeLabel(forecastHrs);
+      updateLayer();
+    }, ANIMATION_INTERVAL_MS);
+  });
+  document.getElementById('wx-stop-btn').addEventListener('click', function() {
+    if (playTimer) { clearInterval(playTimer); playTimer = null; }
+  });
+
+  // ── Initial render ──────────────────────────────────────────────────────────
+  updateLayer();
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     FISHING LOCATIONS MAP
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+  <div style="padding:1.5rem;background:#f8f9fa;border-bottom:1px solid #dee2e6;">
+    <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Fishing Locations</h2>
+    <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour &mdash; click a marker for details</p>
+    <p style="margin:0.5rem 0 0;font-size:0.85rem;color:#6c757d;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#4a9eff;border:2px solid #1d6fbd;vertical-align:middle;margin-right:4px;"></span>Observatory
+      &nbsp;
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid #16a34a;vertical-align:middle;margin-right:4px;"></span>Fishing spot
+    </p>
+    <div style="margin-top:0.75rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
+        Type
+        <select id="fish-type-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+          <option value="">All types</option>
+          <option value="sea">Sea</option>
+          <option value="shore">Shore</option>
+          <option value="pier">Pier</option>
+        </select>
+      </label>
+      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
+        Species
+        <select id="fish-species-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
+          <option value="">All species</option>
+        </select>
+      </label>
+      <span id="fish-filter-status" style="font-size:0.82rem;color:#6b7280;">Loading spots...</span>
+    </div>
+  </div>
+  <div id="obs-map" style="height:420px;width:100%;"></div>
+</div>
+<script>
+(function() {
+  // Whitegate Observatory coordinates (same as weather map above)
+  var OBS_LAT = 51.825256;
+  var OBS_LON = -8.240009;
+  var spotLayers = [];
+
+  var typeSelect = document.getElementById('fish-type-filter');
+  var speciesSelect = document.getElementById('fish-species-filter');
+  var filterStatus = document.getElementById('fish-filter-status');
+
+  var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors', maxZoom: 19
+  }).addTo(map);
+
+  // Observatory marker
+  var obsMarker = L.marker([OBS_LAT, OBS_LON]).addTo(map);
+  obsMarker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
+  L.circle([OBS_LAT, OBS_LON], {
+    color: '#4a9eff', fillColor: '#4a9eff', fillOpacity: 0.2, radius: 100
+  }).addTo(map);
+
+  // Fishing spots overlay — uses a manual manifest first, then legacy fallback.
+  // Edit assets/data/fishing-manifest.json to add, remove or update spots.
+  function loadSpots() {
+    var sources = ['assets/data/fishing-manifest.json', 'assets/data/fishing-spots.json'];
+
+    function parseSpots(data) {
+      if (Array.isArray(data)) return data;
+      return Array.isArray(data && data.spots) ? data.spots : [];
+    }
+
+    function trySource(index) {
+      if (index >= sources.length) {
+        throw new Error('No fishing spots source could be loaded');
+      }
+      return fetch(sources[index], { cache: 'no-store' })
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + sources[index]);
+          return r.json();
+        })
+        .then(function(data) {
+          var spots = parseSpots(data);
+          if (!spots.length) throw new Error('No spots in ' + sources[index]);
+          return spots;
+        })
+        .catch(function() {
+          return trySource(index + 1);
+        });
+    }
+
+    return trySource(0);
+  }
+
+  function normalizeText(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function updateStatus(visible, total) {
+    filterStatus.textContent = visible + ' of ' + total + ' spots shown';
+  }
+
+  function classifySpotType(typeValue) {
+    var t = normalizeText(typeValue);
+    if (!t) return 'shore';
+    if (t.indexOf('pier') !== -1 || t.indexOf('jetty') !== -1 || t.indexOf('quay') !== -1 || t.indexOf('harbour wall') !== -1) {
+      return 'pier';
+    }
+    if (t.indexOf('boat') !== -1 || t.indexOf('offshore') !== -1 || t.indexOf('charter') !== -1 || t.indexOf('reef') !== -1) {
+      return 'sea';
+    }
+    return 'shore';
+  }
+
+  function applyFilters() {
+    var typeFilter = normalizeText(typeSelect.value);
+    var speciesFilter = normalizeText(speciesSelect.value);
+    var filteredBounds = [[OBS_LAT, OBS_LON]];
+    var visibleCount = 0;
+
+    spotLayers.forEach(function(entry) {
+      var spot = entry.spot;
+      var typeCategory = classifySpotType(spot.type);
+      var speciesList = Array.isArray(spot.catches) ? spot.catches.map(normalizeText) : [];
+
+      var typeMatch = !typeFilter || typeCategory === typeFilter;
+      var speciesMatch = !speciesFilter || speciesList.indexOf(speciesFilter) !== -1;
+      var show = typeMatch && speciesMatch;
+
+      if (show) {
+        if (!map.hasLayer(entry.marker)) {
+          entry.marker.addTo(map);
+        }
+        filteredBounds.push([spot.lat, spot.lon]);
+        visibleCount += 1;
+      } else if (map.hasLayer(entry.marker)) {
+        map.removeLayer(entry.marker);
+      }
+    });
+
+    updateStatus(visibleCount, spotLayers.length);
+    if (filteredBounds.length > 1) {
+      map.fitBounds(filteredBounds, { padding: [24, 24] });
+    }
+  }
+
+  function populateFilterOptions(spots) {
+    var speciesSet = new Set();
+
+    spots.forEach(function(spot) {
+      (spot.catches || []).forEach(function(species) {
+        if (species) speciesSet.add(String(species).trim());
+      });
+    });
+
+    Array.from(speciesSet).sort().forEach(function(speciesName) {
+      var option = document.createElement('option');
+      option.value = speciesName;
+      option.textContent = speciesName;
+      speciesSelect.appendChild(option);
+    });
+  }
+
+  loadSpots()
+    .then(function(spots) {
+      populateFilterOptions(spots);
+
+      spots.forEach(function(spot) {
+        var catches = (spot.catches || []).join(', ') || '—';
+        var seasons = spot.seasons || '—';
+        var type    = spot.type    || '';
+        var notes   = spot.notes   || '';
+        var popup =
+          '<b>' + spot.name + '</b>' +
+          (type    ? '<br><span style="color:#555">Type: </span>'    + type    : '') +
+          '<br><span style="color:#555">Fish: </span>'   + catches +
+          '<br><span style="color:#555">Best: </span>'   + seasons +
+          (notes   ? '<br><span style="color:#555">Notes: </span>'   + notes   : '');
+        var marker = L.circleMarker([spot.lat, spot.lon], {
+          radius: 8,
+          color: '#16a34a',
+          fillColor: '#22c55e',
+          fillOpacity: 0.85,
+          weight: 2
+        }).bindPopup(popup);
+        spotLayers.push({ marker: marker, spot: spot });
+      });
+
+      typeSelect.addEventListener('change', applyFilters);
+      speciesSelect.addEventListener('change', applyFilters);
+      applyFilters();
+    })
+    .catch(function(e) {
+      console.warn('Could not load fishing spots overlay:', e);
+      filterStatus.textContent = 'Could not load fishing spots';
+    });
+})();
+</script>
+</body>
+</html>

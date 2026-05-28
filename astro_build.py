@@ -605,6 +605,12 @@ def render_combined_weather(locations_data: list) -> str:
 def main():
     ap = argparse.ArgumentParser(description="Build astro JSON + HTML card.")
     ap.add_argument("--out", default="./astro", help="Output folder served by your website (e.g., /var/www/whitegateobservatory.com/astro)")
+    ap.add_argument(
+        "--harbour-source",
+        choices=("same", "separate"),
+        default="same",
+        help="Use 'same' to reuse the primary forecast for harbour weather (fewer API calls), or 'separate' to fetch a dedicated harbour forecast.",
+    )
     args = ap.parse_args()
     outdir = os.path.abspath(args.out); os.makedirs(outdir, exist_ok=True)
 
@@ -749,11 +755,15 @@ def main():
     weather_dir = os.path.join(os.path.dirname(outdir), "weather")
     os.makedirs(weather_dir, exist_ok=True)
     
-    # Fetch Cork Harbour weather data (centre of the harbour)
+    # Fetch Cork Harbour weather data (centre of the harbour).
+    # Default is to reuse Whitegate hourly data to keep Meteosource usage low.
     HARBOUR_LAT, HARBOUR_LON = 51.835, -8.28  # Cork Harbour
-    fc_harbour = ms.get_point_forecast(lat=HARBOUR_LAT, lon=HARBOUR_LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
-                                       sections=(sections.HOURLY,))
-    harbour_hourly = fc_harbour.hourly.data or []
+    if args.harbour_source == "separate":
+      fc_harbour = ms.get_point_forecast(lat=HARBOUR_LAT, lon=HARBOUR_LON, tz=TZ, lang=langs.ENGLISH, units=units.METRIC,
+                         sections=(sections.HOURLY,))
+      harbour_hourly = fc_harbour.hourly.data or []
+    else:
+      harbour_hourly = hourly
     
     # Fetch marine data for the harbour weather card wave column.
     # Import fetch_openmeteo_marine from fish_build (imported below in marine page block).
@@ -1355,6 +1365,7 @@ def main():
         display: flex;
         gap: 2rem;
         align-items: center;
+        flex-wrap: wrap;
       }}
       .top-menu a {{
         color: #fff;
@@ -1371,6 +1382,37 @@ def main():
         font-size: 1.2rem;
         font-weight: 700;
         color: #4a9eff;
+        margin-right: auto;
+      }}
+      @media (max-width: 900px) {{
+        .top-menu {{
+          padding: 0.75rem 1rem;
+        }}
+        .top-menu nav {{
+          gap: 0.5rem;
+        }}
+        .top-menu a {{
+          padding: 0.45rem 0.65rem;
+          font-size: 0.95rem;
+        }}
+      }}
+      @media (max-width: 640px) {{
+        .top-menu nav {{
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          align-items: stretch;
+          gap: 0.5rem;
+        }}
+        .top-menu .logo {{
+          grid-column: 1 / -1;
+          margin-right: 0;
+          text-align: center;
+          margin-bottom: 0.15rem;
+        }}
+        .top-menu a {{
+          text-align: center;
+          font-size: 0.92rem;
+        }}
       }}
     </style>
 </head>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body style="margin:0;padding:16px;background:transparent">
+<div id="fish-root" class="wrap"><div class="card"><div class="h">Whitegate Fishing Forecast — Best Times & Targets</div><div class="sub">Updated Thu 28 May 09:36. Score blends wind, clouds, rain, pressure trend, humidity, waves, sea temp, tides via WorldTides.</div><div class="tblwrap"><table><colgroup><col style='width:11ch'><col style='width:18ch'><col style='width:6ch'><col style='width:7ch'><col style='width:26ch'><col style='width:8ch'><col style='width:8ch'><col style='width:7ch'><col style='width:7ch'></colgroup><thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th class="num">High Tide</th><th class="num">Low Tide</th><th class="num">Wind (m/s)</th><th class="num">Gust (m/s)</th></tr></thead><tbody><tr><td>Thu 28 May</td><td>21:00–22:59</td><td class='num'><strong>86</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>04:07 / 16:28</td><td class='num'>10:29 / 22:49</td><td class='num'>5.5</td><td class='num'>10.9</td></tr><tr><td>Fri 29 May</td><td>21:00–22:59</td><td class='num'><strong>93</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>04:49 / 17:09</td><td class='num'>11:10 / 23:30</td><td class='num'>3.6</td><td class='num'>8.2</td></tr><tr><td>Sat 30 May</td><td>21:00–22:59</td><td class='num'><strong>92</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>05:28 / 17:47</td><td class='num'>11:49</td><td class='num'>4.5</td><td class='num'>9.7</td></tr><tr><td>Sun 31 May</td><td>04:00–05:59</td><td class='num'><strong>88</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>bass, pollack, wrasse, thornback ray (starting), smoothhound (late May+), mackerel (first/patchy)</td><td class='num'>06:05 / 18:23</td><td class='num'>00:08 / 12:26</td><td class='num'>2.4</td><td class='num'>5.5</td></tr><tr><td>Mon 01 Jun</td><td>21:00–22:59</td><td class='num'><strong>90</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>06:40 / 18:59</td><td class='num'>00:46 / 13:03</td><td class='num'>4.8</td><td class='num'>10.1</td></tr><tr><td>Tue 02 Jun</td><td>21:00–22:59</td><td class='num'><strong>89</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>07:15 / 19:34</td><td class='num'>01:23 / 13:39</td><td class='num'>4.7</td><td class='num'>9.5</td></tr><tr><td>Wed 03 Jun</td><td>05:00–06:59</td><td class='num'><strong>84</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>07:50 / 20:10</td><td class='num'>02:01 / 14:16</td><td class='num'>5.8</td><td class='num'>11.0</td></tr><tr><td>Thu 04 Jun</td><td>05:00–06:59</td><td class='num'><strong>81</strong></td><td><span class='badge GOOD'>GOOD</span></td><td class='dim'>mackerel, bass, pollack, wrasse, thornback ray, smoothhound</td><td class='num'>—</td><td class='num'>02:38</td><td class='num'>5.3</td><td class='num'>8.9</td></tr></tbody></table></div><div class="credit">Check Irish regs before fishing.</div></div><div class="card" style="margin-top:16px">
+  <div class="h">Cork Harbour — Tide Heights</div>
+  <div class="sub">Hourly tide heights (metres).
+    <span aria-hidden="true">●</span><span class="sr-only">Orange dot:</span> High tide
+    &nbsp;<span aria-hidden="true">●</span><span class="sr-only">Blue dot:</span> Low tide
+  </div>
+  <div style="position:relative;width:100%;height:260px">
+    <canvas id="tideChart"
+      aria-label="Tide height chart for Cork Harbour showing hourly heights in metres with high and low tide markers"
+      role="img"></canvas>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  var raw = {"labels": ["Thu 28 May 04:00", "Thu 28 May 04:07", "Thu 28 May 05:00", "Thu 28 May 06:00", "Thu 28 May 07:00", "Thu 28 May 08:00", "Thu 28 May 09:00", "Thu 28 May 10:00", "Thu 28 May 10:29", "Thu 28 May 11:00", "Thu 28 May 12:00", "Thu 28 May 13:00", "Thu 28 May 14:00", "Thu 28 May 15:00", "Thu 28 May 16:00", "Thu 28 May 16:28", "Thu 28 May 17:00", "Thu 28 May 18:00", "Thu 28 May 19:00", "Thu 28 May 20:00", "Thu 28 May 21:00", "Thu 28 May 22:00", "Thu 28 May 22:49", "Thu 28 May 23:00", "Fri 29 May 00:00", "Fri 29 May 01:00", "Fri 29 May 02:00", "Fri 29 May 03:00", "Fri 29 May 04:00", "Fri 29 May 04:49", "Fri 29 May 05:00", "Fri 29 May 06:00", "Fri 29 May 07:00", "Fri 29 May 08:00", "Fri 29 May 09:00", "Fri 29 May 10:00", "Fri 29 May 11:00", "Fri 29 May 11:10", "Fri 29 May 12:00", "Fri 29 May 13:00", "Fri 29 May 14:00", "Fri 29 May 15:00", "Fri 29 May 16:00", "Fri 29 May 17:00", "Fri 29 May 17:09", "Fri 29 May 18:00", "Fri 29 May 19:00", "Fri 29 May 20:00", "Fri 29 May 21:00", "Fri 29 May 22:00", "Fri 29 May 23:00", "Fri 29 May 23:30", "Sat 30 May 00:00", "Sat 30 May 01:00", "Sat 30 May 02:00", "Sat 30 May 03:00", "Sat 30 May 04:00", "Sat 30 May 05:00", "Sat 30 May 05:28", "Sat 30 May 06:00", "Sat 30 May 07:00", "Sat 30 May 08:00", "Sat 30 May 09:00", "Sat 30 May 10:00", "Sat 30 May 11:00", "Sat 30 May 11:49", "Sat 30 May 12:00", "Sat 30 May 13:00", "Sat 30 May 14:00", "Sat 30 May 15:00", "Sat 30 May 16:00", "Sat 30 May 17:00", "Sat 30 May 17:47", "Sat 30 May 18:00", "Sat 30 May 19:00", "Sat 30 May 20:00", "Sat 30 May 21:00", "Sat 30 May 22:00", "Sat 30 May 23:00", "Sun 31 May 00:00", "Sun 31 May 00:08", "Sun 31 May 01:00", "Sun 31 May 02:00", "Sun 31 May 03:00", "Sun 31 May 04:00", "Sun 31 May 05:00", "Sun 31 May 06:00", "Sun 31 May 06:05", "Sun 31 May 07:00", "Sun 31 May 08:00", "Sun 31 May 09:00", "Sun 31 May 10:00", "Sun 31 May 11:00", "Sun 31 May 12:00", "Sun 31 May 12:26", "Sun 31 May 13:00", "Sun 31 May 14:00", "Sun 31 May 15:00", "Sun 31 May 16:00", "Sun 31 May 17:00", "Sun 31 May 18:00", "Sun 31 May 18:23", "Sun 31 May 19:00", "Sun 31 May 20:00", "Sun 31 May 21:00", "Sun 31 May 22:00", "Sun 31 May 23:00", "Mon 01 Jun 00:00", "Mon 01 Jun 00:46", "Mon 01 Jun 01:00", "Mon 01 Jun 02:00", "Mon 01 Jun 03:00", "Mon 01 Jun 04:00", "Mon 01 Jun 05:00", "Mon 01 Jun 06:00", "Mon 01 Jun 06:40", "Mon 01 Jun 07:00", "Mon 01 Jun 08:00", "Mon 01 Jun 09:00", "Mon 01 Jun 10:00", "Mon 01 Jun 11:00", "Mon 01 Jun 12:00", "Mon 01 Jun 13:00", "Mon 01 Jun 13:03", "Mon 01 Jun 14:00", "Mon 01 Jun 15:00", "Mon 01 Jun 16:00", "Mon 01 Jun 17:00", "Mon 01 Jun 18:00", "Mon 01 Jun 18:59", "Mon 01 Jun 19:00", "Mon 01 Jun 20:00", "Mon 01 Jun 21:00", "Mon 01 Jun 22:00", "Mon 01 Jun 23:00", "Tue 02 Jun 00:00", "Tue 02 Jun 01:00", "Tue 02 Jun 01:23", "Tue 02 Jun 02:00", "Tue 02 Jun 03:00", "Tue 02 Jun 04:00", "Tue 02 Jun 05:00", "Tue 02 Jun 06:00", "Tue 02 Jun 07:00", "Tue 02 Jun 07:15", "Tue 02 Jun 08:00", "Tue 02 Jun 09:00", "Tue 02 Jun 10:00", "Tue 02 Jun 11:00", "Tue 02 Jun 12:00", "Tue 02 Jun 13:00", "Tue 02 Jun 13:39", "Tue 02 Jun 14:00", "Tue 02 Jun 15:00", "Tue 02 Jun 16:00", "Tue 02 Jun 17:00", "Tue 02 Jun 18:00", "Tue 02 Jun 19:00", "Tue 02 Jun 19:34", "Tue 02 Jun 20:00", "Tue 02 Jun 21:00", "Tue 02 Jun 22:00", "Tue 02 Jun 23:00", "Wed 03 Jun 00:00", "Wed 03 Jun 01:00", "Wed 03 Jun 02:00", "Wed 03 Jun 02:01", "Wed 03 Jun 03:00", "Wed 03 Jun 04:00", "Wed 03 Jun 05:00", "Wed 03 Jun 06:00", "Wed 03 Jun 07:00", "Wed 03 Jun 07:50", "Wed 03 Jun 08:00", "Wed 03 Jun 09:00", "Wed 03 Jun 10:00", "Wed 03 Jun 11:00", "Wed 03 Jun 12:00", "Wed 03 Jun 13:00", "Wed 03 Jun 14:00", "Wed 03 Jun 14:16", "Wed 03 Jun 15:00", "Wed 03 Jun 16:00", "Wed 03 Jun 17:00", "Wed 03 Jun 18:00", "Wed 03 Jun 19:00", "Wed 03 Jun 20:00", "Wed 03 Jun 20:10", "Wed 03 Jun 21:00", "Wed 03 Jun 22:00", "Wed 03 Jun 23:00", "Thu 04 Jun 00:00", "Thu 04 Jun 01:00", "Thu 04 Jun 02:00", "Thu 04 Jun 02:38", "Thu 04 Jun 03:00", "Thu 04 Jun 04:00"], "heights": [1.19, 1.2, 1.05, 0.62, 0.04, -0.54, -1.02, -1.3, -1.34, -1.3, -0.97, -0.41, 0.25, 0.83, 1.17, 1.22, 1.16, 0.8, 0.23, -0.38, -0.92, -1.29, -1.4, -1.39, -1.16, -0.64, 0.03, 0.68, 1.15, 1.28, 1.27, 1.01, 0.47, -0.17, -0.76, -1.21, -1.42, -1.43, -1.31, -0.86, -0.2, 0.5, 1.06, 1.31, 1.32, 1.17, 0.69, 0.03, -0.6, -1.12, -1.42, -1.47, -1.42, -1.07, -0.44, 0.29, 0.93, 1.3, 1.35, 1.29, 0.89, 0.25, -0.42, -1.0, -1.38, -1.5, -1.49, -1.24, -0.67, 0.07, 0.78, 1.27, 1.4, 1.39, 1.09, 0.49, -0.21, -0.84, -1.3, -1.51, -1.52, -1.38, -0.9, -0.18, 0.58, 1.15, 1.39, 1.4, 1.22, 0.69, -0.02, -0.69, -1.22, -1.51, -1.54, -1.49, -1.09, -0.4, 0.39, 1.05, 1.41, 1.44, 1.36, 0.92, 0.24, -0.47, -1.06, -1.44, -1.54, -1.53, -1.26, -0.65, 0.13, 0.85, 1.31, 1.41, 1.38, 1.05, 0.42, -0.31, -0.94, -1.38, -1.56, -1.56, -1.39, -0.86, -0.09, 0.69, 1.25, 1.45, 1.45, 1.24, 0.68, -0.04, -0.72, -1.23, -1.51, -1.53, -1.47, -1.06, -0.35, 0.44, 1.07, 1.37, 1.38, 1.27, 0.81, 0.12, -0.58, -1.14, -1.48, -1.55, -1.53, -1.22, -0.57, 0.24, 0.94, 1.36, 1.43, 1.39, 1.04, 0.41, -0.3, -0.91, -1.33, -1.5, -1.5, -1.32, -0.79, -0.04, 0.7, 1.19, 1.33, 1.32, 1.08, 0.53, -0.15, -0.8, -1.27, -1.5, -1.51, -1.42, -0.98, -0.26, 0.52, 1.11, 1.37, 1.37, 1.25, 0.8, 0.15, -0.51, -1.05, -1.37, -1.43, -1.41, -1.12], "high_data": [null, 1.2, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.22, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.28, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.32, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.35, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.4, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.4, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.44, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.41, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.45, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.38, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.43, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.33, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 1.37, null, null, null, null, null, null, null, null, null], "low_data": [null, null, null, null, null, null, null, null, -1.34, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.4, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.43, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.47, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.5, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.52, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.54, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.54, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.56, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.53, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.55, null, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.5, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.51, null, null, null, null, null, null, null, null, null, null, null, null, null, -1.43, null, null]};
+  if (!raw.labels || !raw.labels.length) return;
+
+  // Show a date label only at midnight local time (label ends "00:00").
+  // The hourly height sample at UTC 23:00 is always IST 00:00 (UTC+1 summer /
+  // UTC+0 winter), so there is always an exact midnight label to match against
+  // regardless of any extra extreme data-points inserted between hourly samples.
+  var tickLabels = raw.labels.map(function(lbl) {
+    return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
+  });
+
+  new Chart(document.getElementById("tideChart"), {
+    type: "line",
+    data: {
+      labels: raw.labels,
+      datasets: [
+        {
+          label: "Tide height (m)",
+          data: raw.heights,
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59,130,246,0.12)",
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: true,
+          tension: 0.4,
+          order: 3
+        },
+        {
+          label: "High tide",
+          data: raw.high_data,
+          type: "scatter",
+          backgroundColor: "#f97316",
+          borderColor: "#f97316",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          showLine: false,
+          spanGaps: false,
+          order: 1
+        },
+        {
+          label: "Low tide",
+          data: raw.low_data,
+          type: "scatter",
+          backgroundColor: "#0ea5e9",
+          borderColor: "#0ea5e9",
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          showLine: false,
+          spanGaps: false,
+          order: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            title: function(items) { return items[0].label; },
+            label: function(item) {
+              var v = item.raw;
+              if (v === null || v === undefined) return null;
+              return item.dataset.label + ": " + v.toFixed(2) + " m";
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            callback: function(val, idx) { return tickLabels[idx]; },
+            maxRotation: 0,
+            autoSkip: false,
+            font: { size: 11 }
+          },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        },
+        y: {
+          title: { display: true, text: "Height (m)", font: { size: 11 } },
+          ticks: { font: { size: 11 } },
+          grid: { color: "rgba(0,0,0,0.05)" }
+        }
+      }
+    }
+  });
+})();
+</script></div>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  if (p.get("transparent")==="1") document.body.style.background="transparent";
+  function send(){ try{ parent.postMessage({type:"fishing-card-size", height: document.documentElement.scrollHeight}, "*"); }catch(e){} }
+  window.addEventListener("load", send); setTimeout(send,60); setTimeout(send,300);
+})();
+</script>
+</body></html>
