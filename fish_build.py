@@ -237,13 +237,24 @@ def _build_tide_chart_data(heights: List[Dict], extremes: List[Dict]) -> dict:
       high_data  – sparse array with height values only at High-tide extremes
       low_data   – sparse array with height values only at Low-tide extremes
     """
+    # Restrict chart to today + tomorrow in local (Dublin) time.
+    today_local = datetime.now(_DUBLIN_TZ).date()
+    end_local = today_local + timedelta(days=1)
+
+    def in_range_local(dt_utc: datetime) -> bool:
+        d = dt_utc.astimezone(_DUBLIN_TZ).date()
+        return today_local <= d <= end_local
+
     # Merge exact extreme timestamps into the hourly heights so scatter markers
     # land at the true minute-accurate position (no rounding to nearest hour).
     # The merged list is sorted chronologically so the chart line is drawn in
     # the correct order after the extra points are inserted.
-    existing_dts = {h["dt"] for h in heights}
-    merged: List[Dict] = list(heights)
-    for ex in extremes:
+    filtered_heights = [h for h in heights if in_range_local(h["dt"])]
+    filtered_extremes = [ex for ex in extremes if in_range_local(ex["dt"])]
+
+    existing_dts = {h["dt"] for h in filtered_heights}
+    merged: List[Dict] = list(filtered_heights)
+    for ex in filtered_extremes:
         if ex["dt"] not in existing_dts:
             merged.append({"dt": ex["dt"], "height": ex["height"]})
     merged.sort(key=lambda h: h["dt"])
@@ -255,7 +266,7 @@ def _build_tide_chart_data(heights: List[Dict], extremes: List[Dict]) -> dict:
     low_data:  List[Optional[float]] = [None] * len(labels)
 
     label_to_idx = {lbl: i for i, lbl in enumerate(labels)}
-    for ex in extremes:
+    for ex in filtered_extremes:
         lbl = ex["dt"].astimezone(_DUBLIN_TZ).strftime(_TIDE_DT_FMT)
         idx = label_to_idx.get(lbl)
         if idx is not None:
@@ -474,39 +485,24 @@ def build_payload(hourly_data=None, marine_data=None):
             win = hrs[i:i+2]
             s = mean([w["score"] for w in win])
             t0, t1 = win[0]["t"], win[-1]["t"] + timedelta(minutes=59)
-            # Extract wind data from first hour of window
-            w0 = win[0]
-            best.append((s, t0, t1, w0))
+            best.append((s, t0, t1))
         best.sort(key=lambda x: x[0], reverse=True)
         top = best[:1]
-        # targets by month
-        month = hrs[0]["t"].month
-        targets = ", ".join(SPECIES_BY_MONTH.get(month, [])) or "—"
         
         # Get tide times for this day
         day_date = hrs[0]["t"].date()
         high_tide, low_tide = get_tide_times_for_day(day_date, extremes) if WT_KEY else (None, None)
         
-        for s, t0, t1, w0 in top:
+        for s, t0, t1 in top:
             cls = "GOOD" if s>=70 else "FAIR" if s>=55 else "POOR"
-            # Extract wind and gust from notes
-            wind_speed = "—"
-            gust_speed = "—"
-            if "wind_gust" in w0:
-                wind_speed = f"{w0['wind_speed']:.1f}" if w0['wind_speed'] is not None else "—"
-                gust_speed = f"{w0['wind_gust']:.1f}" if w0['wind_gust'] is not None else "—"
             
             windows.append(dict(
                 day_label = t0.strftime("%a %d %b"),
                 start = t0.strftime("%H:%M"),
                 end   = t1.strftime("%H:%M"),
-                score = int(round(s)),
                 cls   = cls,
-                targets = targets,
                 high_tide = high_tide or "—",
                 low_tide = low_tide or "—",
-                wind = wind_speed,
-                gust = gust_speed
             ))
 
     tide_chart = (
@@ -658,18 +654,14 @@ def render_card(payload: dict) -> str:
         "<colgroup>"
         "<col style='width:11ch'>"  # Date
         "<col style='width:18ch'>"  # Window
-        "<col style='width:6ch'>"   # Score
         "<col style='width:7ch'>"   # Class
-        "<col style='width:26ch'>"  # Targets
         "<col style='width:8ch'>"   # High Tide
         "<col style='width:8ch'>"   # Low Tide
-        "<col style='width:7ch'>"   # Wind
-        "<col style='width:7ch'>"   # Gust
         "</colgroup>"
     )
 
     if not wins:
-        rows = "<tr><td colspan='9' class='dim'>No data</td></tr>"
+        rows = "<tr><td colspan='5' class='dim'>No data</td></tr>"
     else:
         rows = ""
         for w in wins:
@@ -677,24 +669,20 @@ def render_card(payload: dict) -> str:
                 "<tr>"
                 f"<td>{w['day_label']}</td>"
                 f"<td>{w['start']}–{w['end']}</td>"
-                f"<td class='num'><strong>{w['score']}</strong></td>"
                 f"<td><span class='badge {w['cls']}'>{w['cls']}</span></td>"
-                f"<td class='dim'>{w['targets']}</td>"
                 f"<td class='num'>{w['high_tide']}</td>"
                 f"<td class='num'>{w['low_tide']}</td>"
-                f"<td class='num'>{w['wind']}</td>"
-                f"<td class='num'>{w['gust']}</td>"
                 "</tr>"
             )
 
     html += (
         '<div id="fish-root" class="wrap"><div class="card">'
-        '<div class="h">Whitegate Fishing Forecast — Best Times & Targets</div>'
-        f'<div class="sub">Updated {updated}. Score blends wind, clouds, rain, pressure trend, humidity, waves, sea temp'
+        '<div class="h">Whitegate Fishing Forecast — Best Times</div>'
+        f'<div class="sub">Updated {updated}. Class blends wind, clouds, rain, pressure trend, humidity, waves, sea temp'
         + (", tides via WorldTides" if WT_KEY else ", tides (no key)") + '.</div>'
         '<div class="tblwrap"><table>'
         f"{colgroup}"
-        '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th class="num">Score</th><th>Class</th><th>Suggested Targets</th><th class="num">High Tide</th><th class="num">Low Tide</th><th class="num">Wind (m/s)</th><th class="num">Gust (m/s)</th></tr></thead>'
+        '<thead><tr><th>Date</th><th>Best 2-hour Window</th><th>Class</th><th class="num">High Tide</th><th class="num">Low Tide</th></tr></thead>'
         f"<tbody>{rows}</tbody></table></div>"
         '<div class="credit">Check Irish regs before fishing.</div>'
         '</div>'

@@ -19,7 +19,8 @@ body {
   margin-bottom: 20px;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-  overflow-x: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Headings */
@@ -39,6 +40,9 @@ body {
 /* Astro Table Layout */
 .astro-table {
   width: 100%;
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .astro-row {
@@ -113,6 +117,13 @@ body {
   gap: 20px;
 }
 
+.weather-scroll,
+.tblwrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .day-row {
   display: grid;
   grid-template-columns: 120px repeat(6, 1fr);
@@ -120,15 +131,15 @@ body {
   border-top: 1px solid #f1f5f9;
   padding: 10px 0;
   align-items: center;
-  min-width: 700px;
+  min-width: 560px;
 }
 
 .header-row {
   border-top: none;
   font-weight: 600;
   background: #f8fafc;
-  margin: 0 -16px;
-  padding: 10px 16px;
+  margin: 0;
+  padding: 10px 0;
 }
 
 .day-row:not(.header-row) {
@@ -142,7 +153,7 @@ body {
 /* Fishing Table */
 table {
   width: 100%;
-  min-width: 640px;
+  min-width: 520px;
   border-collapse: collapse;
   background: #fff;
   color: #0f172a;
@@ -191,13 +202,6 @@ td.num, th.num {
   border: 0;
 }
 
-@media (max-width: 900px) {
-  .card table thead th:nth-child(6),
-  .card table tbody td:nth-child(6) {
-    display: none;
-  }
-}
-
 @media (max-width: 640px) {
   body {
     padding: 8px;
@@ -213,8 +217,8 @@ td.num, th.num {
 
   .astro-header-row,
   .header-row {
-    margin: 0 -12px;
-    padding: 8px 12px;
+    margin: 0;
+    padding: 8px 0;
   }
 
   .update-timestamp {

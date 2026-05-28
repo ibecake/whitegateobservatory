@@ -304,12 +304,7 @@ def render_html_card(payload: dict) -> str:
     return html
 
 def render_weather_card(location_name: str, hourly_data: list, marine_data: dict = None) -> str:
-    """Render a simple 7-day weather forecast card from hourly data.
-
-    marine_data (optional): dict returned by fetch_openmeteo_marine, keyed by
-    naive-UTC datetime.  Used to populate the Wave column when Meteosource
-    hourly data does not include wave_height.
-    """
+    """Render a simple 7-day weather forecast card from hourly data."""
     # Group by day and get daily summaries
     from collections import defaultdict
     days = defaultdict(list)
@@ -319,10 +314,9 @@ def render_weather_card(location_name: str, hourly_data: list, marine_data: dict
         day_key = dt.strftime("%Y-%m-%d")
         days[day_key].append(h)
     
-    body = f'<div class="weather-card-section"><div class="weather-h">{location_name}</div>'
+    body = f'<div class="weather-card-section"><div class="weather-h">{location_name}</div><div class="weather-scroll">'
     
-    # Header row — includes Wave column
-    body += '<div class="day-row header-row" style="grid-template-columns:120px repeat(7,1fr)"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div><div class="weather-val">Humidity</div><div class="weather-val">Pressure</div><div class="weather-val">Wave</div></div>'
+    body += '<div class="day-row header-row" style="grid-template-columns:120px repeat(4,1fr)"><div>Day</div><div class="weather-val">Temp</div><div class="weather-val">Precip</div><div class="weather-val">Wind</div><div class="weather-val">Clouds</div></div>'
     
     for day_key in sorted(days.keys())[:7]:
         day_hours = days[day_key]
@@ -335,41 +329,13 @@ def render_weather_card(location_name: str, hourly_data: list, marine_data: dict
         precips = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "precipitation.total") for h in day_hours]]
         winds = [w if isinstance(w, (int, float)) else 0 for w in [_get(h, "wind.speed") for h in day_hours]]  # m/s from API
         clouds = [c if isinstance(c, (int, float)) else 0 for c in [_get(h, "cloud_cover.total") for h in day_hours]]
-        humidity = [hum if isinstance(hum, (int, float)) else 0 for hum in [_get(h, "humidity") for h in day_hours]]
-        pressure = [p if isinstance(p, (int, float)) else 0 for p in [_get(h, "pressure") for h in day_hours]]
-
-        # Wave height — prefer Open-Meteo Marine data (Meteosource hourly does
-        # not include wave variables in its standard API response)
-        if marine_data:
-            wave_heights = []
-            for h in day_hours:
-                h_dt = _get(h, "date")
-                if h_dt:
-                    h_utc = _to_utc(h_dt)
-                    key = datetime(h_utc.year, h_utc.month, h_utc.day, h_utc.hour)
-                    wh = marine_data.get(key, {}).get("wave_height")
-                    if wh is not None:
-                        wave_heights.append(float(wh))
-        else:
-            wave_heights = [
-                v for v in [
-                    _get(h, "wave_height") or _get(h, "swell_height")
-                    for h in day_hours
-                ]
-                if isinstance(v, (int, float))
-            ]
-        
         temp_str = f"{int(min(temps))}°/{int(max(temps))}°C" if temps else "N/A"
         precip_str = f"{sum(precips):.1f}mm" if precips else "0mm"
         wind_str = f"{int(mean(winds) * 3.6 if winds else 0)} km/h"  # Convert m/s to km/h
         cloud_str = f"{int(mean(clouds) if clouds else 0)}%"
-        humid_str = f"{int(mean(humidity) if humidity else 0)}%"
-        press_str = f"{int(mean(pressure) if pressure else 0)} hPa"
-        wave_str = f"{mean(wave_heights):.1f}m" if wave_heights else "N/A"
-        
-        body += f'<div class="day-row" style="grid-template-columns:120px repeat(7,1fr)"><div>{day_label}</div><div class="weather-val">{temp_str}</div><div class="weather-val">{precip_str}</div><div class="weather-val">{wind_str}</div><div class="weather-val">{cloud_str}</div><div class="weather-val">{humid_str}</div><div class="weather-val">{press_str}</div><div class="weather-val">{wave_str}</div></div>'
+        body += f'<div class="day-row" style="grid-template-columns:120px repeat(4,1fr)"><div>{day_label}</div><div class="weather-val">{temp_str}</div><div class="weather-val">{precip_str}</div><div class="weather-val">{wind_str}</div><div class="weather-val">{cloud_str}</div></div>'
     
-    body += '</div>'
+    body += '</div></div>'
     return body
 
 def _build_wave_chart_data(marine_data: dict) -> dict:
@@ -377,7 +343,7 @@ def _build_wave_chart_data(marine_data: dict) -> dict:
 
     marine_data is keyed by naive-UTC datetime (truncated to the hour).
     Returns a dict with:
-      labels           – local-time strings (one per hour, 7 days)
+      labels           – local-time strings (one per hour, today + tomorrow)
       wave_heights     – wave height values in metres (None where missing)
       wave_periods     – wave period values in seconds (None where missing)
       sea_temps        – sea surface temperature in °C (None where missing)
@@ -385,6 +351,8 @@ def _build_wave_chart_data(marine_data: dict) -> dict:
     from zoneinfo import ZoneInfo
     dublin = ZoneInfo("Europe/Dublin")
 
+    today_local = datetime.now(dublin).date()
+    end_local = today_local + timedelta(days=1)
     sorted_keys = sorted(marine_data.keys())
     labels: List[str] = []
     wave_heights: List = []
@@ -393,6 +361,8 @@ def _build_wave_chart_data(marine_data: dict) -> dict:
 
     for k in sorted_keys:
         dt_local = k.replace(tzinfo=timezone.utc).astimezone(dublin)
+        if not (today_local <= dt_local.date() <= end_local):
+            continue
         labels.append(dt_local.strftime("%a %d %b %H:%M"))
         row = marine_data[k]
         wave_heights.append(round(float(row["wave_height"]), 2) if row.get("wave_height") is not None else None)
@@ -419,7 +389,7 @@ def _render_wave_chart(chart_data: dict) -> str:
     return f"""<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
   <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
     <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Wave &amp; Swell Forecast</h2>
-    <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour entrance &mdash; Open-Meteo Marine data &mdash; 7-day hourly forecast</p>
+    <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour entrance &mdash; Open-Meteo Marine data &mdash; today and tomorrow hourly forecast</p>
   </div>
   <div style="padding:16px;">
     <div style="position:relative;width:100%;height:240px;margin-bottom:16px;">
@@ -840,23 +810,26 @@ def main():
   </div>
 
   <!-- Layer selector -->
-  <div id="wx-layer-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
-    <button class="wx-btn wx-active" data-var="wind_speed"        data-label="Wind Speed">Wind Speed</button>
-    <button class="wx-btn"           data-var="wind_gust"         data-label="Wind Gusts">Wind Gusts</button>
-    <button class="wx-btn"           data-var="wave_height"       data-label="Wave Height">Wave Height</button>
-    <button class="wx-btn"           data-var="wave_period"       data-label="Wave Period">Wave Period</button>
-    <button class="wx-btn"           data-var="humidity"          data-label="Humidity">Humidity</button>
-    <button class="wx-btn"           data-var="temperature"       data-label="Temperature">Temperature</button>
-    <button class="wx-btn"           data-var="sea_temperature"   data-label="Sea Temp">Sea Temp</button>
-    <button class="wx-btn"           data-var="precipitation"     data-label="Precipitation">Precip</button>
-    <button class="wx-btn"           data-var="clouds"            data-label="Cloud Cover">Clouds</button>
-    <button class="wx-btn"           data-var="pressure"          data-label="Pressure">Pressure</button>
-    <button class="wx-btn"           data-var="feels_like_temperature" data-label="Feels Like">Feels Like</button>
-    <button class="wx-btn"           data-var="air_quality"       data-label="Air Quality">Air Quality</button>
-    <button class="wx-btn"           data-var="ozone_surface"     data-label="Ozone (Surface)">Ozone Sfc</button>
-    <button class="wx-btn"           data-var="ozone_total"       data-label="Ozone (Total)">Ozone Total</button>
-    <button class="wx-btn"           data-var="no2"               data-label="NO₂">NO₂</button>
-    <button class="wx-btn"           data-var="pm2.5"             data-label="PM2.5">PM2.5</button>
+  <div id="wx-layer-bar" style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
+    <label for="wx-layer-select" style="font-size:0.85rem;font-weight:600;color:#374151;">Map layer:</label>
+    <select id="wx-layer-select" class="wx-layer-select" aria-label="Select weather layer">
+      <option value="wind_speed">Wind Speed</option>
+      <option value="wind_gust">Wind Gusts</option>
+      <option value="wave_height">Wave Height</option>
+      <option value="wave_period">Wave Period</option>
+      <option value="humidity">Humidity</option>
+      <option value="temperature">Temperature</option>
+      <option value="sea_temperature">Sea Temp</option>
+      <option value="precipitation">Precipitation</option>
+      <option value="clouds">Cloud Cover</option>
+      <option value="pressure">Pressure</option>
+      <option value="feels_like_temperature">Feels Like</option>
+      <option value="air_quality">Air Quality</option>
+      <option value="ozone_surface">Ozone Sfc</option>
+      <option value="ozone_total">Ozone Total</option>
+      <option value="no2">NO₂</option>
+      <option value="pm2.5">PM2.5</option>
+    </select>
   </div>
 
   <!-- Time slider -->
@@ -916,13 +889,16 @@ def main():
 </div>
 
 <style>
-.wx-btn {{
-  padding:5px 12px;font-size:0.82rem;font-weight:500;
-  border:1px solid #0d6efd;border-radius:20px;
-  background:#fff;color:#0d6efd;cursor:pointer;transition:all 0.15s;
+.wx-layer-select {{
+  min-width: 220px;
+  max-width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.84rem;
 }}
-.wx-btn:hover {{ background:#e8f0fe; }}
-.wx-btn.wx-active {{ background:#0d6efd;color:#fff; }}
 .wx-legend-row {{ display:flex;align-items:center;gap:6px;margin-bottom:3px; }}
 .wx-swatch {{ width:18px;height:12px;border-radius:2px;flex-shrink:0; }}
 </style>
@@ -1114,14 +1090,12 @@ def main():
     else {{ el.textContent = '+' + hrs + 'h'; }}
   }}
 
-  // ── Layer buttons ───────────────────────────────────────────────────────────
-  document.querySelectorAll('.wx-btn').forEach(function(btn) {{
-    btn.addEventListener('click', function() {{
-      document.querySelectorAll('.wx-btn').forEach(function(b) {{ b.classList.remove('wx-active'); }});
-      btn.classList.add('wx-active');
-      activeVar = btn.dataset.var;
-      updateLayer();
-    }});
+  // ── Layer selector ──────────────────────────────────────────────────────────
+  var layerSelect = document.getElementById('wx-layer-select');
+  layerSelect.value = activeVar;
+  layerSelect.addEventListener('change', function() {{
+    activeVar = this.value;
+    updateLayer();
   }});
 
   // ── Time slider ─────────────────────────────────────────────────────────────
