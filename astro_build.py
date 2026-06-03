@@ -1352,10 +1352,6 @@ def main():
       .top-menu a:hover {{
         background: #333;
       }}
-      .top-menu a.sub-nav {{
-        font-size: 0.88rem;
-        opacity: 0.92;
-      }}
       .top-menu .logo {{
         font-size: 1.2rem;
         font-weight: 700;
@@ -1401,7 +1397,6 @@ def main():
     <a href="marine.html">Marine</a>
     <a href="radio.html">Radio</a>
     <a href="radio-astronomy.html">Radio Astronomy</a>
-    <a href="tinygs.html" class="sub-nav">↳ TinyGS</a>
     <a href="astro-photography.html">Astro Photography</a>
   </nav>
 </div>
