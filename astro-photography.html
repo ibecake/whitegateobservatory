@@ -67,6 +67,8 @@
         border: 1px solid #334155;
         border-radius: 10px;
         padding: 1rem;
+        min-width: 0;
+        overflow: hidden;
       }
       .outlook-title {
         display: flex;
@@ -87,8 +89,16 @@
       }
       .outlook-table {
         width: 100%;
+        min-width: 760px;
         border-collapse: collapse;
         font-size: 0.92rem;
+      }
+      .outlook-table-wrap {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .outlook-table th,
       .outlook-table td {
@@ -446,10 +456,12 @@
                 '<h2>Astrophotography Outlook</h2>' +
                 '<div class="outlook-meta">Updated: ' + escapeHtml(payload.generated_at_local || payload.generated_at || 'Unknown') + ' | Source: ' + escapeHtml(sourcePath) + escapeHtml(mode) + '</div>' +
               '</div>' +
-              '<table class="outlook-table">' +
-                '<thead><tr><th>Night</th><th>Score</th><th>Cloud</th><th>Dew Spread</th><th>Precip</th><th>Worst Metric</th><th>Best 2h Window</th></tr></thead>' +
-                '<tbody>' + rows + '</tbody>' +
-              '</table>' +
+              '<div class="outlook-table-wrap">' +
+                '<table class="outlook-table">' +
+                  '<thead><tr><th>Night</th><th>Score</th><th>Cloud</th><th>Dew Spread</th><th>Precip</th><th>Worst Metric</th><th>Best 2h Window</th></tr></thead>' +
+                  '<tbody>' + rows + '</tbody>' +
+                '</table>' +
+              '</div>' +
             '</div>';
 
           frame.style.display = 'none';
