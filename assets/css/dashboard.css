@@ -117,9 +117,21 @@ body {
   gap: 20px;
 }
 
+.weather-grid > * {
+  min-width: 0;
+}
+
+.weather-card-section {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .weather-scroll,
 .tblwrap {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  display: block;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
