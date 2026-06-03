@@ -1352,6 +1352,10 @@ def main():
       .top-menu a:hover {{
         background: #333;
       }}
+      .top-menu a.sub-nav {{
+        font-size: 0.88rem;
+        opacity: 0.92;
+      }}
       .top-menu .logo {{
         font-size: 1.2rem;
         font-weight: 700;
@@ -1397,8 +1401,8 @@ def main():
     <a href="marine.html">Marine</a>
     <a href="radio.html">Radio</a>
     <a href="radio-astronomy.html">Radio Astronomy</a>
+    <a href="tinygs.html" class="sub-nav">↳ TinyGS</a>
     <a href="astro-photography.html">Astro Photography</a>
-    <a href="tinygs.html">TinyGS</a>
   </nav>
 </div>
 <div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides • Wave/swell data © Open-Meteo</span></div>

@@ -1,5 +1,5 @@
 {
-  "generated_at_local": "Wed 03 Jun 07:56",
+  "generated_at_local": "Wed 03 Jun 08:31",
   "windows": [
     {
       "day_label": "Wed 03 Jun",
@@ -7,7 +7,7 @@
       "end": "22:59",
       "cls": "GOOD",
       "high_tide": "07:50 / 20:10",
-      "low_tide": "02:01 / 14:16"
+      "low_tide": "14:16"
     },
     {
       "day_label": "Thu 04 Jun",
@@ -27,8 +27,8 @@
     },
     {
       "day_label": "Sat 06 Jun",
-      "start": "20:00",
-      "end": "21:59",
+      "start": "21:00",
+      "end": "22:59",
       "cls": "GOOD",
       "high_tide": "09:46 / 22:13",
       "low_tide": "03:58 / 16:14"
@@ -51,17 +51,23 @@
     },
     {
       "day_label": "Tue 09 Jun",
-      "start": "04:00",
-      "end": "05:59",
+      "start": "07:00",
+      "end": "08:59",
       "cls": "GOOD",
       "high_tide": "00:05 / 12:33",
       "low_tide": "06:33 / 18:59"
+    },
+    {
+      "day_label": "Wed 10 Jun",
+      "start": "05:00",
+      "end": "06:59",
+      "cls": "GOOD",
+      "high_tide": "01:10",
+      "low_tide": "—"
     }
   ],
   "tide_chart": {
     "labels": [
-      "Wed 03 Jun 02:00",
-      "Wed 03 Jun 02:01",
       "Wed 03 Jun 03:00",
       "Wed 03 Jun 04:00",
       "Wed 03 Jun 05:00",
@@ -116,8 +122,6 @@
       "Thu 04 Jun 23:00"
     ],
     "heights": [
-      -1.5,
-      -1.5,
       -1.32,
       -0.79,
       -0.04,
@@ -177,8 +181,6 @@
       null,
       null,
       null,
-      null,
-      null,
       1.33,
       null,
       null,
@@ -228,8 +230,6 @@
       null
     ],
     "low_data": [
-      null,
-      -1.5,
       null,
       null,
       null,
