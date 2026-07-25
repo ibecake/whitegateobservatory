@@ -740,9 +740,7 @@ def main():
     import sys
     import re
     sys.path.insert(0, os.path.dirname(__file__))
-    from fish_build import (build_payload as build_fishing_payload,
-                            render_card as render_fishing_card,
-                            fetch_openmeteo_marine)
+    from fish_build import fetch_openmeteo_marine
     # Use a point near the Cork Harbour entrance for representative wave data.
     harbour_marine_data = fetch_openmeteo_marine(51.79, -8.25)
 
@@ -758,24 +756,10 @@ def main():
     
     print(f"Wrote Cork Harbour weather: {harbour_html_out}")
     
-    # Generate marine page (weather + fishing + map — astronomy moves to astro-photography page)
+    # Generate marine page (weather + wave data — astronomy moves to astro-photography page)
     marine_dir = os.path.dirname(outdir)
     marine_html_path = os.path.join(marine_dir, "marine.html")
     marine_tmp_path = os.path.join(marine_dir, "marine.tmp.html")
-    
-    fishing_payload = build_fishing_payload(hourly_data=fc.hourly.data, marine_data=harbour_marine_data)
-
-    # Write fishing card + JSON so the workflow does not need a separate fish_build.py run
-    fishing_dir = os.path.join(os.path.dirname(outdir), "fishing")
-    os.makedirs(fishing_dir, exist_ok=True)
-    fishing_html = render_fishing_card(fishing_payload)
-    with open(os.path.join(fishing_dir, "fishing.tmp.json"), "w", encoding="utf-8") as f:
-        json.dump(fishing_payload, f, ensure_ascii=False, indent=2)
-    os.replace(os.path.join(fishing_dir, "fishing.tmp.json"), os.path.join(fishing_dir, "fishing.json"))
-    with open(os.path.join(fishing_dir, "card.tmp.html"), "w", encoding="utf-8") as f:
-        f.write(fishing_html)
-    os.replace(os.path.join(fishing_dir, "card.tmp.html"), os.path.join(fishing_dir, "card.html"))
-    print(f"Wrote FISHING: {os.path.join(fishing_dir,'fishing.json')} / {os.path.join(fishing_dir,'card.html')}")
 
     # Extract body content without body tag
     def extract_body_content(html):
@@ -783,7 +767,6 @@ def main():
         return match.group(1) if match else html
     
     weather_content = extract_body_content(render_combined_weather(locations_data))
-    fishing_content = extract_body_content(fishing_html)
     
     wave_chart_data = _build_wave_chart_data(harbour_marine_data)
     wave_chart_content = _render_wave_chart(wave_chart_data)
@@ -1125,198 +1108,7 @@ def main():
 }})();
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     FISHING LOCATIONS MAP
-     ═══════════════════════════════════════════════════════════════════════ -->
-<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
-  <div style="padding:1.5rem;background:#f8f9fa;border-bottom:1px solid #dee2e6;">
-    <h2 style="margin:0 0 0.5rem;color:#1a1a1a;font-size:1.5rem;">Fishing Locations</h2>
-    <p style="margin:0;color:#6c757d;font-size:0.95rem;">Whitegate, East Cork and Cork Harbour &mdash; click a marker for details</p>
-    <p style="margin:0.5rem 0 0;font-size:0.85rem;color:#6c757d;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#4a9eff;border:2px solid #1d6fbd;vertical-align:middle;margin-right:4px;"></span>Observatory
-      &nbsp;
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#22c55e;border:2px solid #16a34a;vertical-align:middle;margin-right:4px;"></span>Fishing spot
-    </p>
-    <div style="margin-top:0.75rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
-      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
-        Type
-        <select id="fish-type-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
-          <option value="">All types</option>
-          <option value="sea">Sea</option>
-          <option value="shore">Shore</option>
-          <option value="pier">Pier</option>
-        </select>
-      </label>
-      <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;color:#374151;">
-        Species
-        <select id="fish-species-filter" style="padding:0.25rem 0.4rem;border:1px solid #cbd5e1;border-radius:4px;background:#fff;">
-          <option value="">All species</option>
-        </select>
-      </label>
-      <span id="fish-filter-status" style="font-size:0.82rem;color:#6b7280;">Loading spots...</span>
-    </div>
-  </div>
-  <div id="obs-map" style="height:420px;width:100%;"></div>
-</div>
-<script>
-(function() {{
-  // Whitegate Observatory coordinates (same as weather map above)
-  var OBS_LAT = 51.825256;
-  var OBS_LON = -8.240009;
-  var spotLayers = [];
-
-  var typeSelect = document.getElementById('fish-type-filter');
-  var speciesSelect = document.getElementById('fish-species-filter');
-  var filterStatus = document.getElementById('fish-filter-status');
-
-  var map = L.map('obs-map').setView([51.863212, -8.120911], 11);
-  L.tileLayer('https://{{s}}.tile.openstreetmap.org/{{z}}/{{x}}/{{y}}.png', {{
-    attribution: '\xa9 OpenStreetMap contributors', maxZoom: 19
-  }}).addTo(map);
-
-  // Observatory marker
-  var obsMarker = L.marker([OBS_LAT, OBS_LON]).addTo(map);
-  obsMarker.bindPopup('<b>Whitegate Observatory</b><br>East Cork, Ireland');
-  L.circle([OBS_LAT, OBS_LON], {{
-    color: '#4a9eff', fillColor: '#4a9eff', fillOpacity: 0.2, radius: 100
-  }}).addTo(map);
-
-  // Fishing spots overlay — uses a manual manifest first, then legacy fallback.
-  // Edit assets/data/fishing-manifest.json to add, remove or update spots.
-  function loadSpots() {{
-    var sources = ['assets/data/fishing-manifest.json', 'assets/data/fishing-spots.json'];
-
-    function parseSpots(data) {{
-      if (Array.isArray(data)) return data;
-      return Array.isArray(data && data.spots) ? data.spots : [];
-    }}
-
-    function trySource(index) {{
-      if (index >= sources.length) {{
-        throw new Error('No fishing spots source could be loaded');
-      }}
-      return fetch(sources[index], {{ cache: 'no-store' }})
-        .then(function(r) {{
-          if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + sources[index]);
-          return r.json();
-        }})
-        .then(function(data) {{
-          var spots = parseSpots(data);
-          if (!spots.length) throw new Error('No spots in ' + sources[index]);
-          return spots;
-        }})
-        .catch(function() {{
-          return trySource(index + 1);
-        }});
-    }}
-
-    return trySource(0);
-  }}
-
-  function normalizeText(value) {{
-    return String(value || '').trim().toLowerCase();
-  }}
-
-  function updateStatus(visible, total) {{
-    filterStatus.textContent = visible + ' of ' + total + ' spots shown';
-  }}
-
-  function classifySpotType(typeValue) {{
-    var t = normalizeText(typeValue);
-    if (!t) return 'shore';
-    if (t.indexOf('pier') !== -1 || t.indexOf('jetty') !== -1 || t.indexOf('quay') !== -1 || t.indexOf('harbour wall') !== -1) {{
-      return 'pier';
-    }}
-    if (t.indexOf('boat') !== -1 || t.indexOf('offshore') !== -1 || t.indexOf('charter') !== -1 || t.indexOf('reef') !== -1) {{
-      return 'sea';
-    }}
-    return 'shore';
-  }}
-
-  function applyFilters() {{
-    var typeFilter = normalizeText(typeSelect.value);
-    var speciesFilter = normalizeText(speciesSelect.value);
-    var filteredBounds = [[OBS_LAT, OBS_LON]];
-    var visibleCount = 0;
-
-    spotLayers.forEach(function(entry) {{
-      var spot = entry.spot;
-      var typeCategory = classifySpotType(spot.type);
-      var speciesList = Array.isArray(spot.catches) ? spot.catches.map(normalizeText) : [];
-
-      var typeMatch = !typeFilter || typeCategory === typeFilter;
-      var speciesMatch = !speciesFilter || speciesList.indexOf(speciesFilter) !== -1;
-      var show = typeMatch && speciesMatch;
-
-      if (show) {{
-        if (!map.hasLayer(entry.marker)) {{
-          entry.marker.addTo(map);
-        }}
-        filteredBounds.push([spot.lat, spot.lon]);
-        visibleCount += 1;
-      }} else if (map.hasLayer(entry.marker)) {{
-        map.removeLayer(entry.marker);
-      }}
-    }});
-
-    updateStatus(visibleCount, spotLayers.length);
-    if (filteredBounds.length > 1) {{
-      map.fitBounds(filteredBounds, {{ padding: [24, 24] }});
-    }}
-  }}
-
-  function populateFilterOptions(spots) {{
-    var speciesSet = new Set();
-
-    spots.forEach(function(spot) {{
-      (spot.catches || []).forEach(function(species) {{
-        if (species) speciesSet.add(String(species).trim());
-      }});
-    }});
-
-    Array.from(speciesSet).sort().forEach(function(speciesName) {{
-      var option = document.createElement('option');
-      option.value = speciesName;
-      option.textContent = speciesName;
-      speciesSelect.appendChild(option);
-    }});
-  }}
-
-  loadSpots()
-    .then(function(spots) {{
-      populateFilterOptions(spots);
-
-      spots.forEach(function(spot) {{
-        var catches = (spot.catches || []).join(', ') || '—';
-        var seasons = spot.seasons || '—';
-        var type    = spot.type    || '';
-        var notes   = spot.notes   || '';
-        var popup =
-          '<b>' + spot.name + '</b>' +
-          (type    ? '<br><span style="color:#555">Type: </span>'    + type    : '') +
-          '<br><span style="color:#555">Fish: </span>'   + catches +
-          '<br><span style="color:#555">Best: </span>'   + seasons +
-          (notes   ? '<br><span style="color:#555">Notes: </span>'   + notes   : '');
-        var marker = L.circleMarker([spot.lat, spot.lon], {{
-          radius: 8,
-          color: '#16a34a',
-          fillColor: '#22c55e',
-          fillOpacity: 0.85,
-          weight: 2
-        }}).bindPopup(popup);
-        spotLayers.push({{ marker: marker, spot: spot }});
-      }});
-
-      typeSelect.addEventListener('change', applyFilters);
-      speciesSelect.addEventListener('change', applyFilters);
-      applyFilters();
-    }})
-    .catch(function(e) {{
-      console.warn('Could not load fishing spots overlay:', e);
-      filterStatus.textContent = 'Could not load fishing spots';
-    }});
-}})();
-</script>'''
+'''
 
     # Build marine page HTML
     updated_time = datetime.now().strftime("%a %d %b %H:%M")
@@ -1394,7 +1186,6 @@ def main():
 <div class="top-menu">
   <nav>
     <a href="index.html" class="logo">Whitegate Observatory</a>
-    <a href="marine.html">Marine</a>
     <a href="radio.html">Radio</a>
     <a href="radio-astronomy.html">Radio Astronomy</a>
     <a href="astro-photography.html">Astro Photography</a>
@@ -1402,7 +1193,6 @@ def main():
 </div>
 <div class="update-timestamp">Last updated: {updated_time}<br><span style="font-size: 10px; opacity: 0.8;">Weather data © Meteosource • Tides © WorldTides • Wave/swell data © Open-Meteo</span></div>
 {weather_content}
-{fishing_content}
 <div style="max-width:1200px;margin:0 auto;padding:0 1rem;">
 {wave_chart_content}
 </div>
