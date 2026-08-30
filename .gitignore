@@ -2,3 +2,6 @@
 .env.*
 !.env.example
 *.local
+
+# Generated at deploy time by the Pages workflow
+build.json
