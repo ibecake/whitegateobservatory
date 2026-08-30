@@ -411,6 +411,25 @@
           './astrophoto/manifest.json',
           'dist/astrophoto/manifest.json'
         ];
+        // Astrophotography images are hosted in the public Google Cloud Storage
+        // bucket `whitegate-astrophotography` (keeps the binaries out of the git
+        // repo). Manifest `thumb`/`full` values are object paths within this
+        // bucket, unless they are already absolute URLs (which pass through
+        // untouched). The bucket grants public read (allUsers -> Storage Object
+        // Viewer) so these URLs load directly in the browser.
+        const GALLERY_IMAGE_BASE = 'https://storage.googleapis.com/whitegate-astrophotography/';
+
+        function isAbsoluteUrl(value) {
+          return /^(https?:)?\/\//i.test(value) || /^data:/i.test(value);
+        }
+
+        function resolveImage(path, base) {
+          if (!path) return '';
+          if (isAbsoluteUrl(path)) return path;
+          const normalizedBase = base.endsWith('/') ? base : base + '/';
+          return normalizedBase + String(path).replace(/^\/+/, '');
+        }
+
         let sourceIndex = 0;
         let galleryItems = [];
 
@@ -556,7 +575,8 @@
         }
 
         function openLightbox(item) {
-          lightboxImage.src = item.full || item.thumb || '';
+          const fullPath = item.full || item.thumb || '';
+          lightboxImage.src = resolveImage(fullPath, GALLERY_IMAGE_BASE);
           lightboxImage.alt = safeText(item.title);
           lightboxPanel.innerHTML =
             '<h3>' + escapeHtml(safeText(item.title)) + '</h3>' +
@@ -600,7 +620,8 @@
             thumb.className = 'gallery-thumb';
             thumb.loading = 'lazy';
             thumb.decoding = 'async';
-            thumb.src = item.thumb || item.full || '';
+            const thumbPath = item.thumb || item.full || '';
+            thumb.src = resolveImage(thumbPath, GALLERY_IMAGE_BASE);
             thumb.alt = safeText(item.title);
             button.appendChild(thumb);
 
