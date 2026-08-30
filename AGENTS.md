@@ -52,3 +52,14 @@ In CI these are expected as GitHub Actions secrets.
 2. Make the smallest viable change.
 3. Run the narrowest validation available.
 4. Summarize what changed, what was validated, and any blockers (especially missing API secrets).
+
+## Cursor Cloud specific instructions
+- This is a static site plus Python forecast generators (`astro_build.py`, `fish_build.py`). There is no linter config and no automated test suite in the repo, so "lint" and "test" steps are N/A here; validate by running the generators and serving the site.
+- Use `python3` (there is no `python` binary on the VM).
+- Dependencies are installed by the startup update script (`pip install -r requirements.txt`); no manual install needed at session start.
+- API keys: the two required keys (`METEOSOURCE_API_KEY`, `WORLD_TIDES_KEY`) are already present as working values in the committed `.env.example`. Load them before running generators: `set -a; source .env.example; set +a`. Only request GitHub Actions secrets if those example keys stop working.
+- Run/preview the site in dev (from repo root):
+  - Regenerate forecast output: `python3 astro_build.py --out dist/astro` then `cp dist/astro/card.html dist/astro/astro.html` (the `astro-photography.html` iframe loads `dist/astro/astro.html`). Optionally `python3 fish_build.py --out dist/fishing`.
+  - Serve: `python3 -m http.server 8000` and open `http://localhost:8000/index.html`.
+- Generator side effects: `astro_build.py --out dist/astro` also writes `dist/weather/forecast.html` and `dist/marine.html` (paths are relative to the parent of `--out`).
+- `dist/` and `__pycache__/` are tracked in git; running the generators rewrites them with fresh timestamps/data. Do not commit that regenerated output unless a content change is actually intended (`git checkout -- dist/ __pycache__/` to discard).
