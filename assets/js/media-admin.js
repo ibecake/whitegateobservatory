@@ -55,7 +55,9 @@
     gcsToken: sessionStorage.getItem("wg_gcs_token") || "",
     githubToken: sessionStorage.getItem("wg_gh_token") || "",
     bucketItems: [],
-    dirty: false
+    dirty: false,
+    hideHeic: true,
+    onlyNew: true
   };
 
   var el = {};
@@ -156,6 +158,36 @@
     updateOutput();
   }
 
+  function updateSaveBar() {
+    if (!el.saveBarStatus) return;
+    if (state.dirty) {
+      el.saveBarStatus.textContent = "Unsaved changes — click Save to the website";
+      el.saveBarStatus.className = "save-bar-status dirty";
+    } else {
+      el.saveBarStatus.textContent = state.entries.length + " item(s) on this gallery. No unsaved changes.";
+      el.saveBarStatus.className = "save-bar-status";
+    }
+  }
+
+  function isHeicName(name) {
+    return /\.hei[cf]$/i.test(name || "");
+  }
+  function isWebImageName(name) {
+    return /\.(jpe?g|png|webp|gif)$/i.test(name || "");
+  }
+  function preferWebObject(it) {
+    if (!it || !isHeicName(it.name)) return it;
+    var stem = it.name.replace(/\.hei[cf]$/i, "");
+    var match = null;
+    (state.bucketItems || []).forEach(function (other) {
+      var n = other.name || "";
+      if (n === stem + ".jpg" || n === stem + ".JPG" || n === stem + ".jpeg" || n === stem + ".webp" || n === stem + ".png") {
+        match = other;
+      }
+    });
+    return match || it;
+  }
+
   function tokenHeaders() {
     var h = {};
     if (state.gcsToken) h.Authorization = "Bearer " + state.gcsToken;
@@ -197,15 +229,24 @@
     renderTagLibrary();
     renderEntries();
     updateOutput();
-    loadManifestFromRepo();
+    loadManifestFromRepo().then(function () { listObjects(); });
   }
 
   function refreshBase() {
     var c = currentCollection();
-    el.baseUrl.value = baseUrl();
-    el.saveHint.textContent = "Writes to " + c.saveTo + " (gallery: " + c.page + ")";
-    el.importUrl.value = c.saveTo;
-    el.importUrl.placeholder = c.saveTo;
+    if (el.baseUrl) el.baseUrl.value = baseUrl();
+    if (el.saveHint) {
+      el.saveHint.textContent = "Gallery page: " + c.page + "  ·  list file: " + c.saveTo + "  ·  bucket: " + c.bucket;
+    }
+    if (el.importUrl) {
+      el.importUrl.value = c.saveTo;
+      el.importUrl.placeholder = c.saveTo;
+    }
+    if (el.savePathLabel) el.savePathLabel.textContent = c.saveTo;
+    if (el.previewGalleryLink) {
+      el.previewGalleryLink.href = c.page;
+      el.previewGalleryLink.textContent = "Open " + c.label + " gallery";
+    }
   }
 
   // ---- tags ----
@@ -288,35 +329,60 @@
       el.loadFilesBtn.disabled = false;
       items = items.filter(function (it) { return it.name && it.name.slice(-1) !== "/"; });
       state.bucketItems = items;
-      renderFileList(items);
-      if (!items.length) setStatus(el.listStatus, "Bucket is reachable but contains no objects.", "warn");
-      else setStatus(el.listStatus, "Loaded " + items.length + " object(s). Click <strong>Add</strong> to catalogue one.", "ok");
+      renderFileList();
+      var newWeb = items.filter(function (it) { return !isAdded(it.name) && isWebImageName(it.name); });
+      if (!items.length) {
+        setStatus(el.listStatus, "Bucket is reachable but contains no objects. Type a filename below if you know it.", "warn");
+      } else if (newWeb.length) {
+        setStatus(el.listStatus, "Found " + items.length + " object(s). <strong>" + newWeb.length +
+          " JPEG/PNG/WebP file(s) are not on the page yet</strong> — click Add to page, or Add all new JPEG/PNG/WebP.", "ok");
+      } else {
+        setStatus(el.listStatus, "Loaded " + items.length + " object(s). Every web image in this bucket is already on the page (HEIC files are hidden by default because browsers cannot display them).", "ok");
+      }
     }).catch(function (e) {
       el.loadFilesBtn.disabled = false;
       var code = e && e.status;
       if (code === 401 || code === 403) {
         setStatus(el.listStatus,
-          "Anonymous listing is blocked (HTTP " + code + "). Make the bucket publicly listable, or paste a GCS access token in Settings.<br>" +
+          "This bucket is not publicly listable (HTTP " + code + "). Type the <strong>exact filename</strong> below (for example <code>IMG_2756.jpg</code>) and click Add this filename.<br>" +
+          "To make listing work, the bucket owner can run:<br>" +
           "<pre style='margin:.5rem 0 0'>gcloud storage buckets add-iam-policy-binding gs://" + escapeHtml(bucket) +
           " \\\n  --member=allUsers --role=roles/storage.objectViewer</pre>", "err");
       } else {
-        setStatus(el.listStatus, "Could not list bucket (" + escapeHtml(String(code || (e && e.message) || "network error")) + ").", "err");
+        setStatus(el.listStatus, "Could not list bucket (" + escapeHtml(String(code || (e && e.message) || "network error")) +
+          "). Type the exact filename below instead.", "err");
       }
     });
   }
 
   function isAdded(name) {
-    return state.entries.some(function (en) { return en.file === name; });
+    return state.entries.some(function (en) { return en.file === name || en.thumb === name; });
   }
 
-  function renderFileList(items) {
+  function visibleBucketItems() {
+    var items = (state.bucketItems || []).slice();
+    if (state.hideHeic) items = items.filter(function (it) { return !isHeicName(it.name); });
+    if (state.onlyNew) items = items.filter(function (it) { return !isAdded(it.name); });
+    items.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+    return items;
+  }
+
+  function renderFileList() {
+    var items = visibleBucketItems();
     el.fileList.style.display = "";
     el.fileList.innerHTML = "";
-    el.fileCount.textContent = items.length + " file(s)";
-    items.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+    var hidden = (state.bucketItems || []).length - items.length;
+    el.fileCount.textContent = items.length + " shown" + (hidden ? " (" + hidden + " hidden)" : "");
+    if (!items.length) {
+      var empty = document.createElement("div");
+      empty.className = "fileitem";
+      empty.innerHTML = '<span class="name">Nothing to show with the current filters.</span>';
+      el.fileList.appendChild(empty);
+      return;
+    }
     items.forEach(function (it) {
       var type = typeFromContentType(it.contentType, it.name);
-      var heic = /\.hei[cf]$/i.test(it.name);
+      var heic = isHeicName(it.name);
       var div = document.createElement("div");
       div.className = "fileitem" + (isAdded(it.name) ? " added" : "");
       div.innerHTML =
@@ -325,20 +391,18 @@
         '<span class="size">' + humanSize(it.size) + "</span>";
       var btn = document.createElement("button");
       btn.className = "small primary";
-      btn.textContent = isAdded(it.name) ? "Added" : "Add";
+      btn.textContent = isAdded(it.name) ? "Already on page" : "Add to page";
       btn.disabled = isAdded(it.name);
       btn.addEventListener("click", function () {
         addFromBucketObject(it);
-        btn.textContent = "Added";
-        btn.disabled = true;
-        div.classList.add("added");
+        renderFileList();
       });
       div.appendChild(btn);
       if (heic) {
         var warn = document.createElement("span");
         warn.className = "badge warn";
-        warn.title = "Browsers cannot display HEIC; upload a JPG/WebP version for the web.";
-        warn.textContent = "HEIC";
+        warn.title = "Browsers cannot display HEIC. Add the .jpg of the same name instead.";
+        warn.textContent = "won't display";
         div.insertBefore(warn, btn);
       }
       el.fileList.appendChild(div);
@@ -346,6 +410,20 @@
   }
 
   function addFromBucketObject(it) {
+    var chosen = preferWebObject(it);
+    if (chosen !== it && chosen && chosen.name !== it.name) {
+      setStatus(el.listStatus, "Added <code>" + escapeHtml(chosen.name) + "</code> (web version of " +
+        escapeHtml(it.name) + "). HEIC does not display in browsers.", "ok");
+      it = chosen;
+    } else if (isHeicName(it.name)) {
+      if (!confirm(it.name + " is HEIC. Browsers cannot show it on the gallery. Add it anyway? If a .jpg with the same name exists, use that instead.")) {
+        return;
+      }
+    }
+    if (isAdded(it.name)) {
+      setStatus(el.listStatus, escapeHtml(it.name) + " is already on the page.", "warn");
+      return;
+    }
     var type = typeFromContentType(it.contentType, it.name);
     var meta = it.metadata || {};
     var details = [];
@@ -361,7 +439,7 @@
     registerTags(tags);
     addEntry({
       file: it.name,
-      thumb: type === "image" ? it.name : "",
+      thumb: type === "image" && !isHeicName(it.name) ? it.name : "",
       type: type,
       date: date,
       title: meta.title || it.name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " "),
@@ -371,10 +449,27 @@
       fileMeta: { contentType: it.contentType, size: Number(it.size) || 0, timeCreated: it.timeCreated || "" }
     });
     tryReadRemoteExif(it.name, type);
+    var card = el.entries && el.entries.lastElementChild;
+    if (card && card.scrollIntoView) card.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function addAllNewWebFiles() {
+    var added = 0;
+    (state.bucketItems || []).forEach(function (it) {
+      if (isAdded(it.name)) return;
+      if (!isWebImageName(it.name)) return;
+      addFromBucketObject(it);
+      added++;
+    });
+    renderFileList();
+    if (!added) setStatus(el.listStatus, "No new JPEG/PNG/WebP files to add.", "warn");
+    else setStatus(el.listStatus, "Added " + added + " new web image(s). Check the cards below, then click Save to the website.", "ok");
   }
 
   function tryReadRemoteExif(objectName, type) {
     if (type !== "image") return;
+    if (isHeicName(objectName)) return;
+    if (!/\.(jpe?g|png|webp|gif)$/i.test(objectName)) return;
     var url = resolveUrl(objectName, baseUrl());
     fetch(url, { cache: "no-store" }).then(function (r) {
       if (!r.ok) throw new Error("HTTP " + r.status);
@@ -826,9 +921,8 @@
   }
 
   function updateOutput() {
-    el.output.value = JSON.stringify(buildManifest(), null, 2);
-    var pending = state.entries.filter(function (e) { return e.pendingUpload; }).length;
-    el.pendingCount.textContent = pending ? (pending + " file(s) waiting to upload") : "No pending uploads";
+    if (el.output) el.output.value = JSON.stringify(buildManifest(), null, 2);
+    updateSaveBar();
   }
 
   function importEntries(data) {
@@ -1007,21 +1101,58 @@
     return btoa(bin);
   }
 
+  function githubEditUrl() {
+    return "https://github.com/" + GITHUB.owner + "/" + GITHUB.repo + "/edit/" + GITHUB.branch + "/" + currentCollection().saveTo;
+  }
+
+  function setSaveDisabled(disabled) {
+    [el.saveBarBtn, el.saveBarBtn2].forEach(function (b) {
+      if (b) b.disabled = disabled;
+    });
+  }
+
+  function saveToWebsite() {
+    updateOutput();
+    var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
+    function afterCopy() {
+      if (state.githubToken) {
+        commitManifest();
+        return;
+      }
+      window.open(githubEditUrl(), "_blank", "noopener");
+      var msg = "Copied the gallery list. In the GitHub tab: select all, paste, click <strong>Commit changes</strong> on <code>main</code>. Wait about a minute, then hard-refresh the gallery.";
+      if (el.publishStatus) setStatus(el.publishStatus, msg, "ok");
+      if (el.saveBarStatus) {
+        el.saveBarStatus.textContent = "Copied. Paste into GitHub and commit.";
+        el.saveBarStatus.className = "save-bar-status dirty";
+      }
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(json).then(afterCopy, function () {
+        fallbackCopy(json);
+        afterCopy();
+      });
+    } else {
+      fallbackCopy(json);
+      afterCopy();
+    }
+  }
+
   function commitManifest() {
     if (!state.githubToken) {
-      setStatus(el.publishStatus, "Paste a GitHub token with <code>repo</code> scope in Settings to commit the manifest.", "warn");
+      saveToWebsite();
       return;
     }
     var path = currentCollection().saveTo;
-    var json = el.output.value || JSON.stringify(buildManifest(), null, 2);
+    var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
     var api = "https://api.github.com/repos/" + GITHUB.owner + "/" + GITHUB.repo + "/contents/" + path;
     var headers = {
       Authorization: "Bearer " + state.githubToken,
       Accept: "application/vnd.github+json",
       "Content-Type": "application/json"
     };
-    setStatus(el.publishStatus, "Committing " + escapeHtml(path) + " to " + GITHUB.branch + "…", "");
-    el.commitBtn.disabled = true;
+    if (el.publishStatus) setStatus(el.publishStatus, "Saving " + escapeHtml(path) + " to " + GITHUB.branch + "…", "");
+    setSaveDisabled(true);
     fetch(api, { headers: headers, cache: "no-store" }).then(function (r) {
       if (r.status === 404) return { sha: null };
       if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
@@ -1038,14 +1169,17 @@
         })
       });
     }).then(function (r) {
-      el.commitBtn.disabled = false;
+      setSaveDisabled(false);
       if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
       state.dirty = false;
-      setStatus(el.publishStatus, "Committed <code>" + escapeHtml(path) + "</code> to <code>" + GITHUB.branch +
-        "</code>. GitHub Pages will pick it up on the next workflow run.", "ok");
+      updateSaveBar();
+      if (el.publishStatus) {
+        setStatus(el.publishStatus, "Saved <code>" + escapeHtml(path) + "</code> to <code>" + GITHUB.branch +
+          "</code>. Wait about a minute, then hard-refresh the gallery.", "ok");
+      }
     }).catch(function (err) {
-      el.commitBtn.disabled = false;
-      setStatus(el.publishStatus, "Could not commit: " + escapeHtml(err.message || String(err)), "err");
+      setSaveDisabled(false);
+      if (el.publishStatus) setStatus(el.publishStatus, "Could not save: " + escapeHtml(err.message || String(err)), "err");
     });
   }
 
@@ -1121,8 +1255,16 @@
     el.commitBtn = $("commitBtn");
     el.copyGsutilBtn = $("copyGsutilBtn");
     el.publishStatus = $("publishStatus");
-    el.pendingCount = $("pendingCount");
     el.gsutilOut = $("gsutilOut");
+    el.saveBarBtn = $("saveBarBtn");
+    el.saveBarBtn2 = $("saveBarBtn2");
+    el.saveBarStatus = $("saveBarStatus");
+    el.previewGalleryLink = $("previewGalleryLink");
+    el.savePathLabel = $("savePathLabel");
+    el.addAllBtn = $("addAllBtn");
+    el.onlyNewCheck = $("onlyNewCheck");
+    el.hideHeicCheck = $("hideHeicCheck");
+    el.manualName = $("manualName");
 
     el.gcsToken.value = state.gcsToken;
     el.githubToken.value = state.githubToken;
@@ -1140,9 +1282,36 @@
 
     el.loadFilesBtn.addEventListener("click", listObjects);
     el.addManualBtn.addEventListener("click", function () {
-      var name = prompt("Object name (path within the bucket), e.g. recordings/1420mhz_2026-01-01.wav");
-      if (name != null && name.trim()) addEntry({ file: name.trim(), thumb: name.trim() });
+      var name = (el.manualName && el.manualName.value || "").trim();
+      if (!name) {
+        setStatus(el.listStatus, "Type the exact object name first, e.g. IMG_2756.jpg", "warn");
+        return;
+      }
+      addEntry({
+        file: name,
+        thumb: /\.(jpe?g|png|webp|gif)$/i.test(name) ? name : "",
+        type: typeFromContentType("", name),
+        title: name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " ")
+      });
+      el.manualName.value = "";
+      renderFileList();
+      setStatus(el.listStatus, "Added <code>" + escapeHtml(name) + "</code>. Check the card below, then Save to the website.", "ok");
     });
+    if (el.addAllBtn) el.addAllBtn.addEventListener("click", addAllNewWebFiles);
+    if (el.onlyNewCheck) {
+      el.onlyNewCheck.checked = state.onlyNew;
+      el.onlyNewCheck.addEventListener("change", function () {
+        state.onlyNew = el.onlyNewCheck.checked;
+        renderFileList();
+      });
+    }
+    if (el.hideHeicCheck) {
+      el.hideHeicCheck.checked = state.hideHeic;
+      el.hideHeicCheck.addEventListener("change", function () {
+        state.hideHeic = el.hideHeicCheck.checked;
+        renderFileList();
+      });
+    }
     el.addBlankBtn.addEventListener("click", function () { addEntry({}); });
     el.clearBtn.addEventListener("click", function () {
       if (state.entries.length && !confirm("Remove all entries in this section?")) return;
@@ -1211,13 +1380,19 @@
 
     el.downloadBtn.addEventListener("click", downloadManifest);
     el.copyBtn.addEventListener("click", function () { copyText(el.output.value || "[]", el.copyBtn, "Copy JSON"); });
-    el.uploadGcsBtn.addEventListener("click", uploadPending);
-    el.commitBtn.addEventListener("click", commitManifest);
-    el.copyGsutilBtn.addEventListener("click", function () {
-      var snippet = gsutilSnippet();
-      el.gsutilOut.value = snippet;
-      copyText(snippet, el.copyGsutilBtn, "Copy gsutil commands");
-    });
+    if (el.uploadGcsBtn) el.uploadGcsBtn.addEventListener("click", uploadPending);
+    if (el.copyGsutilBtn) {
+      el.copyGsutilBtn.addEventListener("click", function () {
+        var snippet = gsutilSnippet();
+        if (el.gsutilOut) el.gsutilOut.value = snippet;
+        copyText(snippet, el.copyGsutilBtn, "Copy gcloud copy commands");
+      });
+    }
+    function bindSave(btn) {
+      if (btn) btn.addEventListener("click", saveToWebsite);
+    }
+    bindSave(el.saveBarBtn);
+    bindSave(el.saveBarBtn2);
   }
 
   bind();
@@ -1226,5 +1401,5 @@
   renderTagLibrary();
   renderEntries();
   updateOutput();
-  loadManifestFromRepo();
+  loadManifestFromRepo().then(function () { listObjects(); });
 })();

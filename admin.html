@@ -19,117 +19,85 @@
       </nav>
     </div>
 
+    <div class="save-bar" id="saveBar">
+      <span id="saveBarStatus" class="save-bar-status">No unsaved changes</span>
+      <span class="spacer"></span>
+      <a id="previewGalleryLink" class="save-bar-link" href="astro-photography.html" target="_blank" rel="noopener">Open gallery</a>
+      <button type="button" class="primary" id="saveBarBtn">Save to the website</button>
+    </div>
+
     <div class="admin-wrap">
       <h1>Media Admin</h1>
       <p class="lead">
-        Catalogue and publish media for each gallery section. Drop files to read EXIF/file metadata
-        and suggest tags, edit <code>manifest.json</code>, then upload objects to the matching
-        Google Cloud Storage bucket. Tokens stay in this browser tab only.
+        The gallery pages only show files listed here. Files can already be in the Google Cloud
+        bucket &mdash; you still need to <strong>Add</strong> them, then <strong>Save to the website</strong>.
       </p>
 
+      <div class="howto">
+        <h2>Add a file that is already in the bucket</h2>
+        <ol>
+          <li>Choose the section below (Astrophotography, Radio Astronomy, or Radio).</li>
+          <li>Wait for the bucket list. Click <strong>Add to page</strong> on each file you want. Use JPEG/PNG/WebP &mdash; HEIC will not show in a browser.</li>
+          <li>Check the new card: title, date, tags.</li>
+          <li>Click <strong>Save to the website</strong> (top right). The list is copied and GitHub opens. Paste over the file, commit to <code>main</code>, wait a minute, then hard-refresh the gallery.</li>
+        </ol>
+      </div>
+
       <div class="panel">
-        <h2>Section</h2>
+        <h2>1. Which gallery?</h2>
         <div class="section-tabs" id="sectionTabs"></div>
-        <div class="row" style="margin-top:0.9rem;">
-          <div class="field" style="flex:2 1 320px;">
-            <label>Public base URL</label>
-            <input type="text" id="baseUrl" readonly />
-          </div>
-        </div>
         <p class="hint" id="saveHint"></p>
+        <input type="hidden" id="baseUrl" />
       </div>
 
       <div class="panel">
-        <h2>Settings</h2>
-        <div class="row">
-          <div class="field">
-            <label for="gcsToken">GCS access token (optional, for uploads)</label>
-            <input type="password" id="gcsToken" autocomplete="off" placeholder="gcloud auth print-access-token" />
-          </div>
-          <div class="field">
-            <label for="githubToken">GitHub token (optional, to commit the manifest)</label>
-            <input type="password" id="githubToken" autocomplete="off" placeholder="repo-scoped PAT" />
-          </div>
-        </div>
-        <p class="hint">
-          Tokens are stored in <code>sessionStorage</code> for this tab and are never written to the repo.
-          Uploads also need a CORS policy on the bucket that allows this site origin.
+        <h2>2. Files in the bucket <span class="pill-count" id="fileCount"></span></h2>
+        <p class="hint" style="margin-top:0;">
+          These are objects already stored in Cloud Storage. Adding one only lists it on the website;
+          it does not copy the file again.
         </p>
-        <details class="help">
-          <summary>How to get tokens and enable CORS</summary>
-          <p class="hint">Print a short-lived GCS token:</p>
-          <pre>gcloud auth print-access-token</pre>
-          <p class="hint">Apply CORS so the browser can upload from this page (adjust the origin if needed). An example file is <code>assets/data/gcs-cors.example.json</code>:</p>
-          <pre>[
-  {
-    "origin": ["https://whitegateobservatory.com", "http://localhost:8000"],
-    "method": ["GET", "HEAD", "PUT", "POST", "OPTIONS"],
-    "responseHeader": ["Content-Type", "Authorization", "x-goog-resumable"],
-    "maxAgeSeconds": 3600
-  }
-]
-
-gcloud storage buckets update gs://whitegate-astrophotography --cors-file=cors.json</pre>
-          <p class="hint">Without tokens you can still edit the manifest, download it, and copy <code>gcloud storage cp</code> commands.</p>
-        </details>
-      </div>
-
-      <div class="panel">
-        <h2><span class="step">1</span> Upload media</h2>
-        <div class="dropzone" id="dropzone" role="button" tabindex="0">
-          <strong>Drop files here or click to choose</strong>
-          JPEG, PNG, WebP, video, audio, or data files. EXIF/date/camera are read in the browser.
-          <input id="fileInput" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.fits,.csv,.json,.txt" />
-        </div>
-        <div class="status" id="uploadStatus"></div>
-        <p class="hint">
-          HEIC is flagged because browsers cannot display it — convert to JPEG/WebP for the gallery.
-          Object metadata (camera, date, tags) is written onto GCS objects when you upload with a token.
-        </p>
-      </div>
-
-      <div class="panel">
-        <h2><span class="step">2</span> Files already in the bucket</h2>
         <div class="btn-bar">
-          <button class="primary" id="loadFilesBtn">Load files from bucket</button>
-          <button id="addManualBtn">Add a file manually</button>
-          <span class="pill-count" id="fileCount"></span>
+          <button class="primary" id="loadFilesBtn">Reload bucket list</button>
+          <button id="addAllBtn">Add all new JPEG/PNG/WebP</button>
+          <label class="check-inline"><input type="checkbox" id="onlyNewCheck" checked /> Only files not yet on the page</label>
+          <label class="check-inline"><input type="checkbox" id="hideHeicCheck" checked /> Hide HEIC</label>
         </div>
         <div class="status" id="listStatus"></div>
         <div class="filelist" id="fileList" style="display:none;"></div>
-        <details class="help">
-          <summary>Bucket not listing?</summary>
-          <p class="hint">Anonymous listing needs public object viewer on the bucket, or a GCS token in Settings.</p>
-          <pre>gcloud storage buckets add-iam-policy-binding gs://BUCKET_NAME \
-  --member=allUsers --role=roles/storage.objectViewer</pre>
-        </details>
-      </div>
-
-      <div class="panel">
-        <h2><span class="step">3</span> Tags</h2>
-        <p class="hint" style="margin-top:0;">Click a tag to filter entries. Create tags here or on any card. File names and EXIF suggest tags automatically.</p>
-        <div class="tag-library" id="tagLibrary"></div>
-        <div class="btn-bar" style="margin-top:0.75rem;">
-          <input type="text" id="newTag" placeholder="new tag (aurora, moon, 1420mhz…)" style="max-width:280px;" />
-          <button id="addTagBtn">Create tag</button>
+        <div class="row" style="margin-top:0.85rem;">
+          <div class="field" style="flex:2 1 280px;">
+            <label for="manualName">If the list is empty or blocked, type the exact object name</label>
+            <div class="btn-bar">
+              <input type="text" id="manualName" placeholder="e.g. IMG_2756.jpg" />
+              <button id="addManualBtn">Add this filename</button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="panel">
-        <h2><span class="step">4</span> Entries <span class="pill-count" id="entryCount">0</span></h2>
+        <h2>3. On the page <span class="pill-count" id="entryCount">0</span></h2>
         <div class="row">
           <div class="field">
             <label for="filterText">Search</label>
             <input type="search" id="filterText" placeholder="title, file, tag…" />
           </div>
           <div class="field">
-            <label for="bulkTag">Apply tag to selected</label>
+            <label for="newTag">Create a tag</label>
+            <div class="btn-bar">
+              <input type="text" id="newTag" placeholder="aurora, moon, 1420mhz…" />
+              <button id="addTagBtn">Create</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="bulkTag">Tag selected cards</label>
             <div class="btn-bar">
               <input type="text" id="bulkTag" placeholder="tag name" list="tagsuggest" />
               <button id="bulkBtn">Apply</button>
             </div>
           </div>
         </div>
+        <div class="tag-library" id="tagLibrary"></div>
         <div class="status" id="bulkStatus"></div>
         <div id="entries"></div>
         <div class="btn-bar" style="margin-top:0.5rem;">
@@ -139,36 +107,79 @@ gcloud storage buckets update gs://whitegate-astrophotography --cors-file=cors.j
       </div>
 
       <div class="panel">
-        <h2><span class="step">5</span> Import &amp; publish</h2>
+        <h2>4. Save to the website</h2>
+        <p class="hint" style="margin-top:0;">
+          This updates <code id="savePathLabel">astrophoto/manifest.json</code> in GitHub.
+          After it is committed to <code>main</code>, GitHub Pages republishes in about a minute.
+        </p>
+        <div class="btn-bar">
+          <button class="primary" id="saveBarBtn2">Save to the website</button>
+          <button id="downloadBtn">Download manifest.json</button>
+          <button id="copyBtn">Copy JSON</button>
+        </div>
+        <div class="status" id="publishStatus"></div>
+        <details class="help" id="saveHelp">
+          <summary>What “Save to the website” does</summary>
+          <ol class="hint-list">
+            <li>Copies the updated gallery list to your clipboard.</li>
+            <li>Opens the GitHub file editor for this section’s <code>manifest.json</code>.</li>
+            <li>In that tab: select all, paste, click <strong>Commit changes</strong> (leave it on the <code>main</code> branch).</li>
+            <li>Wait for Pages to rebuild, then hard-refresh the gallery (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).</li>
+          </ol>
+          <p class="hint">If you paste a GitHub token with <code>repo</code> scope in Settings, Save will commit for you instead of opening the editor.</p>
+        </details>
+      </div>
+
+      <details class="panel panel-details">
+        <summary>Upload a new file from this computer</summary>
+        <p class="hint">Use this only if the file is <em>not</em> already in the bucket. You will still need to save the list, and to put the file in the bucket (GCS token or <code>gcloud storage cp</code>).</p>
+        <div class="dropzone" id="dropzone" role="button" tabindex="0">
+          <strong>Drop files here or click to choose</strong>
+          Prefer JPEG, PNG, or WebP. Browsers cannot display HEIC.
+          <input id="fileInput" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.fits,.csv,.json,.txt" />
+        </div>
+        <div class="status" id="uploadStatus"></div>
+        <div class="btn-bar" style="margin-top:0.6rem;">
+          <button id="uploadGcsBtn">Upload pending files to GCS</button>
+          <button id="copyGsutilBtn">Copy gcloud copy commands</button>
+        </div>
+        <textarea id="gsutilOut" rows="3" readonly spellcheck="false" placeholder="Pending uploads appear here as gcloud storage cp commands."></textarea>
+      </details>
+
+      <details class="panel panel-details">
+        <summary>Settings and advanced JSON</summary>
+        <div class="row">
+          <div class="field">
+            <label for="gcsToken">GCS access token (only needed to upload new binaries)</label>
+            <input type="password" id="gcsToken" autocomplete="off" placeholder="gcloud auth print-access-token" />
+          </div>
+          <div class="field">
+            <label for="githubToken">GitHub token (optional — lets Save commit without the editor)</label>
+            <input type="password" id="githubToken" autocomplete="off" placeholder="repo scope personal access token" />
+          </div>
+        </div>
+        <p class="hint">
+          Tokens stay in this browser tab only.
+          <a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=Whitegate%20media%20admin" target="_blank" rel="noopener">Create a GitHub token</a>
+          with the <code>repo</code> scope if you want one-click save.
+        </p>
         <div class="row">
           <div class="field" style="flex:2 1 300px;">
-            <label for="importUrl">Load an existing manifest</label>
+            <label for="importUrl">Reload list from a URL</label>
             <div class="btn-bar">
               <input type="text" id="importUrl" placeholder="astrophoto/manifest.json" />
               <button id="importUrlBtn">Load</button>
             </div>
           </div>
           <div class="field">
-            <label for="importFile">…or from a file</label>
+            <label for="importFile">…or from a downloaded JSON file</label>
             <input type="file" id="importFile" accept="application/json,.json" />
           </div>
         </div>
         <div class="status" id="importStatus"></div>
-
         <label style="margin-top:0.5rem;">manifest.json preview</label>
         <textarea class="output" id="output" readonly spellcheck="false"></textarea>
-        <div class="btn-bar" style="margin-top:0.6rem;">
-          <button class="primary" id="downloadBtn">Download manifest.json</button>
-          <button id="copyBtn">Copy JSON</button>
-          <button id="uploadGcsBtn">Upload pending files to GCS</button>
-          <button id="commitBtn">Commit manifest to GitHub</button>
-          <button id="copyGsutilBtn">Copy gsutil commands</button>
-          <span class="muted-inline" id="pendingCount"></span>
-        </div>
-        <div class="status" id="publishStatus"></div>
-        <label style="margin-top:0.6rem;">gsutil fallback</label>
-        <textarea id="gsutilOut" rows="3" readonly spellcheck="false" placeholder="Pending uploads appear here as gcloud storage cp commands."></textarea>
-      </div>
+      </details>
     </div>
 
     <script src="assets/js/exif-reader.js"></script>
