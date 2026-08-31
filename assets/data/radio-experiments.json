@@ -1,0 +1,285 @@
+{
+  "title": "Satellite and space RF observations",
+  "experiments": [
+    {
+      "id": 1,
+      "title": "Seeing Your First Satellite Signal",
+      "description": "Receive a known satellite signal and watch it move across the SDR waterfall during a pass.",
+      "level": 1,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 2,
+      "title": "Measuring Satellite Doppler Shift",
+      "description": "Record the frequency change as a satellite approaches, passes overhead and moves away.",
+      "level": 1,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 3,
+      "title": "Receiving a Radiosonde",
+      "description": "Decode weather-balloon telemetry including position, altitude and atmospheric data.",
+      "level": 1,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 4,
+      "title": "Tracking a Radiosonde to Landing",
+      "description": "Follow a weather balloon through ascent, burst and descent and predict its landing point.",
+      "level": 1,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 5,
+      "title": "Receiving CubeSat Telemetry",
+      "description": "Receive and decode telemetry from amateur, university and experimental CubeSats.",
+      "level": 1,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 6,
+      "title": "Receiving Satellite SSTV Images",
+      "description": "Receive slow-scan television images transmitted from suitable spacecraft or amateur satellite events.",
+      "level": 1,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 7,
+      "title": "Receiving HRPT Weather Satellites",
+      "description": "Receive high-resolution weather data directly from polar-orbiting satellites using the Discovery Dish.",
+      "level": 2,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 8,
+      "title": "Creating Weather Images From Raw Satellite Data",
+      "description": "Decode HRPT data into visible, infrared and other weather imagery.",
+      "level": 2,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 9,
+      "title": "Tracking a Weather Satellite With the Dish",
+      "description": "Automatically move the dish in azimuth and elevation to follow a satellite pass.",
+      "level": 2,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 10,
+      "title": "Building a Daily Weather Satellite Archive",
+      "description": "Automatically receive, decode and store images from useful satellite passes.",
+      "level": 2,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 11,
+      "title": "Comparing Weather Images Over Time",
+      "description": "Compare consecutive satellite passes to observe changing cloud systems and weather fronts.",
+      "level": 2,
+      "difficulty": "Beginner"
+    },
+    {
+      "id": 12,
+      "title": "Measuring the Discovery Dish Beamwidth",
+      "description": "Sweep a strong source through the dish beam and plot received power against pointing angle.",
+      "level": 2,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 13,
+      "title": "Identifying an Unknown Satellite by Doppler",
+      "description": "Match an unknown signal's Doppler curve and pass time against predicted spacecraft.",
+      "level": 3,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 14,
+      "title": "Building a Satellite RF Logbook",
+      "description": "Automatically record frequency, SNR, bandwidth, Doppler, time, satellite and pointing information.",
+      "level": 3,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 15,
+      "title": "Hunting Transit 5B-5",
+      "description": "Attempt to receive signals associated with the 1964 Transit navigation satellite.",
+      "level": 3,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 16,
+      "title": "Hunting Zombie Satellites",
+      "description": "Search for old or abandoned spacecraft that continue or unexpectedly resume transmitting.",
+      "level": 3,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 17,
+      "title": "Searching for LES-1",
+      "description": "Attempt to detect the famous 1965 Lincoln Experimental Satellite.",
+      "level": 3,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 18,
+      "title": "Building an Ancient Satellite Catalogue",
+      "description": "Catalogue historic spacecraft, frequencies, orbital information and your own reception attempts.",
+      "level": 3,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 19,
+      "title": "Passive Satellite Spectrum Survey",
+      "description": "Survey satellite bands and document what RF activity appears in each part of the spectrum.",
+      "level": 3,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 20,
+      "title": "Finding Satellites Without Knowing What to Look For",
+      "description": "Record wide sections of spectrum and identify unknown moving signals afterwards.",
+      "level": 3,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 21,
+      "title": "Turning the Discovery Dish Into a Ku-Band Receiver",
+      "description": "Add an LNB so the dish can receive signals around 10–12 GHz and downconvert them for an SDR.",
+      "level": 4,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 22,
+      "title": "Receiving QO-100",
+      "description": "Receive the geostationary amateur satellite QO-100 using the dish and Ku-band LNB.",
+      "level": 4,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 23,
+      "title": "Exploring the QO-100 Transponder",
+      "description": "Observe SSB, CW, digital modes and beacon activity across the QO-100 transponder.",
+      "level": 4,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 24,
+      "title": "Receiving a Geostationary Satellite Beacon",
+      "description": "Detect and monitor a stable RF beacon from a geostationary spacecraft.",
+      "level": 4,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 25,
+      "title": "Finding Geostationary Satellites With an SDR",
+      "description": "Scan the geostationary arc and identify satellites from their beacons and transponders.",
+      "level": 4,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 26,
+      "title": "Measuring Geostationary Satellite Drift",
+      "description": "Monitor subtle changes in beacon frequency or apparent position over long periods.",
+      "level": 4,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 27,
+      "title": "Observing Inclined-Orbit Satellites",
+      "description": "Observe geostationary spacecraft whose orbital inclination causes predictable daily movement.",
+      "level": 4,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 28,
+      "title": "Exploring Satellite TV Signals With an SDR",
+      "description": "Examine DVB-S/S2 carriers, bandwidth and transponder structure using the dish and LNB.",
+      "level": 4,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 29,
+      "title": "Watching Iridium Satellites Cross the Sky",
+      "description": "Observe Iridium satellite signal strength and Doppler as individual spacecraft pass.",
+      "level": 5,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 30,
+      "title": "Mapping Iridium Doppler Curves",
+      "description": "Record multiple passes and compare measured Doppler against orbital predictions.",
+      "level": 5,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 31,
+      "title": "Receiving GPS and Galileo With an SDR",
+      "description": "Capture raw GNSS signals rather than relying on a conventional GPS receiver.",
+      "level": 5,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 32,
+      "title": "Building a Software GPS Receiver",
+      "description": "Use raw IQ data to acquire GNSS satellites and calculate a navigation solution in software.",
+      "level": 5,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 33,
+      "title": "Measuring GNSS Satellite Doppler",
+      "description": "Measure and compare GNSS carrier Doppler against predicted satellite motion.",
+      "level": 5,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 34,
+      "title": "Receiving Reflected GPS Signals From the Sea",
+      "description": "Attempt to detect GNSS signals reflected from the sea surface.",
+      "level": 5,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 35,
+      "title": "GNSS Reflectometry and Sea State",
+      "description": "Compare direct and reflected GNSS signals to investigate changes caused by sea conditions.",
+      "level": 5,
+      "difficulty": "Expert"
+    },
+    {
+      "id": 36,
+      "title": "Aircraft Scatter",
+      "description": "Detect changes in distant radio signals caused by reflections from passing aircraft.",
+      "level": 5,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 37,
+      "title": "Meteor Scatter",
+      "description": "Detect brief radio reflections from ionised meteor trails.",
+      "level": 5,
+      "difficulty": "Intermediate"
+    },
+    {
+      "id": 38,
+      "title": "Observing Broadband LEO Constellations",
+      "description": "Measure spectrum occupancy, bandwidth, Doppler and pass behaviour of modern LEO constellations.",
+      "level": 5,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 39,
+      "title": "Mapping the RF Sky",
+      "description": "Automatically point the dish around the sky and map RF power and spectrum occupancy by direction.",
+      "level": 5,
+      "difficulty": "Advanced"
+    },
+    {
+      "id": 40,
+      "title": "Building an Automated Space RF Observatory",
+      "description": "Combine dish tracking, SDRs, antennas, satellite predictions, recording, decoding and a database into an unattended station.",
+      "level": 5,
+      "difficulty": "Expert"
+    }
+  ]
+}

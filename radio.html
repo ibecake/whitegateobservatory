@@ -6,6 +6,7 @@
     <title>Radio - Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
     <link rel="stylesheet" href="assets/css/gallery.css" />
+    <link rel="stylesheet" href="assets/css/experiments.css" />
     <style>
       .top-menu {
         background: #1a1a1a;
@@ -96,7 +97,24 @@
     </div>
     <div class="content">
       <h1>Radio</h1>
-      <p>HF and VHF radio operations at Whitegate Observatory, including amateur radio contacts and propagation monitoring.</p>
+      <p>HF and VHF radio operations at Whitegate Observatory, including amateur radio contacts, satellite reception, and propagation monitoring.</p>
+
+      <section class="experiments" aria-labelledby="experimentsTitle">
+        <h2 id="experimentsTitle">Satellite and space RF observations</h2>
+        <p class="experiments-intro">
+          A planned programme of satellite and space-radio work with SDRs and the Discovery Dish,
+          from first waterfall detections through weather-satellite imagery, geostationary Ku-band,
+          GNSS, and an unattended observatory. Difficulty is a planning guide, not a limit.
+        </p>
+        <div class="difficulty-legend" role="toolbar" aria-label="Filter observations by difficulty">
+          <button type="button" class="active" data-filter="all">All</button>
+          <button type="button" data-filter="beginner">Beginner</button>
+          <button type="button" data-filter="intermediate">Intermediate</button>
+          <button type="button" data-filter="advanced">Advanced</button>
+          <button type="button" data-filter="expert">Expert</button>
+        </div>
+        <div class="experiment-list" id="experimentList"></div>
+      </section>
 
       <section class="gallery-section" aria-labelledby="galleryTitle">
         <div class="gallery-header">
@@ -140,7 +158,13 @@
     </div>
 
     <script src="assets/js/gallery.js"></script>
+    <script src="assets/js/experiments.js"></script>
     <script>
+      WhitegateExperiments.mount({
+        src: "assets/data/radio-experiments.json",
+        listEl: document.getElementById("experimentList"),
+        buttons: document.querySelectorAll(".difficulty-legend button")
+      });
       WhitegateGallery.mount({
         statusEl: document.getElementById("galleryStatus"),
         gridEl: document.getElementById("galleryGrid"),

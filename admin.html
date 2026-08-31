@@ -29,17 +29,20 @@
     <div class="admin-wrap">
       <h1>Media Admin</h1>
       <p class="lead">
-        The gallery pages only show files listed here. Files can already be in the Google Cloud
-        bucket &mdash; you still need to <strong>Add</strong> them, then <strong>Save to the website</strong>.
+        This page loads the <strong>latest gallery list from GitHub</strong>. Add or remove files here,
+        keep tags and targets, then <strong>Save to the website</strong>. A file in the Cloud bucket is
+        not on the public gallery until it appears in this list and you save.
       </p>
+      <div class="status" id="loadBanner"></div>
 
       <div class="howto">
-        <h2>Add a file that is already in the bucket</h2>
+        <h2>How publishing works</h2>
         <ol>
-          <li>Choose the section below (Astrophotography, Radio Astronomy, or Radio).</li>
-          <li>Wait for the bucket list. Click <strong>Add to page</strong> on each file you want. Use JPEG/PNG/WebP &mdash; HEIC will not show in a browser.</li>
-          <li>Check the new card: title, date, tags.</li>
-          <li>Click <strong>Save to the website</strong> (top right). The list is copied and GitHub opens. Paste over the file, commit to <code>main</code>, wait a minute, then hard-refresh the gallery.</li>
+          <li>This page opens on the files already listed on the live gallery (from GitHub <code>main</code>).</li>
+          <li>Bucket files that are not listed yet show <strong>Add to page</strong>. Cards already on the gallery can be removed.</li>
+          <li>Tags and targets stay in the library even if no photo currently uses them, until you delete them here.</li>
+          <li>Putting a file in the bucket only stores the binary. Listing it on the gallery needs <strong>Save to the website</strong>.</li>
+          <li>After a successful save you will see a confirmation with the item count. Wait about a minute, then hard-refresh the gallery.</li>
         </ol>
       </div>
 
@@ -58,6 +61,7 @@
         </p>
         <div class="btn-bar">
           <button class="primary" id="loadFilesBtn">Reload bucket list</button>
+          <button id="reloadGithubBtn">Reload latest gallery from GitHub</button>
           <button id="addAllBtn">Add all new JPEG/PNG/WebP</button>
           <label class="check-inline"><input type="checkbox" id="onlyNewCheck" checked /> Only files not yet on the page</label>
           <label class="check-inline"><input type="checkbox" id="hideHeicCheck" checked /> Hide HEIC</label>
@@ -76,17 +80,28 @@
       </div>
 
       <div class="panel">
-        <h2>3. On the page <span class="pill-count" id="entryCount">0</span></h2>
+        <h2>3. On the gallery <span class="pill-count" id="entryCount">0</span></h2>
+        <p class="hint" style="margin-top:0;">
+          These cards are the gallery list. Add files from the bucket above, or remove a card to drop it
+          from the site (the file stays in the bucket). Tags and targets below are saved with the list.
+        </p>
         <div class="row">
           <div class="field">
             <label for="filterText">Search</label>
-            <input type="search" id="filterText" placeholder="title, file, tag…" />
+            <input type="search" id="filterText" placeholder="title, file, tag, target…" />
           </div>
           <div class="field">
             <label for="newTag">Create a tag</label>
             <div class="btn-bar">
               <input type="text" id="newTag" placeholder="aurora, moon, 1420mhz…" />
               <button id="addTagBtn">Create</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="newTarget">Create a target</label>
+            <div class="btn-bar">
+              <input type="text" id="newTarget" placeholder="Sun, ISS, Aurora Borealis…" list="targetsuggest" />
+              <button id="addTargetBtn">Create</button>
             </div>
           </div>
           <div class="field">
@@ -97,7 +112,10 @@
             </div>
           </div>
         </div>
+        <p class="library-label">Tag library (kept even if unused)</p>
         <div class="tag-library" id="tagLibrary"></div>
+        <p class="library-label">Target library (kept even if unused)</p>
+        <div class="tag-library" id="targetLibrary"></div>
         <div class="status" id="bulkStatus"></div>
         <div id="entries"></div>
         <div class="btn-bar" style="margin-top:0.5rem;">
@@ -110,7 +128,8 @@
         <h2>4. Save to the website</h2>
         <p class="hint" style="margin-top:0;">
           This updates <code id="savePathLabel">astrophoto/manifest.json</code> in GitHub.
-          After it is committed to <code>main</code>, GitHub Pages republishes in about a minute.
+          Save <strong>merges</strong> with the latest GitHub list so existing gallery items are not wiped
+          unless you removed them here. After commit, GitHub Pages republishes in about a minute.
         </p>
         <div class="btn-bar">
           <button class="primary" id="saveBarBtn2">Save to the website</button>
@@ -118,21 +137,21 @@
           <button id="copyBtn">Copy JSON</button>
         </div>
         <div class="status" id="publishStatus"></div>
+        <div class="status" id="saveConfirm"></div>
         <details class="help" id="saveHelp">
           <summary>What “Save to the website” does</summary>
           <ol class="hint-list">
-            <li>Copies the updated gallery list to your clipboard.</li>
-            <li>Opens the GitHub file editor for this section’s <code>manifest.json</code>.</li>
-            <li>In that tab: select all, paste, click <strong>Commit changes</strong> (leave it on the <code>main</code> branch).</li>
+            <li>Fetches the latest GitHub list and merges it with this page (your adds, edits, and removals win).</li>
+            <li>If a GitHub token with <code>repo</code> scope is in Settings, Save commits for you and shows a confirmation.</li>
+            <li>Otherwise it copies the merged JSON and opens the GitHub editor: select all, paste, commit on <code>main</code>.</li>
             <li>Wait for Pages to rebuild, then hard-refresh the gallery (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>).</li>
           </ol>
-          <p class="hint">If you paste a GitHub token with <code>repo</code> scope in Settings, Save will commit for you instead of opening the editor.</p>
         </details>
       </div>
 
       <details class="panel panel-details">
         <summary>Upload a new file from this computer</summary>
-        <p class="hint">Use this only if the file is <em>not</em> already in the bucket. You will still need to save the list, and to put the file in the bucket (GCS token or <code>gcloud storage cp</code>).</p>
+        <p class="hint">Use this only if the file is <em>not</em> already in the bucket. Upload stores the file in Cloud Storage. You still need <strong>Save to the website</strong> before it appears on the gallery. You will get a confirmation for each step.</p>
         <div class="dropzone" id="dropzone" role="button" tabindex="0">
           <strong>Drop files here or click to choose</strong>
           Prefer JPEG, PNG, or WebP. Browsers cannot display HEIC.

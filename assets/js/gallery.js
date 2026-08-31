@@ -46,20 +46,29 @@
   function normalize(data) {
     var items;
     var tags = [];
+    var targets = [];
     if (Array.isArray(data)) {
       items = data;
     } else if (data && Array.isArray(data.items)) {
       items = data.items;
       tags = Array.isArray(data.tags) ? data.tags.slice() : [];
+      targets = Array.isArray(data.targets) ? data.targets.slice() : [];
     } else {
       return null;
     }
-    var seen = {};
-    tags.forEach(function (t) { if (t) seen[t] = true; });
+    var seenTags = {};
+    var seenTargets = {};
+    tags.forEach(function (t) { if (t) seenTags[t] = true; });
+    targets.forEach(function (t) { if (t) seenTargets[t] = true; });
     items.forEach(function (item) {
-      (item.tags || []).forEach(function (t) { if (t) seen[t] = true; });
+      (item.tags || []).forEach(function (t) { if (t) seenTags[t] = true; });
+      if (item.target) seenTargets[item.target] = true;
     });
-    return { items: items, tags: Object.keys(seen).sort() };
+    return {
+      items: items,
+      tags: Object.keys(seenTags).sort(),
+      targets: Object.keys(seenTargets).sort()
+    };
   }
 
   function fillSelect(select, values, allLabel) {
@@ -103,6 +112,7 @@
     var mediaBase = opts.mediaBase || "";
     var emptyLabel = opts.emptyLabel || "No media listed in this manifest yet.";
     var items = [];
+    var catalog = { tags: [], targets: [] };
 
     function updateStatus(message, isError) {
       if (!statusEl) return;
@@ -238,11 +248,13 @@
     }
 
     function populateFilters() {
-      var targets = Array.from(new Set(items.map(function (item) { return safeText(item.target); }))).sort();
+      var targets = Array.from(new Set(catalog.targets.concat(items.map(function (item) {
+        return item.target ? String(item.target) : "";
+      }).filter(Boolean)))).sort();
       var years = Array.from(new Set(items.map(function (item) { return yearFromDate(item.date); }))).sort().reverse();
-      var tags = Array.from(new Set(items.reduce(function (acc, item) {
+      var tags = Array.from(new Set(catalog.tags.concat(items.reduce(function (acc, item) {
         return acc.concat(item.tags || []);
-      }, []))).sort();
+      }, [])))).sort();
       fillSelect(filterTarget, targets, "All targets");
       fillSelect(filterYear, years, "All years");
       fillSelect(filterTag, tags, "All tags");
@@ -280,6 +292,8 @@
         return;
       }
       items = normalized.items;
+      catalog.tags = normalized.tags || [];
+      catalog.targets = normalized.targets || [];
       if (!items.length) {
         updateStatus("Gallery manifest loaded from " + sourceUsed + ", but " + emptyLabel.toLowerCase(), false);
         return;

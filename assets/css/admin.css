@@ -264,6 +264,27 @@ code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospac
 .fileitem .size { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
 .fileitem.added { opacity: 0.5; }
 
+.library-label {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge.new { color: #fde68a; border-color: #7c5b12; background: #2a2110; }
+.badge.listed { color: #bbf7d0; border-color: #14532d; background: #0f2417; }
+.confirm-banner {
+  display: none;
+  margin: 0 0 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #14532d;
+  background: #0f2417;
+  color: #bbf7d0;
+  line-height: 1.55;
+}
+.confirm-banner.show { display: block; }
+.confirm-banner a { color: #86efac; }
 .tag-library { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
 .tag-library .chip, .chip {
   display: inline-flex;

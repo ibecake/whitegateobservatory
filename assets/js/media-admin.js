@@ -49,7 +49,9 @@
     collectionKey: "astrophotography",
     entries: [],
     tagCatalog: [],
+    targetCatalog: [],
     knownTags: {},
+    knownTargets: {},
     filterTag: "",
     filterText: "",
     gcsToken: sessionStorage.getItem("wg_gcs_token") || "",
@@ -57,7 +59,10 @@
     bucketItems: [],
     dirty: false,
     hideHeic: true,
-    onlyNew: true
+    onlyNew: true,
+    removedFiles: {},
+    loadedItemFiles: {},
+    loadSource: ""
   };
 
   var el = {};
@@ -153,6 +158,49 @@
     });
   }
 
+  function registerTargets(targets) {
+    (targets || []).forEach(function (t) {
+      t = String(t || "").trim();
+      if (!t) return;
+      state.knownTargets[t] = true;
+      if (state.targetCatalog.indexOf(t) === -1) state.targetCatalog.push(t);
+    });
+  }
+
+  function entryKey(entry) {
+    return (entry && (entry.file || entry.thumb)) || "";
+  }
+
+  function recordLoadedFiles() {
+    state.loadedItemFiles = {};
+    state.removedFiles = {};
+    state.entries.forEach(function (e) {
+      var k = entryKey(e);
+      if (k) state.loadedItemFiles[k] = true;
+    });
+  }
+
+  function isListedOnGithub(entry) {
+    var k = entryKey(entry);
+    return !!(k && state.loadedItemFiles[k]);
+  }
+
+  function resetCollectionState() {
+    state.entries.forEach(function (e) { if (e.objectUrl) URL.revokeObjectURL(e.objectUrl); });
+    state.entries = [];
+    state.tagCatalog = [];
+    state.targetCatalog = [];
+    state.knownTags = {};
+    state.knownTargets = {};
+    state.filterTag = "";
+    state.filterText = "";
+    state.bucketItems = [];
+    state.dirty = false;
+    state.removedFiles = {};
+    state.loadedItemFiles = {};
+    state.loadSource = "";
+  }
+
   function markDirty() {
     state.dirty = true;
     updateOutput();
@@ -160,8 +208,11 @@
 
   function updateSaveBar() {
     if (!el.saveBarStatus) return;
+    var listed = state.entries.filter(isListedOnGithub).length;
+    var neu = state.entries.length - listed;
     if (state.dirty) {
-      el.saveBarStatus.textContent = "Unsaved changes — click Save to the website";
+      el.saveBarStatus.textContent = "Unsaved — " + state.entries.length + " item(s) in this list" +
+        (neu ? " (" + neu + " not on the live gallery yet)" : "") + ". Click Save to the website.";
       el.saveBarStatus.className = "save-bar-status dirty";
     } else {
       el.saveBarStatus.textContent = state.entries.length + " item(s) on this gallery. No unsaved changes.";
@@ -212,21 +263,19 @@
     if (key === state.collectionKey) return;
     if (state.dirty && !confirm("Discard unsaved edits for this section?")) return;
     state.collectionKey = key;
-    state.entries.forEach(function (e) { if (e.objectUrl) URL.revokeObjectURL(e.objectUrl); });
-    state.entries = [];
-    state.tagCatalog = [];
-    state.knownTags = {};
-    state.filterTag = "";
-    state.filterText = "";
-    state.bucketItems = [];
-    state.dirty = false;
+    resetCollectionState();
     el.fileList.style.display = "none";
     el.fileList.innerHTML = "";
     el.fileCount.textContent = "";
     clearStatus(el.listStatus);
+    if (el.saveConfirm) {
+      el.saveConfirm.className = "status";
+      el.saveConfirm.innerHTML = "";
+    }
     renderSectionTabs();
     refreshBase();
     renderTagLibrary();
+    renderTargetLibrary();
     renderEntries();
     updateOutput();
     loadManifestFromRepo().then(function () { listObjects(); });
@@ -252,6 +301,7 @@
   // ---- tags ----
   function renderTagLibrary() {
     var box = el.tagLibrary;
+    if (!box) return;
     box.innerHTML = "";
     if (!state.tagCatalog.length) {
       var empty = document.createElement("span");
@@ -293,6 +343,41 @@
       box.appendChild(chip);
     });
     refreshTagSuggestions();
+    refreshTargetSuggestions();
+  }
+
+  function renderTargetLibrary() {
+    var box = el.targetLibrary;
+    if (!box) return;
+    box.innerHTML = "";
+    if (!state.targetCatalog.length) {
+      var empty = document.createElement("span");
+      empty.className = "muted-inline";
+      empty.textContent = "No targets yet. Create one or fill Target on a card.";
+      box.appendChild(empty);
+    }
+    state.targetCatalog.forEach(function (t) {
+      var count = state.entries.filter(function (e) { return e.target === t; }).length;
+      var chip = document.createElement("span");
+      chip.className = "chip";
+      chip.appendChild(document.createTextNode(t + " (" + count + ")"));
+      chip.title = "Target stays in the library until you remove it";
+      var x = document.createElement("button");
+      x.type = "button";
+      x.textContent = "×";
+      x.title = "Remove target from library (does not delete files)";
+      x.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (!confirm("Remove target “" + t + "” from the library? Cards using it will keep the text until you change them.")) return;
+        state.targetCatalog = state.targetCatalog.filter(function (x) { return x !== t; });
+        delete state.knownTargets[t];
+        renderTargetLibrary();
+        markDirty();
+      });
+      chip.appendChild(x);
+      box.appendChild(chip);
+    });
+    refreshTargetSuggestions();
   }
 
   function addCatalogTag(raw) {
@@ -302,6 +387,16 @@
       registerTags([t]);
     });
     renderTagLibrary();
+    markDirty();
+  }
+
+  function addCatalogTarget(raw) {
+    raw.split(",").forEach(function (part) {
+      var t = part.trim();
+      if (!t) return;
+      registerTargets([t]);
+    });
+    renderTargetLibrary();
     markDirty();
   }
 
@@ -391,13 +486,25 @@
         '<span class="size">' + humanSize(it.size) + "</span>";
       var btn = document.createElement("button");
       btn.className = "small primary";
-      btn.textContent = isAdded(it.name) ? "Already on page" : "Add to page";
-      btn.disabled = isAdded(it.name);
-      btn.addEventListener("click", function () {
-        addFromBucketObject(it);
-        renderFileList();
-      });
-      div.appendChild(btn);
+      if (isAdded(it.name)) {
+        btn.textContent = "On gallery";
+        btn.disabled = true;
+        div.appendChild(btn);
+        var rm = document.createElement("button");
+        rm.className = "small danger";
+        rm.textContent = "Remove from gallery";
+        rm.addEventListener("click", function () {
+          removeByFilename(it.name);
+        });
+        div.appendChild(rm);
+      } else {
+        btn.textContent = "Add to page";
+        btn.addEventListener("click", function () {
+          addFromBucketObject(it);
+          renderFileList();
+        });
+        div.appendChild(btn);
+      }
       if (heic) {
         var warn = document.createElement("span");
         warn.className = "badge warn";
@@ -407,6 +514,25 @@
       }
       el.fileList.appendChild(div);
     });
+  }
+
+  function removeByFilename(name) {
+    var index = -1;
+    state.entries.forEach(function (e, i) {
+      if (e.file === name || e.thumb === name) index = i;
+    });
+    if (index < 0) return;
+    var entry = state.entries[index];
+    if (!confirm("Remove “" + (entry.file || name) + "” from the gallery list? The file stays in the bucket. Save to publish this removal.")) return;
+    if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+    var k = entryKey(entry);
+    if (k) state.removedFiles[k] = true;
+    state.entries.splice(index, 1);
+    renderTagLibrary();
+    renderTargetLibrary();
+    renderEntries();
+    renderFileList();
+    markDirty();
   }
 
   function addFromBucketObject(it) {
@@ -437,11 +563,13 @@
     if (meta.tags) tags = String(meta.tags).split(",").map(function (t) { return t.trim(); }).filter(Boolean);
     tags = tags.concat(window.MediaExif ? window.MediaExif.suggestFromFilename(it.name) : []);
     registerTags(tags);
+    if (meta.target) registerTargets([meta.target]);
     addEntry({
       file: it.name,
       thumb: type === "image" && !isHeicName(it.name) ? it.name : "",
       type: type,
       date: date,
+      target: meta.target || "",
       title: meta.title || it.name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " "),
       camera: meta.camera,
       tags: tags,
@@ -463,7 +591,7 @@
     });
     renderFileList();
     if (!added) setStatus(el.listStatus, "No new JPEG/PNG/WebP files to add.", "warn");
-    else setStatus(el.listStatus, "Added " + added + " new web image(s). Check the cards below, then click Save to the website.", "ok");
+    else setStatus(el.listStatus, "Added " + added + " new web image(s) to this list. They are not on the public gallery until you Save to the website.", "ok");
   }
 
   function tryReadRemoteExif(objectName, type) {
@@ -494,7 +622,7 @@
       chain = chain.then(function () { return ingestLocalFile(file); });
     });
     chain.then(function () {
-      setStatus(el.uploadStatus, "Added " + files.length + " file(s). Review tags and details, then publish.", "ok");
+      setStatus(el.uploadStatus, "Prepared " + files.length + " file(s) on this list. Next: upload to the bucket if needed, then Save to the website to list them on the gallery.", "ok");
     });
   }
 
@@ -568,8 +696,12 @@
     if (seed && seed.camera && !e.details.some(function (d) { return d.key === "camera"; })) {
       e.details.push({ key: "camera", value: String(seed.camera) });
     }
+    if (seed && seed.target) registerTargets([seed.target]);
     state.entries.push(e);
+    var k = entryKey(e);
+    if (k && state.removedFiles[k]) delete state.removedFiles[k];
     renderTagLibrary();
+    renderTargetLibrary();
     renderEntries();
     markDirty();
   }
@@ -591,7 +723,7 @@
     if (!state.entries.length) {
       var empty = document.createElement("p");
       empty.className = "hint";
-      empty.textContent = "No entries yet. Upload files, load the bucket, or import the existing manifest.";
+      empty.textContent = "No entries yet. Loading the latest GitHub gallery, or add files from the bucket.";
       el.entries.appendChild(empty);
       return;
     }
@@ -627,8 +759,18 @@
     if (entry.pendingUpload) {
       var pend = document.createElement("span");
       pend.className = "badge pending";
-      pend.textContent = "not uploaded";
+      pend.textContent = "in this list — not in the bucket yet";
       head.appendChild(pend);
+    } else if (!isListedOnGithub(entry)) {
+      var neu = document.createElement("span");
+      neu.className = "badge new";
+      neu.textContent = "new — save to publish";
+      head.appendChild(neu);
+    } else {
+      var listed = document.createElement("span");
+      listed.className = "badge listed";
+      listed.textContent = "listed on gallery";
+      head.appendChild(listed);
     }
     if (entry.exif && entry.exif.source) {
       var ex = document.createElement("span");
@@ -651,11 +793,16 @@
       renderEntries();
       markDirty();
     });
-    var del = mkBtn("Remove", "small danger", function () {
+    var del = mkBtn("Remove from gallery", "small danger", function () {
+      if (!confirm("Remove “" + (entry.file || entry.title || "this item") + "” from the gallery list? The file stays in the bucket. Save to the website to publish this removal.")) return;
       if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+      var k = entryKey(entry);
+      if (k) state.removedFiles[k] = true;
       state.entries.splice(index, 1);
       renderTagLibrary();
+      renderTargetLibrary();
       renderEntries();
+      renderFileList();
       markDirty();
     });
     up.disabled = index === 0;
@@ -696,7 +843,18 @@
 
     var r2 = document.createElement("div"); r2.className = "row";
     r2.appendChild(fieldDate("Date", entry.date, function (v) { entry.date = v; markDirty(); }));
-    r2.appendChild(fieldText("Target / subject", entry.target, "e.g. Aurora Borealis", function (v) { entry.target = v; markDirty(); }, 2));
+    r2.appendChild(fieldText("Target / subject", entry.target, "e.g. Aurora Borealis", function (v) {
+      entry.target = v;
+      markDirty();
+    }, 2, "targetsuggest", function (v) {
+      var t = String(v || "").trim();
+      entry.target = t;
+      if (t) {
+        registerTargets([t]);
+        renderTargetLibrary();
+      }
+      markDirty();
+    }));
     fields.appendChild(r2);
 
     var r3 = document.createElement("div"); r3.className = "row";
@@ -835,11 +993,14 @@
     var b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label;
     b.addEventListener("click", fn); return b;
   }
-  function fieldText(label, value, placeholder, onInput, grow) {
+  function fieldText(label, value, placeholder, onInput, grow, listId, onChange) {
     var f = document.createElement("div"); f.className = "field"; if (grow) f.style.flex = grow + " 1 200px";
     var l = document.createElement("label"); l.textContent = label; f.appendChild(l);
     var i = document.createElement("input"); i.type = "text"; i.value = value || ""; i.placeholder = placeholder || "";
-    i.addEventListener("input", function () { onInput(i.value); }); f.appendChild(i);
+    if (listId) i.setAttribute("list", listId);
+    i.addEventListener("input", function () { onInput(i.value); });
+    if (onChange) i.addEventListener("change", function () { onChange(i.value); });
+    f.appendChild(i);
     return f;
   }
   function fieldDate(label, value, onInput) {
@@ -860,11 +1021,18 @@
   }
 
   var tagDatalist = document.createElement("datalist"); tagDatalist.id = "tagsuggest"; document.body.appendChild(tagDatalist);
+  var targetDatalist = document.createElement("datalist"); targetDatalist.id = "targetsuggest"; document.body.appendChild(targetDatalist);
   var detailDatalist = document.createElement("datalist"); detailDatalist.id = "detailsuggest"; document.body.appendChild(detailDatalist);
   function refreshTagSuggestions() {
     tagDatalist.innerHTML = "";
     state.tagCatalog.slice().sort().forEach(function (t) {
       var o = document.createElement("option"); o.value = t; tagDatalist.appendChild(o);
+    });
+  }
+  function refreshTargetSuggestions() {
+    targetDatalist.innerHTML = "";
+    state.targetCatalog.slice().sort().forEach(function (t) {
+      var o = document.createElement("option"); o.value = t; targetDatalist.appendChild(o);
     });
   }
   (function seedDetailKeys() {
@@ -916,6 +1084,7 @@
       collection: state.collectionKey,
       updated: new Date().toISOString(),
       tags: state.tagCatalog.slice(),
+      targets: state.targetCatalog.slice(),
       items: items
     };
   }
@@ -925,75 +1094,198 @@
     updateSaveBar();
   }
 
-  function importEntries(data) {
+  function entryFromObject(o) {
+    o = o || {};
+    var detailPairs = [];
+    if (o.details && typeof o.details === "object" && !Array.isArray(o.details)) {
+      Object.keys(o.details).forEach(function (k) { detailPairs.push({ key: k, value: String(o.details[k]) }); });
+    } else if (Array.isArray(o.details)) {
+      o.details.forEach(function (d) {
+        if (d && d.key) detailPairs.push({ key: d.key, value: String(d.value == null ? "" : d.value) });
+      });
+    }
+    ["camera", "telescope", "integration", "filter", "exposure", "frequency", "mode", "duration"].forEach(function (k) {
+      if (o[k] != null && !detailPairs.some(function (d) { return d.key === k; })) {
+        detailPairs.push({ key: k, value: String(o[k]) });
+      }
+    });
+    var file = o.file || o.full || o.url || o.thumb || "";
+    var base = baseUrl();
+    if (base && file.indexOf(base) === 0) file = file.slice(base.length);
+    var thumb = o.thumb || "";
+    if (base && thumb.indexOf(base) === 0) thumb = thumb.slice(base.length);
+    registerTags(o.tags);
+    if (o.target) registerTargets([o.target]);
+    return newEntry({
+      type: o.type || typeFromContentType("", file),
+      title: o.title || "",
+      date: o.date || "",
+      target: o.target || "",
+      tags: o.tags || [],
+      description: o.description || "",
+      file: file,
+      thumb: thumb === file ? "" : thumb,
+      details: detailPairs,
+      fileMeta: o.fileMeta || null
+    });
+  }
+
+  function importEntries(data, opts) {
+    opts = opts || {};
     var tags = [];
+    var targets = [];
     var arr;
     if (Array.isArray(data)) {
       arr = data;
     } else if (data && Array.isArray(data.items)) {
       arr = data.items;
       tags = data.tags || [];
+      targets = data.targets || [];
     } else {
       throw new Error("Manifest must be a JSON array or { items: [] }.");
     }
     state.tagCatalog = [];
+    state.targetCatalog = [];
     state.knownTags = {};
+    state.knownTargets = {};
     registerTags(tags);
-    state.entries = arr.map(function (o) {
-      o = o || {};
-      var detailPairs = [];
-      if (o.details && typeof o.details === "object") {
-        Object.keys(o.details).forEach(function (k) { detailPairs.push({ key: k, value: String(o.details[k]) }); });
-      }
-      ["camera", "telescope", "integration", "filter", "exposure", "frequency", "mode", "duration"].forEach(function (k) {
-        if (o[k] != null && !detailPairs.some(function (d) { return d.key === k; })) {
-          detailPairs.push({ key: k, value: String(o[k]) });
-        }
-      });
-      var file = o.file || o.full || o.url || o.thumb || "";
-      var base = baseUrl();
-      if (base && file.indexOf(base) === 0) file = file.slice(base.length);
-      var thumb = o.thumb || "";
-      if (base && thumb.indexOf(base) === 0) thumb = thumb.slice(base.length);
-      registerTags(o.tags);
-      return newEntry({
-        type: o.type || typeFromContentType("", file),
-        title: o.title || "",
-        date: o.date || "",
-        target: o.target || "",
-        tags: o.tags || [],
-        description: o.description || "",
-        file: file,
-        thumb: thumb === file ? "" : thumb,
-        details: detailPairs,
-        fileMeta: o.fileMeta || null
-      });
-    });
-    state.dirty = false;
+    registerTargets(targets);
+    state.entries = arr.map(entryFromObject);
+    arr.forEach(function (o) { if (o && o.target) registerTargets([o.target]); });
+    if (!opts.keepDirty) state.dirty = false;
+    recordLoadedFiles();
     refreshTagSuggestions();
+    refreshTargetSuggestions();
     renderTagLibrary();
+    renderTargetLibrary();
     renderEntries();
     updateOutput();
   }
 
+  function githubRawUrl() {
+    return "https://raw.githubusercontent.com/" + GITHUB.owner + "/" + GITHUB.repo + "/" +
+      GITHUB.branch + "/" + currentCollection().saveTo + "?t=" + Date.now();
+  }
+
+  function githubApiContentsUrl() {
+    return "https://api.github.com/repos/" + GITHUB.owner + "/" + GITHUB.repo +
+      "/contents/" + currentCollection().saveTo + "?ref=" + GITHUB.branch;
+  }
+
+  function githubHeaders() {
+    var h = { Accept: "application/vnd.github+json" };
+    if (state.githubToken) h.Authorization = "Bearer " + state.githubToken;
+    return h;
+  }
+
+  function decodeGithubContent(json) {
+    if (!json || !json.content) return null;
+    var b64 = String(json.content).replace(/\n/g, "");
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }
+
+  function fetchLatestGithubManifest() {
+    return fetch(githubRawUrl(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("raw HTTP " + r.status);
+      return r.json().then(function (data) {
+        return { data: data, source: "GitHub " + GITHUB.branch, sha: null };
+      });
+    }).catch(function () {
+      return fetch(githubApiContentsUrl(), { cache: "no-store", headers: githubHeaders() }).then(function (r) {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("GitHub HTTP " + r.status);
+        return r.json().then(function (meta) {
+          return { data: decodeGithubContent(meta), source: "GitHub API " + GITHUB.branch, sha: meta.sha || null };
+        });
+      });
+    });
+  }
+
+  function mergeRemoteItems(remote, opts) {
+    opts = opts || {};
+    if (!remote || !Array.isArray(remote.items)) return 0;
+    if (opts.unionCatalogs) {
+      registerTags(remote.tags);
+      registerTargets(remote.targets);
+    }
+    var localKeys = {};
+    state.entries.forEach(function (e) {
+      var k = entryKey(e);
+      if (k) localKeys[k] = true;
+    });
+    var kept = 0;
+    remote.items.forEach(function (item) {
+      var k = (item && (item.file || item.full)) || "";
+      if (!k || localKeys[k] || state.removedFiles[k]) return;
+      state.entries.push(entryFromObject(item));
+      localKeys[k] = true;
+      if (opts.markListed) state.loadedItemFiles[k] = true;
+      kept++;
+    });
+    if (kept || opts.unionCatalogs) {
+      renderTagLibrary();
+      renderTargetLibrary();
+      renderEntries();
+    }
+    return kept;
+  }
+
   function loadManifestFromRepo() {
     var c = currentCollection();
-    var urls = [c.saveTo, "./" + c.saveTo, "dist/" + c.saveTo];
-    setStatus(el.importStatus, "Loading " + escapeHtml(c.saveTo) + "…", "");
-    function tryNext(i) {
-      if (i >= urls.length) {
-        setStatus(el.importStatus, "No existing manifest at " + escapeHtml(c.saveTo) + ". Starting empty — upload files or add entries.", "warn");
+    var localUrls = [c.saveTo, "./" + c.saveTo, "dist/" + c.saveTo];
+    if (el.loadBanner) setStatus(el.loadBanner, "Loading the latest gallery list from GitHub…", "");
+    setStatus(el.importStatus, "Loading latest " + escapeHtml(c.saveTo) + " from GitHub…", "");
+
+    function fromLocal(i) {
+      if (i >= localUrls.length) {
+        state.loadSource = "";
+        setStatus(el.importStatus, "No existing manifest at " + escapeHtml(c.saveTo) + ". Starting empty — add files from the bucket.", "warn");
+        if (el.loadBanner) {
+          setStatus(el.loadBanner, "No gallery list found yet for this section. Add files from the bucket, then Save to the website.", "warn");
+        }
         return Promise.resolve();
       }
-      return fetch(urls[i], { cache: "no-store" }).then(function (r) {
-        if (!r.ok) return tryNext(i + 1);
+      return fetch(localUrls[i], { cache: "no-store" }).then(function (r) {
+        if (!r.ok) return fromLocal(i + 1);
         return r.json().then(function (data) {
           importEntries(data);
-          setStatus(el.importStatus, "Loaded " + state.entries.length + " entr(y/ies) from " + escapeHtml(urls[i]) + ".", "ok");
+          state.loadSource = localUrls[i] + " (may be a cached Pages copy)";
+          var msg = "Loaded " + state.entries.length + " item(s) from " + escapeHtml(localUrls[i]) +
+            ". This may lag behind GitHub — use Reload latest gallery from GitHub if it looks stale.";
+          setStatus(el.importStatus, msg, "warn");
+          if (el.loadBanner) setStatus(el.loadBanner, msg, "warn");
         });
-      }).catch(function () { return tryNext(i + 1); });
+      }).catch(function () { return fromLocal(i + 1); });
     }
-    return tryNext(0);
+
+    function mergeSameOriginDraft() {
+      return fetch(c.saveTo, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) return 0;
+        return r.json().then(function (data) {
+          return mergeRemoteItems(data, { markListed: false, unionCatalogs: true });
+        });
+      }).catch(function () { return 0; });
+    }
+
+    return fetchLatestGithubManifest().then(function (result) {
+      if (!result || !result.data) return fromLocal(0);
+      importEntries(result.data);
+      state.loadSource = result.source;
+      return mergeSameOriginDraft().then(function (extra) {
+        var msg = "Loaded <strong>" + state.entries.length + " item(s)</strong> from " +
+          escapeHtml(result.source) + " (" + escapeHtml(c.saveTo) + "). This is the live gallery list. Add or remove files below, then Save.";
+        if (extra) {
+          msg += " Also found " + extra + " extra item(s) in the local copy of the file that are not on GitHub yet — they are marked <em>new — save to publish</em>.";
+        }
+        setStatus(el.importStatus, msg, "ok");
+        if (el.loadBanner) setStatus(el.loadBanner, msg, "ok");
+      });
+    }).catch(function () {
+      return fromLocal(0);
+    });
   }
 
   // ---- GCS upload ----
@@ -1002,6 +1294,7 @@
     var meta = {};
     if (entry.title) meta.title = entry.title;
     if (entry.date) meta.date = entry.date;
+    if (entry.target) meta.target = entry.target;
     if (entry.tags.length) meta.tags = entry.tags.join(",");
     if (details.camera) meta.camera = details.camera;
     if (details.latitude) meta.latitude = details.latitude;
@@ -1069,7 +1362,11 @@
         el.uploadGcsBtn.disabled = false;
         renderEntries();
         updateOutput();
-        setStatus(el.publishStatus, "Uploaded " + pending.length + " file(s). Download or commit the updated manifest next.", "ok");
+        var names = pending.map(function (e) { return "<code>" + escapeHtml(e.file) + "</code>"; }).join(", ");
+        var msg = "Uploaded " + pending.length + " file(s) to the bucket: " + names +
+          ". They are stored, but <strong>not on the public gallery yet</strong>. Click <strong>Save to the website</strong> to list them.";
+        setStatus(el.publishStatus, msg, "ok");
+        if (el.uploadStatus) setStatus(el.uploadStatus, msg, "ok");
         return Promise.resolve();
       }
       var entry = pending[i++];
@@ -1111,40 +1408,104 @@
     });
   }
 
-  function saveToWebsite() {
-    updateOutput();
-    var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
-    function afterCopy() {
-      if (state.githubToken) {
-        commitManifest();
-        return;
-      }
-      window.open(githubEditUrl(), "_blank", "noopener");
-      var msg = "Copied the gallery list. In the GitHub tab: select all, paste, click <strong>Commit changes</strong> on <code>main</code>. Wait about a minute, then hard-refresh the gallery.";
-      if (el.publishStatus) setStatus(el.publishStatus, msg, "ok");
-      if (el.saveBarStatus) {
-        el.saveBarStatus.textContent = "Copied. Paste into GitHub and commit.";
-        el.saveBarStatus.className = "save-bar-status dirty";
-      }
-    }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(json).then(afterCopy, function () {
-        fallbackCopy(json);
-        afterCopy();
-      });
-    } else {
-      fallbackCopy(json);
-      afterCopy();
-    }
+  function galleryPageHref() {
+    return currentCollection().page;
   }
 
-  function commitManifest() {
+  function confirmationHtml(opts) {
+    opts = opts || {};
+    var n = state.entries.length;
+    var newOnes = state.entries.filter(function (e) { return !isListedOnGithub(e); });
+    var removed = Object.keys(state.removedFiles);
+    var bits = [];
+    bits.push("<strong>Saved " + n + " item(s)</strong> to <code>" + escapeHtml(currentCollection().saveTo) + "</code> on <code>" + GITHUB.branch + "</code>.");
+    if (newOnes.length) {
+      bits.push("Newly listed: " + newOnes.map(function (e) {
+        return "<code>" + escapeHtml(e.file || e.title) + "</code>";
+      }).join(", ") + ".");
+    }
+    if (removed.length) {
+      bits.push("Removed from gallery: " + removed.map(function (f) {
+        return "<code>" + escapeHtml(f) + "</code>";
+      }).join(", ") + ".");
+    }
+    if (!newOnes.length && !removed.length) {
+      bits.push("Existing gallery items were kept. Tags and targets were saved with the list.");
+    }
+    bits.push("The public gallery updates in about 1–2 minutes. Then hard-refresh <a href=\"" +
+      escapeHtml(galleryPageHref()) + "\" target=\"_blank\" rel=\"noopener\">" +
+      escapeHtml(currentCollection().label) + "</a>.");
+    return bits.join(" ");
+  }
+
+  function markPublished() {
+    recordLoadedFiles();
+    state.dirty = false;
+    renderEntries();
+    renderFileList();
+    updateSaveBar();
+  }
+
+  function saveToWebsite() {
+    setSaveDisabled(true);
+    if (el.publishStatus) setStatus(el.publishStatus, "Fetching the latest GitHub list so existing gallery items are kept…", "");
+    fetchLatestGithubManifest().then(function (result) {
+      var kept = 0;
+      if (result && result.data) kept = mergeRemoteItems(result.data, { markListed: true });
+      updateOutput();
+      var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
+      if (kept) {
+        if (el.publishStatus) {
+          setStatus(el.publishStatus, "Merged " + kept + " item(s) that were on GitHub but missing from this page, then saving…", "ok");
+        }
+      }
+      function afterCopy() {
+        if (state.githubToken) {
+          commitManifest(json);
+          return;
+        }
+        setSaveDisabled(false);
+        window.open(githubEditUrl(), "_blank", "noopener");
+        var msg = "Merged list copied (" + state.entries.length + " item(s)). In the GitHub tab: select all, paste over the whole file, click <strong>Commit changes</strong> on <code>main</code>. Wait about a minute, then hard-refresh the gallery.";
+        if (el.publishStatus) setStatus(el.publishStatus, msg, "ok");
+        if (el.saveConfirm) setStatus(el.saveConfirm, msg, "ok");
+        if (el.saveBarStatus) {
+          el.saveBarStatus.textContent = "Copied " + state.entries.length + " items. Paste into GitHub and commit.";
+          el.saveBarStatus.className = "save-bar-status dirty";
+        }
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(json).then(afterCopy, function () {
+          fallbackCopy(json);
+          afterCopy();
+        });
+      } else {
+        fallbackCopy(json);
+        afterCopy();
+      }
+    }).catch(function (err) {
+      setSaveDisabled(false);
+      if (el.publishStatus) {
+        setStatus(el.publishStatus, "Could not fetch GitHub before save: " + escapeHtml(err.message || String(err)) +
+          ". Saving this page’s list only — check you are not dropping existing items.", "warn");
+      }
+      updateOutput();
+      var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
+      if (state.githubToken) commitManifest(json);
+      else {
+        window.open(githubEditUrl(), "_blank", "noopener");
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json);
+      }
+    });
+  }
+
+  function commitManifest(json) {
     if (!state.githubToken) {
       saveToWebsite();
       return;
     }
+    json = json || ((el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2));
     var path = currentCollection().saveTo;
-    var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
     var api = "https://api.github.com/repos/" + GITHUB.owner + "/" + GITHUB.repo + "/contents/" + path;
     var headers = {
       Authorization: "Bearer " + state.githubToken,
@@ -1171,11 +1532,14 @@
     }).then(function (r) {
       setSaveDisabled(false);
       if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
-      state.dirty = false;
-      updateSaveBar();
-      if (el.publishStatus) {
-        setStatus(el.publishStatus, "Saved <code>" + escapeHtml(path) + "</code> to <code>" + GITHUB.branch +
-          "</code>. Wait about a minute, then hard-refresh the gallery.", "ok");
+      var html = confirmationHtml();
+      markPublished();
+      if (el.publishStatus) setStatus(el.publishStatus, html, "ok");
+      if (el.saveConfirm) setStatus(el.saveConfirm, html, "ok");
+      if (el.loadBanner) setStatus(el.loadBanner, html, "ok");
+      if (el.saveBarStatus) {
+        el.saveBarStatus.textContent = "Saved " + state.entries.length + " item(s). Gallery updates in 1–2 minutes.";
+        el.saveBarStatus.className = "save-bar-status";
       }
     }).catch(function (err) {
       setSaveDisabled(false);
@@ -1265,6 +1629,12 @@
     el.onlyNewCheck = $("onlyNewCheck");
     el.hideHeicCheck = $("hideHeicCheck");
     el.manualName = $("manualName");
+    el.reloadGithubBtn = $("reloadGithubBtn");
+    el.targetLibrary = $("targetLibrary");
+    el.newTarget = $("newTarget");
+    el.addTargetBtn = $("addTargetBtn");
+    el.loadBanner = $("loadBanner");
+    el.saveConfirm = $("saveConfirm");
 
     el.gcsToken.value = state.gcsToken;
     el.githubToken.value = state.githubToken;
@@ -1295,7 +1665,7 @@
       });
       el.manualName.value = "";
       renderFileList();
-      setStatus(el.listStatus, "Added <code>" + escapeHtml(name) + "</code>. Check the card below, then Save to the website.", "ok");
+      setStatus(el.listStatus, "Added <code>" + escapeHtml(name) + "</code> to this list. Save to the website to list it on the gallery.", "ok");
     });
     if (el.addAllBtn) el.addAllBtn.addEventListener("click", addAllNewWebFiles);
     if (el.onlyNewCheck) {
@@ -1314,11 +1684,17 @@
     }
     el.addBlankBtn.addEventListener("click", function () { addEntry({}); });
     el.clearBtn.addEventListener("click", function () {
-      if (state.entries.length && !confirm("Remove all entries in this section?")) return;
-      state.entries.forEach(function (e) { if (e.objectUrl) URL.revokeObjectURL(e.objectUrl); });
+      if (state.entries.length && !confirm("Remove all items from this gallery list? Files stay in the bucket. Save to publish the empty list.")) return;
+      state.entries.forEach(function (e) {
+        if (e.objectUrl) URL.revokeObjectURL(e.objectUrl);
+        var k = entryKey(e);
+        if (k) state.removedFiles[k] = true;
+      });
       state.entries = [];
       renderTagLibrary();
+      renderTargetLibrary();
       renderEntries();
+      renderFileList();
       markDirty();
     });
     el.addTagBtn.addEventListener("click", function () {
@@ -1328,6 +1704,28 @@
     el.newTag.addEventListener("keydown", function (ev) {
       if (ev.key === "Enter") { ev.preventDefault(); addCatalogTag(el.newTag.value); el.newTag.value = ""; }
     });
+    if (el.addTargetBtn) {
+      el.addTargetBtn.addEventListener("click", function () {
+        addCatalogTarget(el.newTarget.value);
+        el.newTarget.value = "";
+      });
+    }
+    if (el.newTarget) {
+      el.newTarget.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); addCatalogTarget(el.newTarget.value); el.newTarget.value = ""; }
+      });
+    }
+    if (el.reloadGithubBtn) {
+      el.reloadGithubBtn.addEventListener("click", function () {
+        if (state.dirty && !confirm("Reload from GitHub and discard unsaved edits?")) return;
+        resetCollectionState();
+        renderTagLibrary();
+        renderTargetLibrary();
+        renderEntries();
+        updateOutput();
+        loadManifestFromRepo().then(function () { listObjects(); });
+      });
+    }
     el.filterText.addEventListener("input", function () {
       state.filterText = el.filterText.value;
       renderEntries();
@@ -1357,8 +1755,8 @@
         if (!r.ok) throw new Error("HTTP " + r.status);
         return r.json();
       }).then(function (data) {
-        importEntries(data);
-        setStatus(el.importStatus, "Imported " + state.entries.length + " entr(y/ies).", "ok");
+          importEntries(data);
+          setStatus(el.importStatus, "Imported " + state.entries.length + " item(s).", "ok");
       }).catch(function (e) {
         setStatus(el.importStatus, "Could not load manifest: " + escapeHtml(e.message || String(e)), "err");
       });
@@ -1370,7 +1768,7 @@
       reader.onload = function () {
         try {
           importEntries(JSON.parse(reader.result));
-          setStatus(el.importStatus, "Imported " + state.entries.length + " entr(y/ies) from " + escapeHtml(f.name) + ".", "ok");
+          setStatus(el.importStatus, "Imported " + state.entries.length + " item(s) from " + escapeHtml(f.name) + ".", "ok");
         } catch (err) {
           setStatus(el.importStatus, "Invalid JSON: " + escapeHtml(err.message || String(err)), "err");
         }
@@ -1399,6 +1797,7 @@
   renderSectionTabs();
   refreshBase();
   renderTagLibrary();
+  renderTargetLibrary();
   renderEntries();
   updateOutput();
   loadManifestFromRepo().then(function () { listObjects(); });
