@@ -50,6 +50,102 @@
         line-height: 1.6;
         margin-bottom: 1rem;
       }
+      .content h2 {
+        color: #1e3a5f;
+        font-size: 1.35rem;
+        margin: 1.75rem 0 0.65rem;
+      }
+      .experiments-intro {
+        color: #374151;
+      }
+      .difficulty-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin: 0 0 1rem;
+      }
+      .difficulty-legend button {
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #1f2937;
+        border-radius: 999px;
+        padding: 0.28rem 0.7rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      .difficulty-legend button.active {
+        border-color: #4a9eff;
+        background: #eff6ff;
+        color: #1e40af;
+        font-weight: 600;
+      }
+      .diff {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.15rem 0.55rem;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .diff-easy { background: #dcfce7; color: #166534; }
+      .diff-useful { background: #dbeafe; color: #1e40af; }
+      .diff-medium { background: #fef3c7; color: #92400e; }
+      .diff-fun { background: #ede9fe; color: #5b21b6; }
+      .diff-advanced { background: #ffedd5; color: #9a3412; }
+      .diff-hard { background: #fee2e2; color: #991b1b; }
+      .experiment-list {
+        display: grid;
+        gap: 0.85rem;
+        margin-bottom: 2rem;
+      }
+      .experiment-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 1rem 1.1rem 0.95rem;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+      }
+      .experiment-card[hidden] { display: none; }
+      .experiment-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.45rem 0.75rem;
+        margin-bottom: 0.4rem;
+      }
+      .experiment-num {
+        font-weight: 800;
+        color: #4a9eff;
+        font-variant-numeric: tabular-nums;
+      }
+      .experiment-card h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: #0f172a;
+        flex: 1 1 220px;
+      }
+      .experiment-card dl {
+        margin: 0;
+        display: grid;
+        gap: 0.35rem 1rem;
+      }
+      .experiment-card dt {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #6b7280;
+        margin: 0.45rem 0 0.1rem;
+      }
+      .experiment-card dd {
+        margin: 0;
+        color: #374151;
+        line-height: 1.55;
+      }
+      .experiment-meta {
+        margin-top: 0.55rem;
+        font-size: 0.85rem;
+        color: #6b7280;
+      }
       @media (max-width: 900px) {
         .top-menu {
           padding: 0.75rem 1rem;
@@ -82,6 +178,7 @@
           text-align: center;
           font-size: 0.92rem;
         }
+        .experiment-head { align-items: center; }
       }
     </style>
   </head>
@@ -96,8 +193,312 @@
     </div>
     <div class="content">
       <h1>Radio Astronomy</h1>
-      <p>Passive radio astronomy observations at Whitegate Observatory, including solar and Jupiter noise storm monitoring.</p>
+      <p>
+        Passive radio astronomy at Whitegate Observatory, including solar and Jupiter noise-storm
+        monitoring and a planned 21-cm hydrogen-line programme with a Discovery Dish.
+      </p>
       <p><a href="tinygs.html">TinyGS ground station page</a> is part of this section.</p>
+
+      <section class="experiments" aria-labelledby="experimentsTitle">
+        <h2 id="experimentsTitle">Discovery Dish experiments</h2>
+        <p class="experiments-intro">
+          Planned observations around the neutral-hydrogen line at
+          <strong>1420.40575&nbsp;MHz</strong> (21&nbsp;cm). A 70-cm Discovery Dish is a small aperture
+          for continuum work, but it is well suited to detecting Galactic HI, mapping the plane,
+          measuring Doppler velocities, and characterising local RFI. Difficulty is a planning guide,
+          not a limit.
+        </p>
+        <div class="difficulty-legend" role="toolbar" aria-label="Filter experiments by difficulty">
+          <button type="button" class="active" data-filter="all">All</button>
+          <button type="button" data-filter="easy">Easy</button>
+          <button type="button" data-filter="medium">Medium</button>
+          <button type="button" data-filter="advanced">Advanced</button>
+          <button type="button" data-filter="hard">Hard / science</button>
+        </div>
+        <div class="experiment-list" id="experimentList">
+
+          <article class="experiment-card" data-tier="easy">
+            <div class="experiment-head">
+              <span class="experiment-num">1</span>
+              <h3>Detect the 21-cm hydrogen line</h3>
+              <span class="diff diff-easy">Easy</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Neutral hydrogen in the Milky Way at 1420.40575 MHz — the spin-flip transition of atomic hydrogen (HI).</dd>
+              <dt>How</dt>
+              <dd>Point the dish toward the Galactic plane (for example Cygnus or Cassiopeia longitudes), integrate a spectrum around 1420 MHz, and look for the emission line above the noise floor. First detection is the calibration milestone for everything that follows.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="easy">
+            <div class="experiment-head">
+              <span class="experiment-num">2</span>
+              <h3>Milky Way drift scan</h3>
+              <span class="diff diff-easy">Easy</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>How Galactic hydrogen brightness changes as Earth’s rotation sweeps the sky through a fixed beam.</dd>
+              <dt>How</dt>
+              <dd>Park the dish (typically pointing south, at a chosen elevation) and record spectra versus time. Features rise and set through the beam on a sidereal schedule, giving a one-dimensional cut across the Galaxy with no motorised tracking.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="easy">
+            <div class="experiment-head">
+              <span class="experiment-num">3</span>
+              <h3>Galactic plane vs empty sky</h3>
+              <span class="diff diff-easy">Easy</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>That HI emission is concentrated along the Milky Way, not uniformly across the sky.</dd>
+              <dt>How</dt>
+              <dd>Compare a spectrum on the Galactic plane with one at high Galactic latitude (empty sky / cold sky). The plane should show a strong 21-cm line; the off-plane pointing should be much weaker. This is a control against RFI mimicking the line.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="easy">
+            <div class="experiment-head">
+              <span class="experiment-num">4</span>
+              <h3>Measure the dish beamwidth using the Sun</h3>
+              <span class="diff diff-easy">Easy</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>The actual antenna radiation pattern — half-power beamwidth and pointing offset — using the Sun as a bright continuum source.</dd>
+              <dt>How</dt>
+              <dd>Scan in azimuth or elevation across the Sun (or let it drift through the beam) and record total power at 1.42 GHz. The width of the power peak is your real beam, which will differ from the theoretical ~18° for a 70-cm dish at 21 cm if the illumination or pointing is imperfect.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">5</span>
+              <h3>Make a hydrogen map of the Milky Way</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>A coarse radio image of HI along the Galactic plane.</dd>
+              <dt>How</dt>
+              <dd>Point every ~10–20° in Galactic longitude (and a few latitudes), integrate each spectrum, and plot line intensity versus position. The result is a low-resolution HI map of the plane as seen from Whitegate — enough to show the bulge/inner plane versus outer longitudes.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">6</span>
+              <h3>Measure hydrogen radial velocity</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Line-of-sight velocity of Galactic gas from the Doppler shift of the 1420.40575 MHz rest frequency.</dd>
+              <dt>How</dt>
+              <dd>Convert frequency offset to radial velocity (≈ 1 km/s per 4.74 kHz at 21 cm). Blueshifted gas is approaching; redshifted gas is receding. Frequency calibration and a stable local oscillator matter more here than for a simple detection.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">7</span>
+              <h3>Identify Galactic spiral arms</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Separate velocity peaks in the HI spectrum, each corresponding to hydrogen clouds at different distances along the same line of sight.</dd>
+              <dt>How</dt>
+              <dd>Toward the inner Galaxy, a single pointing often shows multiple line components. Matching those velocities to a Galactic rotation model (and published arm loci such as Sagittarius, Local, Perseus) identifies which arm you are seeing. Inner-longitude spectra are richer than anti-centre ones.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="advanced">
+            <div class="experiment-head">
+              <span class="experiment-num">8</span>
+              <h3>Measure the Milky Way rotation curve</h3>
+              <span class="diff diff-advanced">Advanced</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>How orbital speed of Galactic hydrogen changes with distance from the Galactic centre, using velocities at different Galactic longitudes.</dd>
+              <dt>How</dt>
+              <dd>In the inner Galaxy, the terminal (most extreme) velocity at each longitude traces the rotation speed at the tangent point. Combining many longitudes builds a rotation curve. Needs good velocity calibration, RFI control, and enough longitude coverage.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="hard">
+            <div class="experiment-head">
+              <span class="experiment-num">9</span>
+              <h3>Demonstrate the evidence for dark matter</h3>
+              <span class="diff diff-hard">Proper science</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>The mismatch between the measured Galactic rotation curve and the curve predicted from visible (baryonic) matter alone.</dd>
+              <dt>How</dt>
+              <dd>A Keplerian disk would slow with radius; the observed HI curve stays high. Comparing your rotation curve (experiment 8) with a visible-mass model is the classic kinematic argument for a dark halo. This is real analysis, not just a detection — treat uncertainties honestly.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">10</span>
+              <h3>Galactic latitude survey</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>The thickness of the hydrogen layer: how HI intensity falls as you scan above and below the Galactic plane.</dd>
+              <dt>How</dt>
+              <dd>Fix longitude and step in Galactic latitude. The scale height of the gas shows up as a decline off the plane. Compare inner versus outer longitudes if you have the pointing range.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">11</span>
+              <h3>Sidereal-day experiment</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>That the same Galactic feature returns about 3 minutes 56 seconds earlier each solar day — the difference between a solar day and a sidereal day.</dd>
+              <dt>How</dt>
+              <dd>Repeat a drift scan at the same civil time over several days. HI features should march earlier by ~3m56s per day. If they stay fixed in solar time, you are looking at terrestrial RFI, not the Galaxy.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="advanced">
+            <div class="experiment-head">
+              <span class="experiment-num">12</span>
+              <h3>Earth’s orbital Doppler shift</h3>
+              <span class="diff diff-advanced">Advanced</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>A slow movement of spectral features over months because Earth orbits the Sun at about 30 km/s.</dd>
+              <dt>How</dt>
+              <dd>Revisit the same Galactic pointing across seasons. The projected component of Earth’s orbital velocity along that line of sight changes, shifting the observed HI frequency by up to ~±30 km/s. Requires a stable frequency reference and a log spanning months.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">13</span>
+              <h3>Solar radio monitoring at 1.42 GHz</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Total radio emission from the Sun near 1.42 GHz, and changes tied to solar activity.</dd>
+              <dt>How</dt>
+              <dd>Track or drift-scan the Sun and record continuum power (the Sun is a broadband source at this frequency, not an HI line source). Look for day-to-day changes and, if you catch one, flares or outburst signatures. Useful as both science and a bright calibration source.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="easy">
+            <div class="experiment-head">
+              <span class="experiment-num">14</span>
+              <h3>Solar drift scan</h3>
+              <span class="diff diff-easy">Easy</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Antenna pointing and beam geometry from the Sun crossing a stationary beam.</dd>
+              <dt>How</dt>
+              <dd>Leave the dish fixed and let the Sun drift through. Transit time, peak power, and the shape of the cut give pointing error, beamwidth, and a check that the mount is aligned. Complements experiment 4 with no scanning required.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">15</span>
+              <h3>Radio/optical Milky Way comparison</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>How the HI structure you map relates to the optical Milky Way.</dd>
+              <dt>How</dt>
+              <dd>Overlay the hydrogen map (experiment 5) on Stellarium or optical surveys. Dust hides much of the inner Galaxy in visible light; 21-cm radio passes through, so the radio plane can look “full” where the optical plane is dark. A good public-facing result as well as a sanity check on pointing.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="easy">
+            <div class="experiment-head">
+              <span class="experiment-num">16</span>
+              <h3>RFI map of the property</h3>
+              <span class="diff diff-useful">Very useful</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Where the 1420 MHz noise floor and spurs actually come from on site.</dd>
+              <dt>How</dt>
+              <dd>Walk or slew a reference antenna (or the dish) toward the house, mast, inverters, routers, and neighbours while watching the spectrum. Note persistent carriers versus broadband hash. This map saves every later experiment: you cannot interpret a “line” until you know which features are terrestrial.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="advanced">
+            <div class="experiment-head">
+              <span class="experiment-num">17</span>
+              <h3>Dual-receiver RFI subtraction</h3>
+              <span class="diff diff-advanced">Advanced</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Interference that is common to the dish and a reference antenna — i.e. local terrestrial RFI rather than sky signal.</dd>
+              <dt>How</dt>
+              <dd>Feed the Discovery Dish into RSPduo tuner 1 and a reference antenna into tuner 2. Features that appear in both channels are RFI; features only in the dish channel are candidates for sky. Coherent or spectral subtraction is the advanced step after simple comparison.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">18</span>
+              <h3>Simultaneous astronomy + RFI surveillance</h3>
+              <span class="diff diff-medium">Medium</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>HI from the dish while a second radio watches the surrounding spectrum for contamination.</dd>
+              <dt>How</dt>
+              <dd>RSPduo records the hydrogen line; a HackRF (or similar) surveys nearby spectrum for new carriers, bursty ISM, or wideband junk. Time-align the logs so a suspicious HI feature can be checked against the surveillance receiver.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="medium">
+            <div class="experiment-head">
+              <span class="experiment-num">19</span>
+              <h3>1420-MHz SETI exercise</h3>
+              <span class="diff diff-fun">Fun</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Extremely narrow, artificial-looking signals near the hydrogen line — a classic SETI “water hole” search, treated as an exercise.</dd>
+              <dt>How</dt>
+              <dd>Automate a search for persistent, very narrow carriers that are not in the RFI map and do not follow a sidereal schedule like Galactic HI. Most detections will be terrestrial; the value is in the pipeline, not in claiming a signal.</dd>
+            </dl>
+          </article>
+
+          <article class="experiment-card" data-tier="hard">
+            <div class="experiment-head">
+              <span class="experiment-num">20</span>
+              <h3>Attempt strong continuum radio sources</h3>
+              <span class="diff diff-hard">Hard</span>
+            </div>
+            <dl>
+              <dt>What you are measuring</dt>
+              <dd>Broadband synchrotron from sources such as Cygnus A and Cassiopeia A.</dd>
+              <dt>How</dt>
+              <dd>These are among the brightest extra-solar radio sources, but a 70-cm dish at 1.42 GHz has a huge beam and limited collecting area. Detection will be difficult; on/off or drift techniques and careful subtraction of Galactic background and RFI are required. Treat a non-detection as useful too.</dd>
+            </dl>
+          </article>
+
+        </div>
+      </section>
 
       <section class="gallery-section" aria-labelledby="galleryTitle">
         <div class="gallery-header">
@@ -142,6 +543,26 @@
 
     <script src="assets/js/gallery.js"></script>
     <script>
+      (function () {
+        var list = document.getElementById("experimentList");
+        var buttons = document.querySelectorAll(".difficulty-legend button");
+        if (!list || !buttons.length) return;
+        buttons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var filter = btn.getAttribute("data-filter") || "all";
+            buttons.forEach(function (b) { b.classList.toggle("active", b === btn); });
+            list.querySelectorAll(".experiment-card").forEach(function (card) {
+              var tier = card.getAttribute("data-tier");
+              var show = filter === "all" ||
+                (filter === "easy" && (tier === "easy")) ||
+                (filter === "medium" && tier === "medium") ||
+                (filter === "advanced" && tier === "advanced") ||
+                (filter === "hard" && tier === "hard");
+              card.hidden = !show;
+            });
+          });
+        });
+      })();
       WhitegateGallery.mount({
         statusEl: document.getElementById("galleryStatus"),
         gridEl: document.getElementById("galleryGrid"),
