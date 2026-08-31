@@ -62,7 +62,10 @@
     onlyNew: true,
     removedFiles: {},
     loadedItemFiles: {},
-    loadSource: ""
+    loadSource: "",
+    removedTags: {},
+    removedTargets: {},
+    saveInFlight: false
   };
 
   var el = {};
@@ -153,6 +156,7 @@
   function registerTags(tags) {
     (tags || []).forEach(function (t) {
       if (!t) return;
+      if (state.removedTags[t]) return;
       state.knownTags[t] = true;
       if (state.tagCatalog.indexOf(t) === -1) state.tagCatalog.push(t);
     });
@@ -162,6 +166,7 @@
     (targets || []).forEach(function (t) {
       t = String(t || "").trim();
       if (!t) return;
+      if (state.removedTargets[t]) return;
       state.knownTargets[t] = true;
       if (state.targetCatalog.indexOf(t) === -1) state.targetCatalog.push(t);
     });
@@ -199,6 +204,8 @@
     state.removedFiles = {};
     state.loadedItemFiles = {};
     state.loadSource = "";
+    state.removedTags = {};
+    state.removedTargets = {};
   }
 
   function markDirty() {
@@ -261,6 +268,13 @@
 
   function switchCollection(key) {
     if (key === state.collectionKey) return;
+    if (state.saveInFlight) {
+      if (el.saveBarStatus) {
+        el.saveBarStatus.textContent = "Wait for the current save to finish before switching galleries.";
+        el.saveBarStatus.className = "save-bar-status dirty";
+      }
+      return;
+    }
     if (state.dirty && !confirm("Discard unsaved edits for this section?")) return;
     state.collectionKey = key;
     resetCollectionState();
@@ -335,6 +349,7 @@
           e.tags = e.tags.filter(function (x) { return x !== t; });
         });
         if (state.filterTag === t) state.filterTag = "";
+        state.removedTags[t] = true;
         renderTagLibrary();
         renderEntries();
         markDirty();
@@ -371,6 +386,7 @@
         if (!confirm("Remove target “" + t + "” from the library? Cards using it will keep the text until you change them.")) return;
         state.targetCatalog = state.targetCatalog.filter(function (x) { return x !== t; });
         delete state.knownTargets[t];
+        state.removedTargets[t] = true;
         renderTargetLibrary();
         markDirty();
       });
@@ -384,6 +400,7 @@
     raw.split(",").forEach(function (part) {
       var t = part.trim();
       if (!t) return;
+      delete state.removedTags[t];
       registerTags([t]);
     });
     renderTagLibrary();
@@ -394,6 +411,7 @@
     raw.split(",").forEach(function (part) {
       var t = part.trim();
       if (!t) return;
+      delete state.removedTargets[t];
       registerTargets([t]);
     });
     renderTargetLibrary();
@@ -850,6 +868,7 @@
       var t = String(v || "").trim();
       entry.target = t;
       if (t) {
+        delete state.removedTargets[t];
         registerTargets([t]);
         renderTargetLibrary();
       }
@@ -923,6 +942,7 @@
         var t = part.trim();
         if (t && entry.tags.indexOf(t) === -1) {
           entry.tags.push(t);
+          delete state.removedTags[t];
           registerTags([t]);
         }
       });
@@ -1162,14 +1182,16 @@
     updateOutput();
   }
 
-  function githubRawUrl() {
+  function githubRawUrl(path) {
+    path = path || currentCollection().saveTo;
     return "https://raw.githubusercontent.com/" + GITHUB.owner + "/" + GITHUB.repo + "/" +
-      GITHUB.branch + "/" + currentCollection().saveTo + "?t=" + Date.now();
+      GITHUB.branch + "/" + path + "?t=" + Date.now();
   }
 
-  function githubApiContentsUrl() {
+  function githubApiContentsUrl(path) {
+    path = path || currentCollection().saveTo;
     return "https://api.github.com/repos/" + GITHUB.owner + "/" + GITHUB.repo +
-      "/contents/" + currentCollection().saveTo + "?ref=" + GITHUB.branch;
+      "/contents/" + path + "?ref=" + GITHUB.branch;
   }
 
   function githubHeaders() {
@@ -1187,21 +1209,33 @@
     return JSON.parse(new TextDecoder().decode(bytes));
   }
 
-  function fetchLatestGithubManifest() {
-    return fetch(githubRawUrl(), { cache: "no-store" }).then(function (r) {
-      if (!r.ok) throw new Error("raw HTTP " + r.status);
-      return r.json().then(function (data) {
-        return { data: data, source: "GitHub " + GITHUB.branch, sha: null };
-      });
-    }).catch(function () {
-      return fetch(githubApiContentsUrl(), { cache: "no-store", headers: githubHeaders() }).then(function (r) {
-        if (r.status === 404) return null;
+  function fetchLatestGithubManifest(path, opts) {
+    opts = opts || {};
+    path = path || currentCollection().saveTo;
+    function fromApi() {
+      return fetch(githubApiContentsUrl(path), { cache: "no-store", headers: githubHeaders() }).then(function (r) {
+        if (r.status === 404) return { data: null, source: "GitHub API " + GITHUB.branch, sha: null, path: path };
         if (!r.ok) throw new Error("GitHub HTTP " + r.status);
         return r.json().then(function (meta) {
-          return { data: decodeGithubContent(meta), source: "GitHub API " + GITHUB.branch, sha: meta.sha || null };
+          return {
+            data: decodeGithubContent(meta),
+            source: "GitHub API " + GITHUB.branch,
+            sha: meta.sha || null,
+            path: path
+          };
         });
       });
-    });
+    }
+    function fromRaw() {
+      return fetch(githubRawUrl(path), { cache: "no-store" }).then(function (r) {
+        if (!r.ok) throw new Error("raw HTTP " + r.status);
+        return r.json().then(function (data) {
+          return { data: data, source: "GitHub " + GITHUB.branch, sha: null, path: path };
+        });
+      });
+    }
+    if (opts.requireSha) return fromApi();
+    return fromApi().catch(function () { return fromRaw(); });
   }
 
   function mergeRemoteItems(remote, opts) {
@@ -1234,12 +1268,15 @@
   }
 
   function loadManifestFromRepo() {
-    var c = currentCollection();
+    var collectionKey = state.collectionKey;
+    var c = COLLECTIONS[collectionKey];
     var localUrls = [c.saveTo, "./" + c.saveTo, "dist/" + c.saveTo];
+    function stillHere() { return state.collectionKey === collectionKey; }
     if (el.loadBanner) setStatus(el.loadBanner, "Loading the latest gallery list from GitHub…", "");
     setStatus(el.importStatus, "Loading latest " + escapeHtml(c.saveTo) + " from GitHub…", "");
 
     function fromLocal(i) {
+      if (!stillHere()) return Promise.resolve();
       if (i >= localUrls.length) {
         state.loadSource = "";
         setStatus(el.importStatus, "No existing manifest at " + escapeHtml(c.saveTo) + ". Starting empty — add files from the bucket.", "warn");
@@ -1249,8 +1286,10 @@
         return Promise.resolve();
       }
       return fetch(localUrls[i], { cache: "no-store" }).then(function (r) {
+        if (!stillHere()) return;
         if (!r.ok) return fromLocal(i + 1);
         return r.json().then(function (data) {
+          if (!stillHere()) return;
           importEntries(data);
           state.loadSource = localUrls[i] + " (may be a cached Pages copy)";
           var msg = "Loaded " + state.entries.length + " item(s) from " + escapeHtml(localUrls[i]) +
@@ -1263,19 +1302,22 @@
 
     function mergeSameOriginDraft() {
       return fetch(c.saveTo, { cache: "no-store" }).then(function (r) {
-        if (!r.ok) return 0;
+        if (!stillHere() || !r.ok) return 0;
         return r.json().then(function (data) {
+          if (!stillHere()) return 0;
           return mergeRemoteItems(data, { markListed: false, unionCatalogs: true });
         });
       }).catch(function () { return 0; });
     }
 
-    return fetchLatestGithubManifest().then(function (result) {
+    return fetchLatestGithubManifest(c.saveTo).then(function (result) {
+      if (!stillHere()) return;
       if (!result || !result.data) return fromLocal(0);
       importEntries(result.data);
       state.loadSource = result.source;
       var githubCount = state.entries.length;
       return mergeSameOriginDraft().then(function (extra) {
+        if (!stillHere()) return;
         var msg = "Loaded <strong>" + githubCount + " item(s)</strong> from " +
           escapeHtml(result.source) + " (" + escapeHtml(c.saveTo) + "). This is the live gallery list. Add or remove files below, then Save.";
         if (extra) {
@@ -1399,27 +1441,29 @@
     return btoa(bin);
   }
 
-  function githubEditUrl() {
-    return "https://github.com/" + GITHUB.owner + "/" + GITHUB.repo + "/edit/" + GITHUB.branch + "/" + currentCollection().saveTo;
+  function githubEditUrl(path) {
+    path = path || currentCollection().saveTo;
+    return "https://github.com/" + GITHUB.owner + "/" + GITHUB.repo + "/edit/" + GITHUB.branch + "/" + path;
   }
 
   function setSaveDisabled(disabled) {
+    state.saveInFlight = !!disabled;
     [el.saveBarBtn, el.saveBarBtn2].forEach(function (b) {
       if (b) b.disabled = disabled;
     });
+    if (el.sectionTabs) {
+      el.sectionTabs.querySelectorAll("button").forEach(function (b) { b.disabled = disabled; });
+    }
+    if (el.reloadGithubBtn) el.reloadGithubBtn.disabled = disabled;
   }
 
-  function galleryPageHref() {
-    return currentCollection().page;
-  }
-
-  function confirmationHtml(opts) {
-    opts = opts || {};
+  function confirmationHtml(col) {
+    col = col || currentCollection();
     var n = state.entries.length;
     var newOnes = state.entries.filter(function (e) { return !isListedOnGithub(e); });
     var removed = Object.keys(state.removedFiles);
     var bits = [];
-    bits.push("<strong>Saved " + n + " item(s)</strong> to <code>" + escapeHtml(currentCollection().saveTo) + "</code> on <code>" + GITHUB.branch + "</code>.");
+    bits.push("<strong>Saved " + n + " item(s)</strong> to <code>" + escapeHtml(col.saveTo) + "</code> on <code>" + GITHUB.branch + "</code>.");
     if (newOnes.length) {
       bits.push("Newly listed: " + newOnes.map(function (e) {
         return "<code>" + escapeHtml(e.file || e.title) + "</code>";
@@ -1434,39 +1478,55 @@
       bits.push("Existing gallery items were kept. Tags and targets were saved with the list.");
     }
     bits.push("The public gallery updates in about 1–2 minutes. Then hard-refresh <a href=\"" +
-      escapeHtml(galleryPageHref()) + "\" target=\"_blank\" rel=\"noopener\">" +
-      escapeHtml(currentCollection().label) + "</a>.");
+      escapeHtml(col.page) + "\" target=\"_blank\" rel=\"noopener\">" +
+      escapeHtml(col.label) + "</a>.");
     return bits.join(" ");
   }
 
   function markPublished() {
     recordLoadedFiles();
     state.dirty = false;
+    state.removedTags = {};
+    state.removedTargets = {};
     renderEntries();
     renderFileList();
     updateSaveBar();
   }
 
+  function mergeFetchedManifest(data) {
+    return mergeRemoteItems(data, { markListed: true, unionCatalogs: true });
+  }
+
   function saveToWebsite() {
+    if (state.saveInFlight) return;
+    var collectionKey = state.collectionKey;
+    var col = COLLECTIONS[collectionKey];
+    var path = col.saveTo;
+    function stillHere() { return state.collectionKey === collectionKey; }
+
     setSaveDisabled(true);
     if (el.publishStatus) setStatus(el.publishStatus, "Fetching the latest GitHub list so existing gallery items are kept…", "");
-    fetchLatestGithubManifest().then(function (result) {
+    fetchLatestGithubManifest(path, { requireSha: !!state.githubToken }).then(function (result) {
+      if (!stillHere()) {
+        setSaveDisabled(false);
+        if (el.publishStatus) setStatus(el.publishStatus, "Save cancelled because the gallery section changed.", "warn");
+        return;
+      }
       var kept = 0;
-      if (result && result.data) kept = mergeRemoteItems(result.data, { markListed: true });
+      if (result && result.data) kept = mergeFetchedManifest(result.data);
       updateOutput();
       var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
-      if (kept) {
-        if (el.publishStatus) {
-          setStatus(el.publishStatus, "Merged " + kept + " item(s) that were on GitHub but missing from this page, then saving…", "ok");
-        }
+      if (kept && el.publishStatus) {
+        setStatus(el.publishStatus, "Merged " + kept + " item(s) that were on GitHub but missing from this page, then saving…", "ok");
       }
+      var sha = result && result.sha ? result.sha : null;
       function afterCopy() {
         if (state.githubToken) {
-          commitManifest(json);
+          commitManifest(json, { sha: sha, path: path, collectionKey: collectionKey, attempt: 0 });
           return;
         }
         setSaveDisabled(false);
-        window.open(githubEditUrl(), "_blank", "noopener");
+        window.open(githubEditUrl(path), "_blank", "noopener");
         var msg = "Merged list copied (" + state.entries.length + " item(s)). In the GitHub tab: select all, paste over the whole file, click <strong>Commit changes</strong> on <code>main</code>. Wait about a minute, then hard-refresh the gallery.";
         if (el.publishStatus) setStatus(el.publishStatus, msg, "ok");
         if (el.saveConfirm) setStatus(el.saveConfirm, msg, "ok");
@@ -1490,50 +1550,90 @@
         setStatus(el.publishStatus, "Could not fetch GitHub before save: " + escapeHtml(err.message || String(err)) +
           ". Saving this page’s list only — check you are not dropping existing items.", "warn");
       }
+      if (!stillHere()) return;
       updateOutput();
       var json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
-      if (state.githubToken) commitManifest(json);
-      else {
-        window.open(githubEditUrl(), "_blank", "noopener");
+      if (state.githubToken) {
+        setSaveDisabled(true);
+        commitManifest(json, { sha: null, path: path, collectionKey: collectionKey, attempt: 0, refetchSha: true });
+      } else {
+        window.open(githubEditUrl(path), "_blank", "noopener");
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json);
       }
     });
   }
 
-  function commitManifest(json) {
+  function commitManifest(json, opts) {
+    opts = opts || {};
     if (!state.githubToken) {
       saveToWebsite();
       return;
     }
+    var collectionKey = opts.collectionKey || state.collectionKey;
+    var path = opts.path || COLLECTIONS[collectionKey].saveTo;
+    var sha = opts.sha;
+    var attempt = opts.attempt || 0;
     json = json || ((el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2));
-    var path = currentCollection().saveTo;
     var api = "https://api.github.com/repos/" + GITHUB.owner + "/" + GITHUB.repo + "/contents/" + path;
     var headers = {
       Authorization: "Bearer " + state.githubToken,
       Accept: "application/vnd.github+json",
       "Content-Type": "application/json"
     };
+
+    function putWithSha(useSha) {
+      var body = {
+        message: "Update " + path + " via media admin",
+        content: utf8ToBase64(json),
+        branch: GITHUB.branch
+      };
+      if (useSha) body.sha = useSha;
+      return fetch(api, { method: "PUT", headers: headers, body: JSON.stringify(body) });
+    }
+
+    function retryAgainstLatest() {
+      if (attempt >= 1) return Promise.reject(new Error("GitHub file changed again during save. Try Save once more."));
+      if (state.collectionKey !== collectionKey) return Promise.reject(new Error("Gallery section changed during save"));
+      if (el.publishStatus) setStatus(el.publishStatus, "GitHub list changed; merging the latest copy and retrying…", "warn");
+      return fetchLatestGithubManifest(path, { requireSha: true }).then(function (result) {
+        if (state.collectionKey !== collectionKey) throw new Error("Gallery section changed during save");
+        if (result && result.data) mergeFetchedManifest(result.data);
+        updateOutput();
+        var nextJson = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
+        return commitManifest(nextJson, {
+          sha: result && result.sha ? result.sha : null,
+          path: path,
+          collectionKey: collectionKey,
+          attempt: attempt + 1
+        });
+      });
+    }
+
     if (el.publishStatus) setStatus(el.publishStatus, "Saving " + escapeHtml(path) + " to " + GITHUB.branch + "…", "");
     setSaveDisabled(true);
-    fetch(api, { headers: headers, cache: "no-store" }).then(function (r) {
-      if (r.status === 404) return { sha: null };
-      if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
-      return r.json();
-    }).then(function (existing) {
-      return fetch(api, {
-        method: "PUT",
-        headers: headers,
-        body: JSON.stringify({
-          message: "Update " + path + " via media admin",
-          content: utf8ToBase64(json),
-          branch: GITHUB.branch,
-          sha: existing && existing.sha ? existing.sha : undefined
-        })
+
+    var start = Promise.resolve(sha);
+    if (opts.refetchSha && !sha) {
+      // Last-resort only when the merge fetch could not return a SHA.
+      start = fetchLatestGithubManifest(path, { requireSha: true }).then(function (result) {
+        if (result && result.data) mergeFetchedManifest(result.data);
+        updateOutput();
+        json = (el.output && el.output.value) || JSON.stringify(buildManifest(), null, 2);
+        return result && result.sha ? result.sha : null;
       });
+    }
+
+    return start.then(function (useSha) {
+      return putWithSha(useSha);
     }).then(function (r) {
+      if (r && r.handled) return r;
+      if (r && r.status === 409) {
+        return retryAgainstLatest().then(function () { return { handled: true }; });
+      }
       setSaveDisabled(false);
       if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
-      var html = confirmationHtml();
+      if (state.collectionKey !== collectionKey) return { handled: true };
+      var html = confirmationHtml(COLLECTIONS[collectionKey]);
       markPublished();
       if (el.publishStatus) setStatus(el.publishStatus, html, "ok");
       if (el.saveConfirm) setStatus(el.saveConfirm, html, "ok");
@@ -1542,6 +1642,7 @@
         el.saveBarStatus.textContent = "Saved " + state.entries.length + " item(s). Gallery updates in 1–2 minutes.";
         el.saveBarStatus.className = "save-bar-status";
       }
+      return { handled: true };
     }).catch(function (err) {
       setSaveDisabled(false);
       if (el.publishStatus) setStatus(el.publishStatus, "Could not save: " + escapeHtml(err.message || String(err)), "err");
@@ -1573,6 +1674,7 @@
     if (!tag) { setStatus(el.bulkStatus, "Enter a tag first.", "warn"); return; }
     var selected = state.entries.filter(function (e) { return e.selected; });
     if (!selected.length) { setStatus(el.bulkStatus, "Select one or more entries with the checkboxes.", "warn"); return; }
+    delete state.removedTags[tag];
     registerTags([tag]);
     selected.forEach(function (e) {
       if (e.tags.indexOf(tag) === -1) e.tags.push(tag);
@@ -1718,6 +1820,7 @@
     }
     if (el.reloadGithubBtn) {
       el.reloadGithubBtn.addEventListener("click", function () {
+        if (state.saveInFlight) return;
         if (state.dirty && !confirm("Reload from GitHub and discard unsaved edits?")) return;
         resetCollectionState();
         renderTagLibrary();
