@@ -1,154 +1,60 @@
 {
-	"version": 1,
-	"collection": "astrophotography",
-	"updated": "2026-08-31T00:00:00Z",
-	"tags": [
-		"aurora"
-	],
-	"items": [
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-08-12",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1959.jpg",
-			"full": "IMG_1959.jpg",
-			"type": "image",
-			"file": "IMG_1959.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-08-19",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1960.jpg",
-			"full": "IMG_1960.jpg",
-			"type": "image",
-			"file": "IMG_1960.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-09-03",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1964.jpg",
-			"full": "IMG_1964.jpg",
-			"type": "image",
-			"file": "IMG_1964.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-09-10",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1965.jpg",
-			"full": "IMG_1965.jpg",
-			"type": "image",
-			"file": "IMG_1965.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-09-17",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1968.jpg",
-			"full": "IMG_1968.jpg",
-			"type": "image",
-			"file": "IMG_1968.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-09-24",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1970.jpg",
-			"full": "IMG_1970.jpg",
-			"type": "image",
-			"file": "IMG_1970.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-10-01",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1972.jpg",
-			"full": "IMG_1972.jpg",
-			"type": "image",
-			"file": "IMG_1972.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-10-08",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1975.jpg",
-			"full": "IMG_1975.jpg",
-			"type": "image",
-			"file": "IMG_1975.jpg",
-			"tags": [
-				"aurora"
-			]
-		},
-		{
-			"title": "Aurora Borealis - East Cork",
-			"target": "Aurora Borealis",
-			"date": "2025-10-15",
-			"camera": "iPhone",
-			"telescope": "Unknown",
-			"integration": "Unknown",
-			"description": "Captured from Whitegate Observatory.",
-			"thumb": "IMG_1979.jpg",
-			"full": "IMG_1979.jpg",
-			"type": "image",
-			"file": "IMG_1979.jpg",
-			"tags": [
-				"aurora"
-			]
-		}
-	]
+  "version": 1,
+  "collection": "astrophotography",
+  "updated": "2026-08-31T17:46:47.049Z",
+  "tags": [
+    "Solar"
+  ],
+  "items": [
+    {
+      "type": "video",
+      "title": "0812 (1)",
+      "date": "2026-08-12",
+      "target": "Sun",
+      "tags": [
+        "Solar"
+      ],
+      "file": "0812 (1).MP4",
+      "url": "https://storage.googleapis.com/whitegate-astrophotography/0812 (1).MP4",
+      "description": "Raw Footage of recent Solar Eclipse",
+      "fileMeta": {
+        "contentType": "video/mp4",
+        "size": 98553386
+      }
+    },
+    {
+      "type": "video",
+      "title": "My Movie 1 1080p60",
+      "date": "2026-08-12",
+      "target": "Sun",
+      "tags": [
+        "Solar"
+      ],
+      "file": "My Movie 1-1080p60.mov",
+      "url": "https://storage.googleapis.com/whitegate-astrophotography/My Movie 1-1080p60.mov",
+      "thumb": "IMG_2756.jpg",
+      "description": "Timelapse of created from Raw footage",
+      "fileMeta": {
+        "contentType": "application/octet-stream",
+        "size": 129493573
+      }
+    },
+    {
+      "type": "image",
+      "title": "IMG 2756",
+      "date": "2026-08-30",
+      "target": "Sun",
+      "tags": [
+        "Solar"
+      ],
+      "file": "IMG_2756.jpg",
+      "url": "https://storage.googleapis.com/whitegate-astrophotography/IMG_2756.jpg",
+      "thumb": "IMG_2756.jpg",
+      "fileMeta": {
+        "contentType": "image/jpeg",
+        "size": 52669
+      },
+      "full": "IMG_2756.jpg"
+    }
+  ]
 }
