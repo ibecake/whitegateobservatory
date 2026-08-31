@@ -1274,8 +1274,9 @@
       if (!result || !result.data) return fromLocal(0);
       importEntries(result.data);
       state.loadSource = result.source;
+      var githubCount = state.entries.length;
       return mergeSameOriginDraft().then(function (extra) {
-        var msg = "Loaded <strong>" + state.entries.length + " item(s)</strong> from " +
+        var msg = "Loaded <strong>" + githubCount + " item(s)</strong> from " +
           escapeHtml(result.source) + " (" + escapeHtml(c.saveTo) + "). This is the live gallery list. Add or remove files below, then Save.";
         if (extra) {
           msg += " Also found " + extra + " extra item(s) in the local copy of the file that are not on GitHub yet — they are marked <em>new — save to publish</em>.";
