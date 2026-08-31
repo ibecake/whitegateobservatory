@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Radio - Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
+    <link rel="stylesheet" href="assets/css/gallery.css" />
     <style>
       .top-menu {
         background: #1a1a1a;
@@ -95,8 +96,66 @@
     </div>
     <div class="content">
       <h1>Radio</h1>
-      <p>Information about radio operations at Whitegate Observatory.</p>
+      <p>HF and VHF radio operations at Whitegate Observatory, including amateur radio contacts and propagation monitoring.</p>
+
+      <section class="gallery-section" aria-labelledby="galleryTitle">
+        <div class="gallery-header">
+          <h2 id="galleryTitle">Radio media</h2>
+          <div class="gallery-controls">
+            <label for="filterTarget">
+              Target
+              <select id="filterTarget">
+                <option value="">All targets</option>
+              </select>
+            </label>
+            <label for="filterYear">
+              Year
+              <select id="filterYear">
+                <option value="">All years</option>
+              </select>
+            </label>
+            <label for="filterTag">
+              Tag
+              <select id="filterTag">
+                <option value="">All tags</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="galleryStatus" class="gallery-status">Loading gallery manifest...</div>
+        <div id="galleryGrid" class="gallery-grid" aria-live="polite"></div>
+      </section>
     </div>
+
+    <div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Radio media viewer">
+      <div class="lightbox-dialog">
+        <div class="lightbox-top">
+          <button id="lightboxClose" class="lightbox-close" type="button" aria-label="Close viewer">Close</button>
+        </div>
+        <div class="lightbox-body">
+          <div id="lightboxMedia"></div>
+          <div id="lightboxPanel" class="lightbox-panel"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/gallery.js"></script>
+    <script>
+      WhitegateGallery.mount({
+        statusEl: document.getElementById("galleryStatus"),
+        gridEl: document.getElementById("galleryGrid"),
+        filterTarget: document.getElementById("filterTarget"),
+        filterYear: document.getElementById("filterYear"),
+        filterTag: document.getElementById("filterTag"),
+        lightbox: document.getElementById("lightbox"),
+        lightboxClose: document.getElementById("lightboxClose"),
+        lightboxMedia: document.getElementById("lightboxMedia"),
+        lightboxPanel: document.getElementById("lightboxPanel"),
+        sources: ["radio/manifest.json", "./radio/manifest.json", "dist/radio/manifest.json"],
+        mediaBase: "https://storage.googleapis.com/whitegate-radio/",
+        emptyLabel: "no radio media is listed yet."
+      });
+    </script>
     <script defer src="assets/js/build-stamp.js"></script>
   </body>
 </html>

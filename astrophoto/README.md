@@ -13,32 +13,50 @@ browser from:
 The bucket grants public read (`allUsers` -> Storage Object Viewer). Only
 `manifest.json` (the metadata index) is tracked here.
 
+Use [admin.html](../admin.html) to upload images, apply tags, read EXIF metadata,
+and update this file. You can still edit `manifest.json` by hand if you prefer.
+
 ## Adding a new image
 
-1. Upload the image file to the `whitegate-astrophotography` bucket (a plain
-   web-friendly format such as `.jpg`, `.png`, or `.webp` — browsers do not
-   render `.heic`).
-2. Add an entry to `manifest.json`. The `full` and `thumb` fields are the
-   **object path within the bucket** (for an object at the bucket root, that is
-   just the file name).
+1. Open `admin.html`, choose **Astrophotography**, and drop the image (or upload
+   it to the `whitegate-astrophotography` bucket with `gcloud storage cp`).
+2. Review the auto-filled date/camera/tags from file metadata, then download or
+   commit the updated `manifest.json`.
+
+The `full` and `thumb` fields are the **object path within the bucket** (for an
+object at the bucket root, that is just the file name). The admin also writes
+`file`, `type`, and `tags`.
 
 ## Manifest format
 
 ```json
-[
-  {
-    "title": "Aurora Borealis - East Cork",
-    "date": "2025-08-12",
-    "target": "Aurora Borealis",
-    "camera": "iPhone",
-    "telescope": "Unknown",
-    "integration": "Unknown",
-    "full": "IMG_1959.jpg",
-    "thumb": "IMG_1959.jpg",
-    "description": "Captured from Whitegate Observatory."
-  }
-]
+{
+  "version": 1,
+  "collection": "astrophotography",
+  "tags": ["aurora"],
+  "items": [
+    {
+      "type": "image",
+      "title": "Aurora Borealis - East Cork",
+      "date": "2025-08-12",
+      "target": "Aurora Borealis",
+      "tags": ["aurora"],
+      "camera": "iPhone",
+      "telescope": "Unknown",
+      "integration": "Unknown",
+      "file": "IMG_1959.jpg",
+      "full": "IMG_1959.jpg",
+      "thumb": "IMG_1959.jpg",
+      "description": "Captured from Whitegate Observatory."
+    }
+  ]
+}
 ```
+
+A legacy JSON array of items is still accepted by the gallery.
+
+Browser uploads to GCS from `admin.html` need CORS on the bucket. An example
+policy is in [`assets/data/gcs-cors.example.json`](../assets/data/gcs-cors.example.json).
 
 Notes:
 
@@ -54,4 +72,4 @@ Notes:
 
 - Responsive card grid with lazy-loaded thumbnails.
 - Click a thumbnail to open a lightbox with the full image and metadata.
-- Filters by `target` and `date`.
+- Filters by `target`, year, and `tags`.

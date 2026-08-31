@@ -1,0 +1,8 @@
+[
+  {
+    "origin": ["https://whitegateobservatory.com", "http://localhost:8000"],
+    "method": ["GET", "HEAD", "PUT", "POST", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Authorization", "x-goog-resumable"],
+    "maxAgeSeconds": 3600
+  }
+]

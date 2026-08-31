@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Media Admin - Whitegate Observatory</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css" />
+    <link rel="stylesheet" href="assets/css/admin.css" />
+  </head>
+  <body class="admin-body">
+    <div class="top-menu">
+      <nav>
+        <a href="index.html" class="logo">Whitegate Observatory</a>
+        <a href="radio.html">Radio</a>
+        <a href="radio-astronomy.html">Radio Astronomy</a>
+        <a href="astro-photography.html">Astro Photography</a>
+        <a href="admin.html" class="active">Admin</a>
+      </nav>
+    </div>
+
+    <div class="admin-wrap">
+      <h1>Media Admin</h1>
+      <p class="lead">
+        Catalogue and publish media for each gallery section. Drop files to read EXIF/file metadata
+        and suggest tags, edit <code>manifest.json</code>, then upload objects to the matching
+        Google Cloud Storage bucket. Tokens stay in this browser tab only.
+      </p>
+
+      <div class="panel">
+        <h2>Section</h2>
+        <div class="section-tabs" id="sectionTabs"></div>
+        <div class="row" style="margin-top:0.9rem;">
+          <div class="field" style="flex:2 1 320px;">
+            <label>Public base URL</label>
+            <input type="text" id="baseUrl" readonly />
+          </div>
+        </div>
+        <p class="hint" id="saveHint"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Settings</h2>
+        <div class="row">
+          <div class="field">
+            <label for="gcsToken">GCS access token (optional, for uploads)</label>
+            <input type="password" id="gcsToken" autocomplete="off" placeholder="gcloud auth print-access-token" />
+          </div>
+          <div class="field">
+            <label for="githubToken">GitHub token (optional, to commit the manifest)</label>
+            <input type="password" id="githubToken" autocomplete="off" placeholder="repo-scoped PAT" />
+          </div>
+        </div>
+        <p class="hint">
+          Tokens are stored in <code>sessionStorage</code> for this tab and are never written to the repo.
+          Uploads also need a CORS policy on the bucket that allows this site origin.
+        </p>
+        <details class="help">
+          <summary>How to get tokens and enable CORS</summary>
+          <p class="hint">Print a short-lived GCS token:</p>
+          <pre>gcloud auth print-access-token</pre>
+          <p class="hint">Apply CORS so the browser can upload from this page (adjust the origin if needed). An example file is <code>assets/data/gcs-cors.example.json</code>:</p>
+          <pre>[
+  {
+    "origin": ["https://whitegateobservatory.com", "http://localhost:8000"],
+    "method": ["GET", "HEAD", "PUT", "POST", "OPTIONS"],
+    "responseHeader": ["Content-Type", "Authorization", "x-goog-resumable"],
+    "maxAgeSeconds": 3600
+  }
+]
+
+gcloud storage buckets update gs://whitegate-astrophotography --cors-file=cors.json</pre>
+          <p class="hint">Without tokens you can still edit the manifest, download it, and copy <code>gcloud storage cp</code> commands.</p>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2><span class="step">1</span> Upload media</h2>
+        <div class="dropzone" id="dropzone" role="button" tabindex="0">
+          <strong>Drop files here or click to choose</strong>
+          JPEG, PNG, WebP, video, audio, or data files. EXIF/date/camera are read in the browser.
+          <input id="fileInput" type="file" multiple accept="image/*,video/*,audio/*,.pdf,.fits,.csv,.json,.txt" />
+        </div>
+        <div class="status" id="uploadStatus"></div>
+        <p class="hint">
+          HEIC is flagged because browsers cannot display it — convert to JPEG/WebP for the gallery.
+          Object metadata (camera, date, tags) is written onto GCS objects when you upload with a token.
+        </p>
+      </div>
+
+      <div class="panel">
+        <h2><span class="step">2</span> Files already in the bucket</h2>
+        <div class="btn-bar">
+          <button class="primary" id="loadFilesBtn">Load files from bucket</button>
+          <button id="addManualBtn">Add a file manually</button>
+          <span class="pill-count" id="fileCount"></span>
+        </div>
+        <div class="status" id="listStatus"></div>
+        <div class="filelist" id="fileList" style="display:none;"></div>
+        <details class="help">
+          <summary>Bucket not listing?</summary>
+          <p class="hint">Anonymous listing needs public object viewer on the bucket, or a GCS token in Settings.</p>
+          <pre>gcloud storage buckets add-iam-policy-binding gs://BUCKET_NAME \
+  --member=allUsers --role=roles/storage.objectViewer</pre>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2><span class="step">3</span> Tags</h2>
+        <p class="hint" style="margin-top:0;">Click a tag to filter entries. Create tags here or on any card. File names and EXIF suggest tags automatically.</p>
+        <div class="tag-library" id="tagLibrary"></div>
+        <div class="btn-bar" style="margin-top:0.75rem;">
+          <input type="text" id="newTag" placeholder="new tag (aurora, moon, 1420mhz…)" style="max-width:280px;" />
+          <button id="addTagBtn">Create tag</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="step">4</span> Entries <span class="pill-count" id="entryCount">0</span></h2>
+        <div class="row">
+          <div class="field">
+            <label for="filterText">Search</label>
+            <input type="search" id="filterText" placeholder="title, file, tag…" />
+          </div>
+          <div class="field">
+            <label for="bulkTag">Apply tag to selected</label>
+            <div class="btn-bar">
+              <input type="text" id="bulkTag" placeholder="tag name" list="tagsuggest" />
+              <button id="bulkBtn">Apply</button>
+            </div>
+          </div>
+        </div>
+        <div class="status" id="bulkStatus"></div>
+        <div id="entries"></div>
+        <div class="btn-bar" style="margin-top:0.5rem;">
+          <button id="addBlankBtn">+ Add blank entry</button>
+          <button class="ghost danger" id="clearBtn">Clear all</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="step">5</span> Import &amp; publish</h2>
+        <div class="row">
+          <div class="field" style="flex:2 1 300px;">
+            <label for="importUrl">Load an existing manifest</label>
+            <div class="btn-bar">
+              <input type="text" id="importUrl" placeholder="astrophoto/manifest.json" />
+              <button id="importUrlBtn">Load</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="importFile">…or from a file</label>
+            <input type="file" id="importFile" accept="application/json,.json" />
+          </div>
+        </div>
+        <div class="status" id="importStatus"></div>
+
+        <label style="margin-top:0.5rem;">manifest.json preview</label>
+        <textarea class="output" id="output" readonly spellcheck="false"></textarea>
+        <div class="btn-bar" style="margin-top:0.6rem;">
+          <button class="primary" id="downloadBtn">Download manifest.json</button>
+          <button id="copyBtn">Copy JSON</button>
+          <button id="uploadGcsBtn">Upload pending files to GCS</button>
+          <button id="commitBtn">Commit manifest to GitHub</button>
+          <button id="copyGsutilBtn">Copy gsutil commands</button>
+          <span class="muted-inline" id="pendingCount"></span>
+        </div>
+        <div class="status" id="publishStatus"></div>
+        <label style="margin-top:0.6rem;">gsutil fallback</label>
+        <textarea id="gsutilOut" rows="3" readonly spellcheck="false" placeholder="Pending uploads appear here as gcloud storage cp commands."></textarea>
+      </div>
+    </div>
+
+    <script src="assets/js/exif-reader.js"></script>
+    <script src="assets/js/media-admin.js"></script>
+    <script defer src="assets/js/build-stamp.js"></script>
+  </body>
+</html>

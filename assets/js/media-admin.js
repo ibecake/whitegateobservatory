@@ -1,0 +1,1230 @@
+/**
+ * Whitegate Observatory media admin.
+ * Edits per-section manifest.json files, tags entries, extracts file metadata,
+ * and optionally uploads objects to the matching GCS bucket.
+ */
+(function () {
+  "use strict";
+
+  var COLLECTIONS = {
+    astrophotography: {
+      label: "Astrophotography",
+      bucket: "whitegate-astrophotography",
+      astroCompat: true,
+      saveTo: "astrophoto/manifest.json",
+      page: "astro-photography.html"
+    },
+    astroradio: {
+      label: "Radio Astronomy",
+      bucket: "whitegate-astroradio",
+      saveTo: "astroradio/manifest.json",
+      page: "radio-astronomy.html"
+    },
+    radio: {
+      label: "Radio",
+      bucket: "whitegate-radio",
+      saveTo: "radio/manifest.json",
+      page: "radio.html"
+    }
+  };
+
+  var GITHUB = {
+    owner: "ibecake",
+    repo: "whitegateobservatory",
+    branch: "main"
+  };
+
+  var DETAIL_TEMPLATES = {
+    image: ["camera", "telescope", "integration", "filter", "exposure"],
+    video: ["duration", "resolution", "equipment"],
+    audio: ["frequency", "mode", "duration", "equipment"],
+    document: ["format", "source"],
+    data: ["format", "source", "instrument"],
+    other: []
+  };
+  var TYPES = ["image", "video", "audio", "document", "data", "other"];
+
+  var uid = 1;
+  var state = {
+    collectionKey: "astrophotography",
+    entries: [],
+    tagCatalog: [],
+    knownTags: {},
+    filterTag: "",
+    filterText: "",
+    gcsToken: sessionStorage.getItem("wg_gcs_token") || "",
+    githubToken: sessionStorage.getItem("wg_gh_token") || "",
+    bucketItems: [],
+    dirty: false
+  };
+
+  var el = {};
+
+  function $(id) { return document.getElementById(id); }
+
+  function currentCollection() { return COLLECTIONS[state.collectionKey]; }
+  function currentBucket() { return currentCollection().bucket; }
+  function baseUrl() {
+    var b = currentBucket();
+    return b ? "https://storage.googleapis.com/" + b + "/" : "";
+  }
+  function isAbsoluteUrl(v) { return /^(https?:)?\/\//i.test(v) || /^data:/i.test(v); }
+  function resolveUrl(path, base) {
+    if (!path) return "";
+    if (isAbsoluteUrl(path)) return path;
+    var nb = base && base.slice(-1) === "/" ? base : base + "/";
+    return nb + String(path).replace(/^\/+/, "");
+  }
+  function typeFromContentType(ct, name) {
+    ct = (ct || "").toLowerCase();
+    var n = (name || "").toLowerCase();
+    if (ct.indexOf("image/") === 0 || /\.(jpe?g|png|webp|gif|heic|heif|tif{1,2})$/.test(n)) return "image";
+    if (ct.indexOf("video/") === 0 || /\.(mp4|mov|m4v|webm)$/.test(n)) return "video";
+    if (ct.indexOf("audio/") === 0 || /\.(wav|mp3|ogg|flac|m4a)$/.test(n)) return "audio";
+    if (ct === "application/pdf" || /\.pdf$/.test(n)) return "document";
+    if (ct.indexOf("text/") === 0 || /json|csv/.test(ct) || /\.(json|csv|txt|fits)$/.test(n)) return "data";
+    return "other";
+  }
+  function humanSize(bytes) {
+    bytes = Number(bytes) || 0;
+    var u = ["B", "KB", "MB", "GB"];
+    var i = 0;
+    while (bytes >= 1024 && i < u.length - 1) { bytes /= 1024; i++; }
+    return (i === 0 ? String(bytes) : bytes.toFixed(1)) + " " + u[i];
+  }
+  function setStatus(node, msg, kind) {
+    node.className = "status show " + (kind || "");
+    node.innerHTML = msg;
+  }
+  function clearStatus(node) { node.className = "status"; node.innerHTML = ""; }
+  function escapeHtml(v) {
+    return String(v == null ? "" : v)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function sanitizeObjectName(name) {
+    name = String(name || "").replace(/\\/g, "/").split("/").pop();
+    name = name.replace(/[^\w.\-()+ ]+/g, "_").replace(/\s+/g, "_");
+    return name || ("upload_" + Date.now());
+  }
+  function uniqueObjectName(name) {
+    var base = sanitizeObjectName(name);
+    var used = {};
+    state.entries.forEach(function (e) { if (e.file) used[e.file] = true; });
+    (state.bucketItems || []).forEach(function (it) { if (it.name) used[it.name] = true; });
+    if (!used[base]) return base;
+    var dot = base.lastIndexOf(".");
+    var stem = dot > 0 ? base.slice(0, dot) : base;
+    var ext = dot > 0 ? base.slice(dot) : "";
+    var n = 2;
+    while (used[stem + "-" + n + ext]) n++;
+    return stem + "-" + n + ext;
+  }
+
+  function newEntry(seed) {
+    seed = seed || {};
+    return {
+      id: uid++,
+      type: seed.type || "image",
+      title: seed.title || "",
+      date: seed.date || "",
+      target: seed.target || "",
+      tags: (seed.tags || []).slice(),
+      description: seed.description || "",
+      file: seed.file || "",
+      thumb: seed.thumb || "",
+      details: (seed.details || []).slice(),
+      localFile: seed.localFile || null,
+      objectUrl: seed.objectUrl || "",
+      exif: seed.exif || null,
+      pendingUpload: !!seed.pendingUpload,
+      selected: false,
+      fileMeta: seed.fileMeta || null
+    };
+  }
+
+  function registerTags(tags) {
+    (tags || []).forEach(function (t) {
+      if (!t) return;
+      state.knownTags[t] = true;
+      if (state.tagCatalog.indexOf(t) === -1) state.tagCatalog.push(t);
+    });
+  }
+
+  function markDirty() {
+    state.dirty = true;
+    updateOutput();
+  }
+
+  function tokenHeaders() {
+    var h = {};
+    if (state.gcsToken) h.Authorization = "Bearer " + state.gcsToken;
+    return h;
+  }
+
+  // ---- collection UI ----
+  function renderSectionTabs() {
+    var wrap = el.sectionTabs;
+    wrap.innerHTML = "";
+    Object.keys(COLLECTIONS).forEach(function (k) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "section-tab" + (k === state.collectionKey ? " active" : "");
+      b.textContent = COLLECTIONS[k].label;
+      b.addEventListener("click", function () { switchCollection(k); });
+      wrap.appendChild(b);
+    });
+  }
+
+  function switchCollection(key) {
+    if (key === state.collectionKey) return;
+    if (state.dirty && !confirm("Discard unsaved edits for this section?")) return;
+    state.collectionKey = key;
+    state.entries.forEach(function (e) { if (e.objectUrl) URL.revokeObjectURL(e.objectUrl); });
+    state.entries = [];
+    state.tagCatalog = [];
+    state.knownTags = {};
+    state.filterTag = "";
+    state.filterText = "";
+    state.bucketItems = [];
+    state.dirty = false;
+    el.fileList.style.display = "none";
+    el.fileList.innerHTML = "";
+    el.fileCount.textContent = "";
+    clearStatus(el.listStatus);
+    renderSectionTabs();
+    refreshBase();
+    renderTagLibrary();
+    renderEntries();
+    updateOutput();
+    loadManifestFromRepo();
+  }
+
+  function refreshBase() {
+    var c = currentCollection();
+    el.baseUrl.value = baseUrl();
+    el.saveHint.textContent = "Writes to " + c.saveTo + " (gallery: " + c.page + ")";
+    el.importUrl.value = c.saveTo;
+    el.importUrl.placeholder = c.saveTo;
+  }
+
+  // ---- tags ----
+  function renderTagLibrary() {
+    var box = el.tagLibrary;
+    box.innerHTML = "";
+    if (!state.tagCatalog.length) {
+      var empty = document.createElement("span");
+      empty.className = "muted-inline";
+      empty.textContent = "No tags yet. Create one below or add tags on an entry.";
+      box.appendChild(empty);
+    }
+    state.tagCatalog.forEach(function (t) {
+      var count = state.entries.filter(function (e) { return e.tags.indexOf(t) !== -1; }).length;
+      var chip = document.createElement("span");
+      chip.className = "chip" + (state.filterTag === t ? " active" : "");
+      chip.appendChild(document.createTextNode(t + " (" + count + ")"));
+      chip.title = "Filter by this tag";
+      chip.style.cursor = "pointer";
+      chip.addEventListener("click", function (ev) {
+        if (ev.target.closest && ev.target.closest("button")) return;
+        state.filterTag = state.filterTag === t ? "" : t;
+        renderTagLibrary();
+        renderEntries();
+      });
+      var x = document.createElement("button");
+      x.type = "button";
+      x.textContent = "×";
+      x.title = "Remove tag from library and all entries";
+      x.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        if (!confirm("Remove tag “" + t + "” from the library and every entry?")) return;
+        state.tagCatalog = state.tagCatalog.filter(function (x) { return x !== t; });
+        delete state.knownTags[t];
+        state.entries.forEach(function (e) {
+          e.tags = e.tags.filter(function (x) { return x !== t; });
+        });
+        if (state.filterTag === t) state.filterTag = "";
+        renderTagLibrary();
+        renderEntries();
+        markDirty();
+      });
+      chip.appendChild(x);
+      box.appendChild(chip);
+    });
+    refreshTagSuggestions();
+  }
+
+  function addCatalogTag(raw) {
+    raw.split(",").forEach(function (part) {
+      var t = part.trim();
+      if (!t) return;
+      registerTags([t]);
+    });
+    renderTagLibrary();
+    markDirty();
+  }
+
+  // ---- bucket listing ----
+  function listObjects() {
+    var bucket = currentBucket();
+    setStatus(el.listStatus, "Loading objects from <code>" + escapeHtml(bucket) + "</code>…", "");
+    el.loadFilesBtn.disabled = true;
+    var items = [];
+    function page(token) {
+      var url = "https://storage.googleapis.com/storage/v1/b/" + encodeURIComponent(bucket) +
+        "/o?fields=items(name,contentType,size,timeCreated,updated,metadata),nextPageToken&maxResults=1000" +
+        (token ? "&pageToken=" + encodeURIComponent(token) : "");
+      return fetch(url, { cache: "no-store", headers: tokenHeaders() }).then(function (r) {
+        if (!r.ok) {
+          return r.json().catch(function () { return {}; }).then(function (j) { throw { status: r.status, body: j }; });
+        }
+        return r.json();
+      }).then(function (data) {
+        (data.items || []).forEach(function (it) { items.push(it); });
+        if (data.nextPageToken) return page(data.nextPageToken);
+      });
+    }
+    page(null).then(function () {
+      el.loadFilesBtn.disabled = false;
+      items = items.filter(function (it) { return it.name && it.name.slice(-1) !== "/"; });
+      state.bucketItems = items;
+      renderFileList(items);
+      if (!items.length) setStatus(el.listStatus, "Bucket is reachable but contains no objects.", "warn");
+      else setStatus(el.listStatus, "Loaded " + items.length + " object(s). Click <strong>Add</strong> to catalogue one.", "ok");
+    }).catch(function (e) {
+      el.loadFilesBtn.disabled = false;
+      var code = e && e.status;
+      if (code === 401 || code === 403) {
+        setStatus(el.listStatus,
+          "Anonymous listing is blocked (HTTP " + code + "). Make the bucket publicly listable, or paste a GCS access token in Settings.<br>" +
+          "<pre style='margin:.5rem 0 0'>gcloud storage buckets add-iam-policy-binding gs://" + escapeHtml(bucket) +
+          " \\\n  --member=allUsers --role=roles/storage.objectViewer</pre>", "err");
+      } else {
+        setStatus(el.listStatus, "Could not list bucket (" + escapeHtml(String(code || (e && e.message) || "network error")) + ").", "err");
+      }
+    });
+  }
+
+  function isAdded(name) {
+    return state.entries.some(function (en) { return en.file === name; });
+  }
+
+  function renderFileList(items) {
+    el.fileList.style.display = "";
+    el.fileList.innerHTML = "";
+    el.fileCount.textContent = items.length + " file(s)";
+    items.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+    items.forEach(function (it) {
+      var type = typeFromContentType(it.contentType, it.name);
+      var heic = /\.hei[cf]$/i.test(it.name);
+      var div = document.createElement("div");
+      div.className = "fileitem" + (isAdded(it.name) ? " added" : "");
+      div.innerHTML =
+        '<span class="name">' + escapeHtml(it.name) + "</span>" +
+        '<span class="badge">' + escapeHtml(type) + "</span>" +
+        '<span class="size">' + humanSize(it.size) + "</span>";
+      var btn = document.createElement("button");
+      btn.className = "small primary";
+      btn.textContent = isAdded(it.name) ? "Added" : "Add";
+      btn.disabled = isAdded(it.name);
+      btn.addEventListener("click", function () {
+        addFromBucketObject(it);
+        btn.textContent = "Added";
+        btn.disabled = true;
+        div.classList.add("added");
+      });
+      div.appendChild(btn);
+      if (heic) {
+        var warn = document.createElement("span");
+        warn.className = "badge warn";
+        warn.title = "Browsers cannot display HEIC; upload a JPG/WebP version for the web.";
+        warn.textContent = "HEIC";
+        div.insertBefore(warn, btn);
+      }
+      el.fileList.appendChild(div);
+    });
+  }
+
+  function addFromBucketObject(it) {
+    var type = typeFromContentType(it.contentType, it.name);
+    var meta = it.metadata || {};
+    var details = [];
+    Object.keys(meta).forEach(function (k) {
+      if (meta[k]) details.push({ key: k, value: String(meta[k]) });
+    });
+    var date = meta.capturedAt || meta.date || "";
+    if (date.length > 10) date = date.slice(0, 10);
+    if (!date && it.timeCreated) date = String(it.timeCreated).slice(0, 10);
+    var tags = [];
+    if (meta.tags) tags = String(meta.tags).split(",").map(function (t) { return t.trim(); }).filter(Boolean);
+    tags = tags.concat(window.MediaExif ? window.MediaExif.suggestFromFilename(it.name) : []);
+    registerTags(tags);
+    addEntry({
+      file: it.name,
+      thumb: type === "image" ? it.name : "",
+      type: type,
+      date: date,
+      title: meta.title || it.name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " "),
+      camera: meta.camera,
+      tags: tags,
+      details: details,
+      fileMeta: { contentType: it.contentType, size: Number(it.size) || 0, timeCreated: it.timeCreated || "" }
+    });
+    tryReadRemoteExif(it.name, type);
+  }
+
+  function tryReadRemoteExif(objectName, type) {
+    if (type !== "image") return;
+    var url = resolveUrl(objectName, baseUrl());
+    fetch(url, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      if (!window.MediaExif) return;
+      var parsed = window.MediaExif.readBuffer(buf, "image/jpeg", objectName);
+      var entry = state.entries.filter(function (e) { return e.file === objectName; })[0];
+      if (!entry || !parsed) return;
+      applyExifToEntry(entry, parsed, { overwriteEmpty: true });
+      renderEntries();
+      markDirty();
+    }).catch(function () { /* CORS likely; ignore */ });
+  }
+
+  // ---- local uploads ----
+  function handleFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    var chain = Promise.resolve();
+    files.forEach(function (file) {
+      chain = chain.then(function () { return ingestLocalFile(file); });
+    });
+    chain.then(function () {
+      setStatus(el.uploadStatus, "Added " + files.length + " file(s). Review tags and details, then publish.", "ok");
+    });
+  }
+
+  function ingestLocalFile(file) {
+    var type = typeFromContentType(file.type, file.name);
+    var objectName = uniqueObjectName(file.name);
+    var objectUrl = "";
+    if (type === "image") {
+      try { objectUrl = URL.createObjectURL(file); } catch (e) { objectUrl = ""; }
+    }
+    var seed = {
+      type: type,
+      file: objectName,
+      thumb: type === "image" ? objectName : "",
+      title: file.name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " "),
+      localFile: file,
+      objectUrl: objectUrl,
+      pendingUpload: true,
+      fileMeta: { contentType: file.type || "", size: file.size || 0 }
+    };
+    var reader = window.MediaExif ? window.MediaExif.read(file) : Promise.resolve(null);
+    return reader.then(function (exif) {
+      if (exif) {
+        seed.exif = exif;
+        if (exif.date) seed.date = exif.date;
+        if (exif.camera) seed.details = seed.details || [];
+        seed.tags = (exif.suggestedTags || []).slice();
+        if (exif.description) seed.description = exif.description;
+        var details = [];
+        Object.keys(exif.details || {}).forEach(function (k) {
+          details.push({ key: k, value: exif.details[k] });
+        });
+        seed.details = details;
+      }
+      if (!seed.date && file.lastModified) {
+        seed.date = new Date(file.lastModified).toISOString().slice(0, 10);
+      }
+      registerTags(seed.tags);
+      addEntry(seed);
+    });
+  }
+
+  function applyExifToEntry(entry, exif, opts) {
+    opts = opts || {};
+    var onlyEmpty = !!opts.overwriteEmpty;
+    entry.exif = exif;
+    function setIf(field, value) {
+      if (!value) return;
+      if (onlyEmpty && entry[field]) return;
+      entry[field] = value;
+    }
+    setIf("date", exif.date);
+    if (exif.description) setIf("description", exif.description);
+    (exif.suggestedTags || []).forEach(function (t) {
+      if (entry.tags.indexOf(t) === -1) entry.tags.push(t);
+    });
+    registerTags(entry.tags);
+    Object.keys(exif.details || {}).forEach(function (k) {
+      if (!entry.details.some(function (d) { return d.key === k; })) {
+        entry.details.push({ key: k, value: exif.details[k] });
+      } else if (!onlyEmpty) {
+        entry.details.forEach(function (d) { if (d.key === k) d.value = exif.details[k]; });
+      }
+    });
+  }
+
+  // ---- entries ----
+  function addEntry(seed) {
+    var e = newEntry(seed);
+    if (!e.title && e.file) e.title = e.file.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " ");
+    if (seed && seed.camera && !e.details.some(function (d) { return d.key === "camera"; })) {
+      e.details.push({ key: "camera", value: String(seed.camera) });
+    }
+    state.entries.push(e);
+    renderTagLibrary();
+    renderEntries();
+    markDirty();
+  }
+
+  function visibleEntries() {
+    var q = (state.filterText || "").toLowerCase();
+    return state.entries.filter(function (e) {
+      if (state.filterTag && e.tags.indexOf(state.filterTag) === -1) return false;
+      if (!q) return true;
+      var blob = [e.title, e.target, e.file, e.description, e.tags.join(" ")].join(" ").toLowerCase();
+      return blob.indexOf(q) !== -1;
+    });
+  }
+
+  function renderEntries() {
+    el.entries.innerHTML = "";
+    el.entryCount.textContent = String(state.entries.length);
+    var list = visibleEntries();
+    if (!state.entries.length) {
+      var empty = document.createElement("p");
+      empty.className = "hint";
+      empty.textContent = "No entries yet. Upload files, load the bucket, or import the existing manifest.";
+      el.entries.appendChild(empty);
+      return;
+    }
+    if (!list.length) {
+      var none = document.createElement("p");
+      none.className = "hint";
+      none.textContent = "No entries match the current tag/search filter.";
+      el.entries.appendChild(none);
+      return;
+    }
+    list.forEach(function (entry) {
+      var index = state.entries.indexOf(entry);
+      el.entries.appendChild(buildEntryCard(entry, index));
+    });
+  }
+
+  function buildEntryCard(entry, index) {
+    var card = document.createElement("div");
+    card.className = "entry" + (entry.selected ? " selected" : "");
+
+    var head = document.createElement("div");
+    head.className = "entry-head";
+    var check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = !!entry.selected;
+    check.title = "Select for bulk tag";
+    check.addEventListener("change", function () { entry.selected = check.checked; card.classList.toggle("selected", entry.selected); });
+    head.appendChild(check);
+    var idx = document.createElement("span");
+    idx.className = "idx";
+    idx.textContent = "#" + (index + 1);
+    head.appendChild(idx);
+    if (entry.pendingUpload) {
+      var pend = document.createElement("span");
+      pend.className = "badge pending";
+      pend.textContent = "not uploaded";
+      head.appendChild(pend);
+    }
+    if (entry.exif && entry.exif.source) {
+      var ex = document.createElement("span");
+      ex.className = "badge ok";
+      ex.textContent = "metadata: " + entry.exif.source;
+      head.appendChild(ex);
+    }
+    var spacer = document.createElement("span");
+    spacer.className = "spacer";
+    head.appendChild(spacer);
+
+    var up = mkBtn("↑", "small ghost", function () { move(index, -1); });
+    var down = mkBtn("↓", "small ghost", function () { move(index, 1); });
+    var dup = mkBtn("Duplicate", "small ghost", function () {
+      var copy = newEntry(JSON.parse(JSON.stringify({
+        type: entry.type, title: entry.title, date: entry.date, target: entry.target,
+        tags: entry.tags, description: entry.description, file: entry.file, thumb: entry.thumb, details: entry.details
+      })));
+      state.entries.splice(index + 1, 0, copy);
+      renderEntries();
+      markDirty();
+    });
+    var del = mkBtn("Remove", "small danger", function () {
+      if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+      state.entries.splice(index, 1);
+      renderTagLibrary();
+      renderEntries();
+      markDirty();
+    });
+    up.disabled = index === 0;
+    down.disabled = index === state.entries.length - 1;
+    head.appendChild(up); head.appendChild(down); head.appendChild(dup); head.appendChild(del);
+    card.appendChild(head);
+
+    var body = document.createElement("div");
+    body.className = "entry-body";
+    var thumb = document.createElement("img");
+    thumb.className = "entry-thumb";
+    var fields = document.createElement("div");
+    fields.className = "entry-fields";
+
+    function refreshThumb() {
+      var src = entry.objectUrl || resolveUrl(entry.thumb || entry.file, baseUrl());
+      if (entry.type === "image" && src) {
+        thumb.src = src;
+        thumb.className = "entry-thumb";
+        thumb.alt = entry.title || entry.file;
+      } else {
+        thumb.removeAttribute("src");
+        thumb.className = "entry-thumb placeholder";
+        thumb.alt = entry.type || "media";
+      }
+    }
+    thumb.addEventListener("error", function () {
+      thumb.className = "entry-thumb placeholder";
+      thumb.removeAttribute("src");
+    });
+
+    var r1 = document.createElement("div"); r1.className = "row";
+    r1.appendChild(fieldSelect("Type", TYPES, entry.type, function (v) {
+      entry.type = v; refreshThumb(); renderDetails(); markDirty();
+    }));
+    r1.appendChild(fieldText("Title", entry.title, "e.g. Aurora over Cork Harbour", function (v) { entry.title = v; markDirty(); }, 2));
+    fields.appendChild(r1);
+
+    var r2 = document.createElement("div"); r2.className = "row";
+    r2.appendChild(fieldDate("Date", entry.date, function (v) { entry.date = v; markDirty(); }));
+    r2.appendChild(fieldText("Target / subject", entry.target, "e.g. Aurora Borealis", function (v) { entry.target = v; markDirty(); }, 2));
+    fields.appendChild(r2);
+
+    var r3 = document.createElement("div"); r3.className = "row";
+    r3.appendChild(fieldText("File (object path or URL)", entry.file, "IMG_1959.jpg", function (v) {
+      entry.file = v.trim(); refreshThumb(); markDirty();
+    }, 2));
+    r3.appendChild(fieldText("Thumbnail (optional)", entry.thumb, "same as file if blank", function (v) {
+      entry.thumb = v.trim(); refreshThumb(); markDirty();
+    }, 2));
+    fields.appendChild(r3);
+
+    if (entry.exif && (entry.exif.camera || entry.exif.dateTime || entry.exif.gps)) {
+      var box = document.createElement("div");
+      box.className = "exif-box";
+      var bits = [];
+      if (entry.exif.camera) bits.push("Camera: " + entry.exif.camera);
+      if (entry.exif.dateTime) bits.push("Captured: " + entry.exif.dateTime.replace("T", " "));
+      if (entry.exif.lens) bits.push("Lens: " + entry.exif.lens);
+      if (entry.exif.iso) bits.push("ISO " + entry.exif.iso);
+      if (entry.exif.exposureTime) bits.push(entry.exif.exposureTime);
+      if (entry.exif.fNumber) bits.push(entry.exif.fNumber);
+      if (entry.exif.focalLength) bits.push(entry.exif.focalLength);
+      if (entry.exif.width && entry.exif.height) bits.push(entry.exif.width + "×" + entry.exif.height);
+      if (entry.exif.gps) bits.push(entry.exif.gps.lat.toFixed(5) + ", " + entry.exif.gps.lon.toFixed(5));
+      box.textContent = bits.join(" · ");
+      fields.appendChild(box);
+    }
+
+    var tagsField = document.createElement("div"); tagsField.className = "field";
+    var tagsLabel = document.createElement("label"); tagsLabel.textContent = "Tags"; tagsField.appendChild(tagsLabel);
+    var tagsBox = document.createElement("div"); tagsBox.className = "tags";
+    tagsField.appendChild(tagsBox);
+    fields.appendChild(tagsField);
+
+    function renderTags(focusInput) {
+      tagsBox.innerHTML = "";
+      entry.tags.forEach(function (t, ti) {
+        var chip = document.createElement("span"); chip.className = "chip";
+        chip.appendChild(document.createTextNode(t));
+        var x = document.createElement("button"); x.type = "button"; x.textContent = "×";
+        x.addEventListener("click", function () {
+          entry.tags.splice(ti, 1); renderTags(true); renderTagLibrary(); markDirty();
+        });
+        chip.appendChild(x);
+        tagsBox.appendChild(chip);
+      });
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.placeholder = entry.tags.length ? "add tag…" : "type a tag, press Enter";
+      inp.setAttribute("list", "tagsuggest");
+      inp.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === ",") {
+          ev.preventDefault();
+          addTagFromInput(inp.value);
+          inp.value = "";
+        } else if (ev.key === "Backspace" && !inp.value && entry.tags.length) {
+          entry.tags.pop(); renderTags(true); renderTagLibrary(); markDirty();
+        }
+      });
+      inp.addEventListener("change", function () { if (inp.value.trim()) { addTagFromInput(inp.value); inp.value = ""; } });
+      tagsBox.appendChild(inp);
+      if (focusInput) inp.focus();
+    }
+    function addTagFromInput(raw) {
+      raw.split(",").forEach(function (part) {
+        var t = part.trim();
+        if (t && entry.tags.indexOf(t) === -1) {
+          entry.tags.push(t);
+          registerTags([t]);
+        }
+      });
+      renderTags(true);
+      renderTagLibrary();
+      markDirty();
+    }
+    renderTags(false);
+
+    var descField = document.createElement("div"); descField.className = "field";
+    var descLabel = document.createElement("label"); descLabel.textContent = "Description"; descField.appendChild(descLabel);
+    var ta = document.createElement("textarea"); ta.rows = 2; ta.value = entry.description;
+    ta.addEventListener("input", function () { entry.description = ta.value; markDirty(); });
+    descField.appendChild(ta);
+    fields.appendChild(descField);
+
+    var detailsField = document.createElement("div"); detailsField.className = "field";
+    var dHead = document.createElement("label"); dHead.textContent = "Details"; detailsField.appendChild(dHead);
+    var detailsWrap = document.createElement("div");
+    detailsField.appendChild(detailsWrap);
+    var dBar = document.createElement("div"); dBar.className = "btn-bar";
+    dBar.appendChild(mkBtn("+ Add detail", "small", function () {
+      entry.details.push({ key: "", value: "" }); renderDetails(); markDirty();
+    }));
+    dBar.appendChild(mkBtn("Suggested fields", "small ghost", function () {
+      (DETAIL_TEMPLATES[entry.type] || []).forEach(function (k) {
+        if (!entry.details.some(function (d) { return d.key === k; })) entry.details.push({ key: k, value: "" });
+      });
+      renderDetails(); markDirty();
+    }));
+    detailsField.appendChild(dBar);
+    fields.appendChild(detailsField);
+
+    function renderDetails() {
+      detailsWrap.innerHTML = "";
+      entry.details.forEach(function (d, di) {
+        var row = document.createElement("div"); row.className = "detail-row";
+        var k = document.createElement("input"); k.className = "k"; k.type = "text"; k.placeholder = "key (e.g. camera)"; k.value = d.key;
+        k.setAttribute("list", "detailsuggest");
+        k.addEventListener("input", function () { d.key = k.value.trim(); markDirty(); });
+        var v = document.createElement("input"); v.type = "text"; v.placeholder = "value"; v.value = d.value;
+        v.addEventListener("input", function () { d.value = v.value; markDirty(); });
+        var rm = mkBtn("×", "small danger", function () { entry.details.splice(di, 1); renderDetails(); markDirty(); });
+        row.appendChild(k); row.appendChild(v); row.appendChild(rm);
+        detailsWrap.appendChild(row);
+      });
+    }
+    renderDetails();
+
+    body.appendChild(thumb);
+    body.appendChild(fields);
+    card.appendChild(body);
+    refreshThumb();
+    return card;
+  }
+
+  function move(index, dir) {
+    var ni = index + dir;
+    if (ni < 0 || ni >= state.entries.length) return;
+    var tmp = state.entries[index];
+    state.entries[index] = state.entries[ni];
+    state.entries[ni] = tmp;
+    renderEntries();
+    markDirty();
+  }
+
+  function mkBtn(label, cls, fn) {
+    var b = document.createElement("button"); b.type = "button"; b.className = cls; b.textContent = label;
+    b.addEventListener("click", fn); return b;
+  }
+  function fieldText(label, value, placeholder, onInput, grow) {
+    var f = document.createElement("div"); f.className = "field"; if (grow) f.style.flex = grow + " 1 200px";
+    var l = document.createElement("label"); l.textContent = label; f.appendChild(l);
+    var i = document.createElement("input"); i.type = "text"; i.value = value || ""; i.placeholder = placeholder || "";
+    i.addEventListener("input", function () { onInput(i.value); }); f.appendChild(i);
+    return f;
+  }
+  function fieldDate(label, value, onInput) {
+    var f = document.createElement("div"); f.className = "field";
+    var l = document.createElement("label"); l.textContent = label; f.appendChild(l);
+    var i = document.createElement("input"); i.type = "date"; i.value = value || "";
+    i.addEventListener("input", function () { onInput(i.value); }); f.appendChild(i);
+    return f;
+  }
+  function fieldSelect(label, opts, value, onChange) {
+    var f = document.createElement("div"); f.className = "field";
+    var l = document.createElement("label"); l.textContent = label; f.appendChild(l);
+    var s = document.createElement("select");
+    opts.forEach(function (o) { var op = document.createElement("option"); op.value = o; op.textContent = o; s.appendChild(op); });
+    s.value = value;
+    s.addEventListener("change", function () { onChange(s.value); }); f.appendChild(s);
+    return f;
+  }
+
+  var tagDatalist = document.createElement("datalist"); tagDatalist.id = "tagsuggest"; document.body.appendChild(tagDatalist);
+  var detailDatalist = document.createElement("datalist"); detailDatalist.id = "detailsuggest"; document.body.appendChild(detailDatalist);
+  function refreshTagSuggestions() {
+    tagDatalist.innerHTML = "";
+    state.tagCatalog.slice().sort().forEach(function (t) {
+      var o = document.createElement("option"); o.value = t; tagDatalist.appendChild(o);
+    });
+  }
+  (function seedDetailKeys() {
+    var seen = {};
+    Object.keys(DETAIL_TEMPLATES).forEach(function (t) {
+      DETAIL_TEMPLATES[t].forEach(function (k) { seen[k] = true; });
+    });
+    ["make", "model", "lens", "iso", "aperture", "focalLength", "latitude", "longitude", "resolution"].forEach(function (k) { seen[k] = true; });
+    Object.keys(seen).forEach(function (k) { var o = document.createElement("option"); o.value = k; detailDatalist.appendChild(o); });
+  })();
+
+  // ---- manifest ----
+  function detailsObject(entry) {
+    var details = {};
+    (entry.details || []).forEach(function (d) { if (d.key) details[d.key] = d.value; });
+    return details;
+  }
+
+  function buildManifest() {
+    var base = baseUrl();
+    var compat = !!currentCollection().astroCompat;
+    var items = state.entries.map(function (e) {
+      var out = { type: e.type || "other", title: e.title || "" };
+      if (e.date) out.date = e.date;
+      if (e.target) out.target = e.target;
+      if (e.tags && e.tags.length) out.tags = e.tags.slice();
+      out.file = e.file || "";
+      if (base && e.file) out.url = resolveUrl(e.file, base);
+      if (e.thumb) out.thumb = e.thumb;
+      if (e.description) out.description = e.description;
+      var details = detailsObject(e);
+      if (Object.keys(details).length) out.details = details;
+      if (e.fileMeta && (e.fileMeta.contentType || e.fileMeta.size)) {
+        out.fileMeta = {};
+        if (e.fileMeta.contentType) out.fileMeta.contentType = e.fileMeta.contentType;
+        if (e.fileMeta.size) out.fileMeta.size = e.fileMeta.size;
+      }
+      if (compat && e.type === "image") {
+        out.full = e.file || "";
+        if (!out.thumb) out.thumb = e.file || "";
+        ["camera", "telescope", "integration"].forEach(function (k) {
+          if (details[k]) out[k] = details[k];
+        });
+      }
+      return out;
+    });
+    return {
+      version: 1,
+      collection: state.collectionKey,
+      updated: new Date().toISOString(),
+      tags: state.tagCatalog.slice(),
+      items: items
+    };
+  }
+
+  function updateOutput() {
+    el.output.value = JSON.stringify(buildManifest(), null, 2);
+    var pending = state.entries.filter(function (e) { return e.pendingUpload; }).length;
+    el.pendingCount.textContent = pending ? (pending + " file(s) waiting to upload") : "No pending uploads";
+  }
+
+  function importEntries(data) {
+    var tags = [];
+    var arr;
+    if (Array.isArray(data)) {
+      arr = data;
+    } else if (data && Array.isArray(data.items)) {
+      arr = data.items;
+      tags = data.tags || [];
+    } else {
+      throw new Error("Manifest must be a JSON array or { items: [] }.");
+    }
+    state.tagCatalog = [];
+    state.knownTags = {};
+    registerTags(tags);
+    state.entries = arr.map(function (o) {
+      o = o || {};
+      var detailPairs = [];
+      if (o.details && typeof o.details === "object") {
+        Object.keys(o.details).forEach(function (k) { detailPairs.push({ key: k, value: String(o.details[k]) }); });
+      }
+      ["camera", "telescope", "integration", "filter", "exposure", "frequency", "mode", "duration"].forEach(function (k) {
+        if (o[k] != null && !detailPairs.some(function (d) { return d.key === k; })) {
+          detailPairs.push({ key: k, value: String(o[k]) });
+        }
+      });
+      var file = o.file || o.full || o.url || o.thumb || "";
+      var base = baseUrl();
+      if (base && file.indexOf(base) === 0) file = file.slice(base.length);
+      var thumb = o.thumb || "";
+      if (base && thumb.indexOf(base) === 0) thumb = thumb.slice(base.length);
+      registerTags(o.tags);
+      return newEntry({
+        type: o.type || typeFromContentType("", file),
+        title: o.title || "",
+        date: o.date || "",
+        target: o.target || "",
+        tags: o.tags || [],
+        description: o.description || "",
+        file: file,
+        thumb: thumb === file ? "" : thumb,
+        details: detailPairs,
+        fileMeta: o.fileMeta || null
+      });
+    });
+    state.dirty = false;
+    refreshTagSuggestions();
+    renderTagLibrary();
+    renderEntries();
+    updateOutput();
+  }
+
+  function loadManifestFromRepo() {
+    var c = currentCollection();
+    var urls = [c.saveTo, "./" + c.saveTo, "dist/" + c.saveTo];
+    setStatus(el.importStatus, "Loading " + escapeHtml(c.saveTo) + "…", "");
+    function tryNext(i) {
+      if (i >= urls.length) {
+        setStatus(el.importStatus, "No existing manifest at " + escapeHtml(c.saveTo) + ". Starting empty — upload files or add entries.", "warn");
+        return Promise.resolve();
+      }
+      return fetch(urls[i], { cache: "no-store" }).then(function (r) {
+        if (!r.ok) return tryNext(i + 1);
+        return r.json().then(function (data) {
+          importEntries(data);
+          setStatus(el.importStatus, "Loaded " + state.entries.length + " entr(y/ies) from " + escapeHtml(urls[i]) + ".", "ok");
+        });
+      }).catch(function () { return tryNext(i + 1); });
+    }
+    return tryNext(0);
+  }
+
+  // ---- GCS upload ----
+  function gcsMetadataFor(entry) {
+    var details = detailsObject(entry);
+    var meta = {};
+    if (entry.title) meta.title = entry.title;
+    if (entry.date) meta.date = entry.date;
+    if (entry.tags.length) meta.tags = entry.tags.join(",");
+    if (details.camera) meta.camera = details.camera;
+    if (details.latitude) meta.latitude = details.latitude;
+    if (details.longitude) meta.longitude = details.longitude;
+    return meta;
+  }
+
+  function uploadFileToGcs(entry) {
+    var file = entry.localFile;
+    if (!file) return Promise.reject(new Error("No local file for " + entry.file));
+    var boundary = "whitegate_" + Date.now() + "_" + Math.random().toString(16).slice(2);
+    var resource = {
+      name: entry.file,
+      contentType: file.type || "application/octet-stream",
+      metadata: gcsMetadataFor(entry)
+    };
+    return file.arrayBuffer().then(function (buf) {
+      var encoder = new TextEncoder();
+      var head = encoder.encode(
+        "--" + boundary + "\r\n" +
+        "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+        JSON.stringify(resource) + "\r\n" +
+        "--" + boundary + "\r\n" +
+        "Content-Type: " + (file.type || "application/octet-stream") + "\r\n\r\n"
+      );
+      var tail = encoder.encode("\r\n--" + boundary + "--\r\n");
+      var body = new Uint8Array(head.length + buf.byteLength + tail.length);
+      body.set(head, 0);
+      body.set(new Uint8Array(buf), head.length);
+      body.set(tail, head.length + buf.byteLength);
+      var url = "https://storage.googleapis.com/upload/storage/v1/b/" +
+        encodeURIComponent(currentBucket()) + "/o?uploadType=multipart";
+      return fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + state.gcsToken,
+          "Content-Type": "multipart/related; boundary=" + boundary
+        },
+        body: body
+      }).then(function (r) {
+        if (!r.ok) {
+          return r.text().then(function (t) { throw new Error("GCS HTTP " + r.status + " " + t.slice(0, 200)); });
+        }
+        entry.pendingUpload = false;
+        return r.json();
+      });
+    });
+  }
+
+  function uploadPending() {
+    if (!state.gcsToken) {
+      setStatus(el.publishStatus, "Paste a GCS access token in Settings first (<code>gcloud auth print-access-token</code>).", "warn");
+      return;
+    }
+    var pending = state.entries.filter(function (e) { return e.pendingUpload && e.localFile; });
+    if (!pending.length) {
+      setStatus(el.publishStatus, "Nothing to upload — add files with the drop zone first.", "warn");
+      return;
+    }
+    el.uploadGcsBtn.disabled = true;
+    setStatus(el.publishStatus, "Uploading " + pending.length + " file(s) to <code>" + escapeHtml(currentBucket()) + "</code>…", "");
+    var i = 0;
+    function next() {
+      if (i >= pending.length) {
+        el.uploadGcsBtn.disabled = false;
+        renderEntries();
+        updateOutput();
+        setStatus(el.publishStatus, "Uploaded " + pending.length + " file(s). Download or commit the updated manifest next.", "ok");
+        return Promise.resolve();
+      }
+      var entry = pending[i++];
+      setStatus(el.publishStatus, "Uploading " + escapeHtml(entry.file) + " (" + i + "/" + pending.length + ")…", "");
+      return uploadFileToGcs(entry).then(next, function (err) {
+        el.uploadGcsBtn.disabled = false;
+        setStatus(el.publishStatus, "Upload failed on " + escapeHtml(entry.file) + ": " + escapeHtml(err.message || String(err)) +
+          ". If this is a CORS error, apply the example CORS config to the bucket (see help below).", "err");
+      });
+    }
+    next();
+  }
+
+  function gsutilSnippet() {
+    var pending = state.entries.filter(function (e) { return e.pendingUpload; });
+    var bucket = currentBucket();
+    var lines = pending.map(function (e) {
+      return "gcloud storage cp " + JSON.stringify(e.file) + " gs://" + bucket + "/" + e.file;
+    });
+    lines.push("# then commit " + currentCollection().saveTo);
+    return lines.join("\n") || "# no pending local files";
+  }
+
+  // ---- GitHub commit ----
+  function utf8ToBase64(str) {
+    var bytes = new TextEncoder().encode(str);
+    var bin = "";
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
+  }
+
+  function commitManifest() {
+    if (!state.githubToken) {
+      setStatus(el.publishStatus, "Paste a GitHub token with <code>repo</code> scope in Settings to commit the manifest.", "warn");
+      return;
+    }
+    var path = currentCollection().saveTo;
+    var json = el.output.value || JSON.stringify(buildManifest(), null, 2);
+    var api = "https://api.github.com/repos/" + GITHUB.owner + "/" + GITHUB.repo + "/contents/" + path;
+    var headers = {
+      Authorization: "Bearer " + state.githubToken,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json"
+    };
+    setStatus(el.publishStatus, "Committing " + escapeHtml(path) + " to " + GITHUB.branch + "…", "");
+    el.commitBtn.disabled = true;
+    fetch(api, { headers: headers, cache: "no-store" }).then(function (r) {
+      if (r.status === 404) return { sha: null };
+      if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
+      return r.json();
+    }).then(function (existing) {
+      return fetch(api, {
+        method: "PUT",
+        headers: headers,
+        body: JSON.stringify({
+          message: "Update " + path + " via media admin",
+          content: utf8ToBase64(json),
+          branch: GITHUB.branch,
+          sha: existing && existing.sha ? existing.sha : undefined
+        })
+      });
+    }).then(function (r) {
+      el.commitBtn.disabled = false;
+      if (!r.ok) return r.text().then(function (t) { throw new Error("GitHub HTTP " + r.status + " " + t.slice(0, 180)); });
+      state.dirty = false;
+      setStatus(el.publishStatus, "Committed <code>" + escapeHtml(path) + "</code> to <code>" + GITHUB.branch +
+        "</code>. GitHub Pages will pick it up on the next workflow run.", "ok");
+    }).catch(function (err) {
+      el.commitBtn.disabled = false;
+      setStatus(el.publishStatus, "Could not commit: " + escapeHtml(err.message || String(err)), "err");
+    });
+  }
+
+  function downloadManifest() {
+    var blob = new Blob([el.output.value || "[]"], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "manifest.json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
+  function copyText(text, btn, label) {
+    function done() { btn.textContent = "Copied!"; setTimeout(function () { btn.textContent = label; }, 1200); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+    } else { fallbackCopy(text); done(); }
+  }
+  function fallbackCopy(text) {
+    el.output.focus(); el.output.select();
+    try { document.execCommand("copy"); } catch (e) {}
+  }
+
+  function applyBulkTag() {
+    var tag = (el.bulkTag.value || "").trim();
+    if (!tag) { setStatus(el.bulkStatus, "Enter a tag first.", "warn"); return; }
+    var selected = state.entries.filter(function (e) { return e.selected; });
+    if (!selected.length) { setStatus(el.bulkStatus, "Select one or more entries with the checkboxes.", "warn"); return; }
+    registerTags([tag]);
+    selected.forEach(function (e) {
+      if (e.tags.indexOf(tag) === -1) e.tags.push(tag);
+    });
+    el.bulkTag.value = "";
+    renderTagLibrary();
+    renderEntries();
+    markDirty();
+    setStatus(el.bulkStatus, "Applied “" + escapeHtml(tag) + "” to " + selected.length + " entr(y/ies).", "ok");
+  }
+
+  function bind() {
+    el.sectionTabs = $("sectionTabs");
+    el.baseUrl = $("baseUrl");
+    el.loadFilesBtn = $("loadFilesBtn");
+    el.addManualBtn = $("addManualBtn");
+    el.fileCount = $("fileCount");
+    el.listStatus = $("listStatus");
+    el.fileList = $("fileList");
+    el.entries = $("entries");
+    el.entryCount = $("entryCount");
+    el.addBlankBtn = $("addBlankBtn");
+    el.clearBtn = $("clearBtn");
+    el.importUrl = $("importUrl");
+    el.importUrlBtn = $("importUrlBtn");
+    el.importFile = $("importFile");
+    el.importStatus = $("importStatus");
+    el.output = $("output");
+    el.downloadBtn = $("downloadBtn");
+    el.copyBtn = $("copyBtn");
+    el.saveHint = $("saveHint");
+    el.tagLibrary = $("tagLibrary");
+    el.newTag = $("newTag");
+    el.addTagBtn = $("addTagBtn");
+    el.dropzone = $("dropzone");
+    el.fileInput = $("fileInput");
+    el.uploadStatus = $("uploadStatus");
+    el.gcsToken = $("gcsToken");
+    el.githubToken = $("githubToken");
+    el.filterText = $("filterText");
+    el.bulkTag = $("bulkTag");
+    el.bulkBtn = $("bulkBtn");
+    el.bulkStatus = $("bulkStatus");
+    el.uploadGcsBtn = $("uploadGcsBtn");
+    el.commitBtn = $("commitBtn");
+    el.copyGsutilBtn = $("copyGsutilBtn");
+    el.publishStatus = $("publishStatus");
+    el.pendingCount = $("pendingCount");
+    el.gsutilOut = $("gsutilOut");
+
+    el.gcsToken.value = state.gcsToken;
+    el.githubToken.value = state.githubToken;
+
+    el.gcsToken.addEventListener("change", function () {
+      state.gcsToken = el.gcsToken.value.trim();
+      if (state.gcsToken) sessionStorage.setItem("wg_gcs_token", state.gcsToken);
+      else sessionStorage.removeItem("wg_gcs_token");
+    });
+    el.githubToken.addEventListener("change", function () {
+      state.githubToken = el.githubToken.value.trim();
+      if (state.githubToken) sessionStorage.setItem("wg_gh_token", state.githubToken);
+      else sessionStorage.removeItem("wg_gh_token");
+    });
+
+    el.loadFilesBtn.addEventListener("click", listObjects);
+    el.addManualBtn.addEventListener("click", function () {
+      var name = prompt("Object name (path within the bucket), e.g. recordings/1420mhz_2026-01-01.wav");
+      if (name != null && name.trim()) addEntry({ file: name.trim(), thumb: name.trim() });
+    });
+    el.addBlankBtn.addEventListener("click", function () { addEntry({}); });
+    el.clearBtn.addEventListener("click", function () {
+      if (state.entries.length && !confirm("Remove all entries in this section?")) return;
+      state.entries.forEach(function (e) { if (e.objectUrl) URL.revokeObjectURL(e.objectUrl); });
+      state.entries = [];
+      renderTagLibrary();
+      renderEntries();
+      markDirty();
+    });
+    el.addTagBtn.addEventListener("click", function () {
+      addCatalogTag(el.newTag.value);
+      el.newTag.value = "";
+    });
+    el.newTag.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); addCatalogTag(el.newTag.value); el.newTag.value = ""; }
+    });
+    el.filterText.addEventListener("input", function () {
+      state.filterText = el.filterText.value;
+      renderEntries();
+    });
+    el.bulkBtn.addEventListener("click", applyBulkTag);
+
+    el.dropzone.addEventListener("click", function () { el.fileInput.click(); });
+    el.fileInput.addEventListener("change", function () {
+      handleFiles(el.fileInput.files);
+      el.fileInput.value = "";
+    });
+    ["dragenter", "dragover"].forEach(function (evt) {
+      el.dropzone.addEventListener(evt, function (e) { e.preventDefault(); el.dropzone.classList.add("drag"); });
+    });
+    ["dragleave", "drop"].forEach(function (evt) {
+      el.dropzone.addEventListener(evt, function (e) { e.preventDefault(); el.dropzone.classList.remove("drag"); });
+    });
+    el.dropzone.addEventListener("drop", function (e) {
+      handleFiles(e.dataTransfer && e.dataTransfer.files);
+    });
+
+    el.importUrlBtn.addEventListener("click", function () {
+      var url = el.importUrl.value.trim();
+      if (!url) { setStatus(el.importStatus, "Enter a manifest URL first.", "warn"); return; }
+      setStatus(el.importStatus, "Loading " + escapeHtml(url) + "…", "");
+      fetch(url, { cache: "no-store" }).then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      }).then(function (data) {
+        importEntries(data);
+        setStatus(el.importStatus, "Imported " + state.entries.length + " entr(y/ies).", "ok");
+      }).catch(function (e) {
+        setStatus(el.importStatus, "Could not load manifest: " + escapeHtml(e.message || String(e)), "err");
+      });
+    });
+    el.importFile.addEventListener("change", function () {
+      var f = el.importFile.files && el.importFile.files[0];
+      if (!f) return;
+      var reader = new FileReader();
+      reader.onload = function () {
+        try {
+          importEntries(JSON.parse(reader.result));
+          setStatus(el.importStatus, "Imported " + state.entries.length + " entr(y/ies) from " + escapeHtml(f.name) + ".", "ok");
+        } catch (err) {
+          setStatus(el.importStatus, "Invalid JSON: " + escapeHtml(err.message || String(err)), "err");
+        }
+      };
+      reader.readAsText(f);
+    });
+
+    el.downloadBtn.addEventListener("click", downloadManifest);
+    el.copyBtn.addEventListener("click", function () { copyText(el.output.value || "[]", el.copyBtn, "Copy JSON"); });
+    el.uploadGcsBtn.addEventListener("click", uploadPending);
+    el.commitBtn.addEventListener("click", commitManifest);
+    el.copyGsutilBtn.addEventListener("click", function () {
+      var snippet = gsutilSnippet();
+      el.gsutilOut.value = snippet;
+      copyText(snippet, el.copyGsutilBtn, "Copy gsutil commands");
+    });
+  }
+
+  bind();
+  renderSectionTabs();
+  refreshBase();
+  renderTagLibrary();
+  renderEntries();
+  updateOutput();
+  loadManifestFromRepo();
+})();

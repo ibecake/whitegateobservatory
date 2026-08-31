@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Astro Photography - Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
+    <link rel="stylesheet" href="assets/css/gallery.css" />
     <style>
       .top-menu {
         background: #1a1a1a;
@@ -372,6 +373,12 @@
                 <option value="">All years</option>
               </select>
             </label>
+            <label for="filterTag">
+              Tag
+              <select id="filterTag">
+                <option value="">All tags</option>
+              </select>
+            </label>
           </div>
         </div>
         <div id="galleryStatus" class="gallery-status">Loading gallery manifest...</div>
@@ -385,12 +392,13 @@
           <button id="lightboxClose" class="lightbox-close" type="button" aria-label="Close image viewer">Close</button>
         </div>
         <div class="lightbox-body">
-          <img id="lightboxImage" class="lightbox-image" alt="" />
+          <div id="lightboxMedia"></div>
           <div id="lightboxPanel" class="lightbox-panel"></div>
         </div>
       </div>
     </div>
 
+    <script src="assets/js/gallery.js"></script>
     <script>
       (function () {
         const dataRoot = document.getElementById('astroOutlookData');
@@ -400,9 +408,10 @@
         const galleryGrid = document.getElementById('galleryGrid');
         const filterTarget = document.getElementById('filterTarget');
         const filterYear = document.getElementById('filterYear');
+        const filterTag = document.getElementById('filterTag');
         const lightbox = document.getElementById('lightbox');
         const lightboxClose = document.getElementById('lightboxClose');
-        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxMedia = document.getElementById('lightboxMedia');
         const lightboxPanel = document.getElementById('lightboxPanel');
         const htmlSources = ['astro/astro.html', 'dist/astro/astro.html'];
         const jsonSources = ['astro/astro.json', 'dist/astro/astro.json'];
@@ -419,19 +428,7 @@
         // Viewer) so these URLs load directly in the browser.
         const GALLERY_IMAGE_BASE = 'https://storage.googleapis.com/whitegate-astrophotography/';
 
-        function isAbsoluteUrl(value) {
-          return /^(https?:)?\/\//i.test(value) || /^data:/i.test(value);
-        }
-
-        function resolveImage(path, base) {
-          if (!path) return '';
-          if (isAbsoluteUrl(path)) return path;
-          const normalizedBase = base.endsWith('/') ? base : base + '/';
-          return normalizedBase + String(path).replace(/^\/+/, '');
-        }
-
         let sourceIndex = 0;
-        let galleryItems = [];
 
         function scoreClass(score) {
           if (score >= 80) return 'score-best';
@@ -533,166 +530,6 @@
           frame.src = htmlSources[sourceIndex];
         }
 
-        function safeText(value) {
-          return (value == null || value === '') ? 'Unknown' : String(value);
-        }
-
-        function yearFromDate(dateValue) {
-          const text = safeText(dateValue);
-          const match = text.match(/^(\d{4})/);
-          return match ? match[1] : 'Unknown';
-        }
-
-        function populateFilters(items) {
-          const targets = Array.from(new Set(items.map(function (item) {
-            return safeText(item.target);
-          }))).sort();
-          const years = Array.from(new Set(items.map(function (item) {
-            return yearFromDate(item.date);
-          }))).sort().reverse();
-
-          targets.forEach(function (target) {
-            const option = document.createElement('option');
-            option.value = target;
-            option.textContent = target;
-            filterTarget.appendChild(option);
-          });
-
-          years.forEach(function (year) {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            filterYear.appendChild(option);
-          });
-        }
-
-        function updateGalleryStatus(message, isError) {
-          galleryStatus.textContent = message;
-          galleryStatus.style.display = 'block';
-          galleryStatus.style.borderColor = isError ? '#7f1d1d' : '#374151';
-          galleryStatus.style.background = isError ? '#1f1012' : '#111827';
-          galleryStatus.style.color = isError ? '#fecaca' : '#e5e7eb';
-        }
-
-        function openLightbox(item) {
-          const fullPath = item.full || item.thumb || '';
-          lightboxImage.src = resolveImage(fullPath, GALLERY_IMAGE_BASE);
-          lightboxImage.alt = safeText(item.title);
-          lightboxPanel.innerHTML =
-            '<h3>' + escapeHtml(safeText(item.title)) + '</h3>' +
-            '<p><span class="label">Target:</span> ' + escapeHtml(safeText(item.target)) + '</p>' +
-            '<p><span class="label">Date:</span> ' + escapeHtml(safeText(item.date)) + '</p>' +
-            '<p><span class="label">Camera:</span> ' + escapeHtml(safeText(item.camera)) + '</p>' +
-            '<p><span class="label">Telescope:</span> ' + escapeHtml(safeText(item.telescope)) + '</p>' +
-            '<p><span class="label">Integration:</span> ' + escapeHtml(safeText(item.integration)) + '</p>' +
-            '<p>' + escapeHtml(safeText(item.description)) + '</p>';
-          lightbox.classList.add('open');
-          lightbox.setAttribute('aria-hidden', 'false');
-        }
-
-        function closeLightbox() {
-          lightbox.classList.remove('open');
-          lightbox.setAttribute('aria-hidden', 'true');
-          lightboxImage.src = '';
-          lightboxPanel.innerHTML = '';
-        }
-
-        function renderGallery(items) {
-          galleryGrid.innerHTML = '';
-          if (!items.length) {
-            updateGalleryStatus('No images match the current filters.', false);
-            return;
-          }
-
-          galleryStatus.style.display = 'none';
-          const fragment = document.createDocumentFragment();
-          items.forEach(function (item) {
-            const card = document.createElement('article');
-            card.className = 'gallery-card';
-
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.addEventListener('click', function () {
-              openLightbox(item);
-            });
-
-            const thumb = document.createElement('img');
-            thumb.className = 'gallery-thumb';
-            thumb.loading = 'lazy';
-            thumb.decoding = 'async';
-            const thumbPath = item.thumb || item.full || '';
-            thumb.src = resolveImage(thumbPath, GALLERY_IMAGE_BASE);
-            thumb.alt = safeText(item.title);
-            button.appendChild(thumb);
-
-            const meta = document.createElement('div');
-            meta.className = 'gallery-meta';
-            meta.innerHTML =
-              '<h3>' + escapeHtml(safeText(item.title)) + '</h3>' +
-              '<p>' + escapeHtml(safeText(item.target)) + ' | ' + escapeHtml(safeText(item.date)) + '</p>';
-
-            card.appendChild(button);
-            card.appendChild(meta);
-            fragment.appendChild(card);
-          });
-
-          galleryGrid.appendChild(fragment);
-        }
-
-        function applyGalleryFilters() {
-          const targetFilter = filterTarget.value;
-          const yearFilter = filterYear.value;
-          const filtered = galleryItems.filter(function (item) {
-            if (targetFilter && safeText(item.target) !== targetFilter) return false;
-            if (yearFilter && yearFromDate(item.date) !== yearFilter) return false;
-            return true;
-          });
-          renderGallery(filtered);
-        }
-
-        async function loadGalleryManifest() {
-          let payload = null;
-          let sourceUsed = '';
-          const errors = [];
-
-          for (const source of galleryManifestSources) {
-            try {
-              const response = await fetch(source, { cache: 'no-store' });
-              if (!response.ok) {
-                errors.push(source + ' -> HTTP ' + response.status);
-                continue;
-              }
-              payload = await response.json();
-              sourceUsed = source;
-              break;
-            } catch (err) {
-              errors.push(source + ' -> ' + ((err && err.name) ? err.name : 'FetchError'));
-              continue;
-            }
-          }
-
-          if (!Array.isArray(payload)) {
-            const isFileProtocol = window.location.protocol === 'file:';
-            const redacted = errors.length ? errors.map(function (entry) {
-              return entry.replace(/https?:\/\/[^\s]+/g, '[redacted-url]');
-            }).join('; ') : 'No source returned parseable JSON.';
-            const help = isFileProtocol
-              ? ' Running from file:// blocks fetch in many browsers. Serve the site over http:// (for example: python3 -m http.server).'
-              : '';
-            updateGalleryStatus('Gallery manifest could not be loaded from known paths. ' + help + ' Redacted errors: ' + redacted, true);
-            return;
-          }
-
-          galleryItems = payload;
-          if (!galleryItems.length) {
-            updateGalleryStatus('Gallery manifest loaded from ' + sourceUsed + ', but no images are listed yet.', false);
-            return;
-          }
-
-          populateFilters(galleryItems);
-          applyGalleryFilters();
-        }
-
         frame.addEventListener('load', function () {
           if (looksLikeMissingPage()) {
             trySource(sourceIndex + 1);
@@ -705,27 +542,29 @@
           trySource(sourceIndex + 1);
         });
 
-        filterTarget.addEventListener('change', applyGalleryFilters);
-        filterYear.addEventListener('change', applyGalleryFilters);
-        lightboxClose.addEventListener('click', closeLightbox);
-        lightbox.addEventListener('click', function (event) {
-          if (event.target === lightbox) {
-            closeLightbox();
-          }
-        });
-        window.addEventListener('keydown', function (event) {
-          if (event.key === 'Escape' && lightbox.classList.contains('open')) {
-            closeLightbox();
-          }
-        });
-
         window.addEventListener('resize', setFrameHeight);
         tryJson(0).then(function (loaded) {
           if (!loaded) {
             trySource(0);
           }
         });
-        loadGalleryManifest();
+
+        if (window.WhitegateGallery) {
+          window.WhitegateGallery.mount({
+            statusEl: galleryStatus,
+            gridEl: galleryGrid,
+            filterTarget: filterTarget,
+            filterYear: filterYear,
+            filterTag: filterTag,
+            lightbox: lightbox,
+            lightboxClose: lightboxClose,
+            lightboxMedia: lightboxMedia,
+            lightboxPanel: lightboxPanel,
+            sources: galleryManifestSources,
+            mediaBase: GALLERY_IMAGE_BASE,
+            emptyLabel: 'no images are listed yet.'
+          });
+        }
       })();
     </script>
     <script defer src="assets/js/build-stamp.js"></script>

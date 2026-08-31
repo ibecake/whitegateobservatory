@@ -1,7 +1,6 @@
 /**
- * Renders a small "last updated" footer using build.json, which the Pages
- * workflow writes at deploy time. If build.json is missing (e.g. local preview
- * before a build), the footer is silently skipped.
+ * Renders a small footer with an optional "last updated" stamp from
+ * build.json (written at deploy time) and a link to the media admin.
  */
 (function () {
   "use strict";
@@ -16,7 +15,7 @@
   }
 
   function render(build) {
-    if (!build || !build.built_at) return;
+    build = build || {};
     if (document.getElementById("site-build-stamp")) return;
 
     var footer = document.createElement("footer");
@@ -31,9 +30,11 @@
       "text-align:center"
     ].join(";");
 
-    var label = document.createElement("span");
-    label.textContent = "Site last updated " + formatUtc(build.built_at);
-    footer.appendChild(label);
+    if (build.built_at) {
+      var label = document.createElement("span");
+      label.textContent = "Site last updated " + formatUtc(build.built_at);
+      footer.appendChild(label);
+    }
 
     if (build.commit) {
       var sep = document.createElement("span");
@@ -58,14 +59,26 @@
       }
     }
 
+    var admin = document.createElement("a");
+    admin.href = "admin.html";
+    admin.textContent = "Media admin";
+    admin.style.cssText = "color:inherit;text-decoration:none;";
+    if (footer.childNodes.length) {
+      var adminSep = document.createElement("span");
+      adminSep.textContent = "  \u00b7  ";
+      adminSep.style.opacity = "0.6";
+      footer.appendChild(adminSep);
+    }
+    footer.appendChild(admin);
+
     document.body.appendChild(footer);
   }
 
   function load() {
     fetch("build.json?_=" + Date.now(), { cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
-      .then(render)
-      .catch(function () { /* no build stamp available; ignore */ });
+      .then(function (build) { render(build); })
+      .catch(function () { render({}); });
   }
 
   if (document.readyState === "loading") {
