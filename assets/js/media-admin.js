@@ -117,10 +117,14 @@
     name = name.replace(/[^\w.\-()+ ]+/g, "_").replace(/\s+/g, "_");
     return name || ("upload_" + Date.now());
   }
-  function uniqueObjectName(name) {
+  function uniqueObjectName(name, exceptEntry) {
     var base = sanitizeObjectName(name);
     var used = {};
-    state.entries.forEach(function (e) { if (e.file) used[e.file] = true; });
+    state.entries.forEach(function (e) {
+      if (e.file) used[e.file] = true;
+      if (e.capturedThumbName) used[e.capturedThumbName] = true;
+      if (e.thumb && e !== exceptEntry) used[e.thumb] = true;
+    });
     (state.bucketItems || []).forEach(function (it) { if (it.name) used[it.name] = true; });
     if (!used[base]) return base;
     var dot = base.lastIndexOf(".");
@@ -153,6 +157,7 @@
       thumbLocalFile: seed.thumbLocalFile || null,
       thumbObjectUrl: seed.thumbObjectUrl || "",
       pendingThumbUpload: !!seed.pendingThumbUpload,
+      capturedThumbName: seed.capturedThumbName || "",
       videoObjectUrl: seed.videoObjectUrl || "",
       autoThumbDone: !!seed.autoThumbDone
     };
@@ -776,9 +781,11 @@
   }
 
   function thumbNameFor(entry) {
-    if (entry.thumb && /\.(jpe?g|png|webp)$/i.test(entry.thumb)) return entry.thumb;
+    if (entry.capturedThumbName) return entry.capturedThumbName;
     var stem = String(entry.file || "video").replace(/\.[^.]+$/, "") || "video";
-    return uniqueObjectName(stem + "-thumb.jpg");
+    var name = uniqueObjectName(stem + "-thumb.jpg", entry);
+    entry.capturedThumbName = name;
+    return name;
   }
 
   function captureVideoFrame(videoEl) {
@@ -813,6 +820,7 @@
     entry.thumbLocalFile = file;
     entry.thumbObjectUrl = URL.createObjectURL(blob);
     entry.pendingThumbUpload = true;
+    entry.capturedThumbName = name;
     entry.autoThumbDone = true;
     if (typeof refreshThumb === "function") refreshThumb();
     markDirty();
@@ -828,7 +836,7 @@
     var hint = document.createElement("p");
     hint.className = "hint";
     hint.style.marginTop = "0";
-    hint.textContent = "Play or scrub to the frame you want, then grab it. A JPEG is stored as the gallery thumbnail.";
+    hint.textContent = "Play or scrub to the frame you want, then grab it. The still lives in this browser until you upload it or download the JPEG (needed if you use the gcloud copy commands).";
     wrap.appendChild(hint);
     var video = document.createElement("video");
     video.className = "frame-grab-video";
@@ -863,6 +871,14 @@
       });
     });
     bar.appendChild(grabBtn);
+    var dlBtn = mkBtn("Download thumbnail JPEG", "small", function () {
+      if (!entry.thumbLocalFile) {
+        status.textContent = "Grab a frame first.";
+        return;
+      }
+      downloadNamedFile(entry.thumbLocalFile, entry.thumb);
+    });
+    bar.appendChild(dlBtn);
     wrap.appendChild(bar);
     video.addEventListener("error", function () {
       status.textContent = "This browser cannot play this movie here (common with some .MOV files). Export MP4, or type a JPEG filename in Thumbnail.";
@@ -1593,12 +1609,28 @@
     next();
   }
 
+  function downloadNamedFile(file, name) {
+    if (!file) return;
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(file);
+    a.download = name || file.name || "thumbnail.jpg";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
   function gsutilSnippet() {
     var bucket = currentBucket();
     var lines = [];
     state.entries.forEach(function (e) {
       if (e.pendingUpload) lines.push("gcloud storage cp " + JSON.stringify(e.file) + " gs://" + bucket + "/" + e.file);
-      if (e.pendingThumbUpload) lines.push("gcloud storage cp " + JSON.stringify(e.thumb) + " gs://" + bucket + "/" + e.thumb);
+      if (e.pendingThumbUpload && e.thumbLocalFile) {
+        downloadNamedFile(e.thumbLocalFile, e.thumb);
+        lines.push("# Thumbnail JPEG downloaded as " + e.thumb + " (check your Downloads folder). Then:");
+        lines.push("gcloud storage cp " + JSON.stringify(e.thumb) + " gs://" + bucket + "/" + e.thumb);
+      } else if (e.pendingThumbUpload) {
+        lines.push("# Thumbnail " + (e.thumb || "") + " exists only in this browser. Use Upload pending files to GCS, or Download thumbnail JPEG on the card.");
+      }
     });
     lines.push("# then commit " + currentCollection().saveTo);
     return lines.join("\n") || "# no pending local files";
