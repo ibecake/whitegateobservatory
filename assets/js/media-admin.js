@@ -842,7 +842,6 @@
       }
       video.src = entry.videoObjectUrl || "";
     } else if (entry.file) {
-      video.crossOrigin = "anonymous";
       video.src = resolveUrl(entry.file, baseUrl());
     }
     wrap.appendChild(video);
@@ -878,6 +877,7 @@
     }
     video.addEventListener("loadeddata", function () {
       if (entry.autoThumbDone || entry.thumb) return;
+      if (!(entry.localFile || entry.videoObjectUrl)) return;
       try {
         var dur = video.duration;
         var t = 1;
