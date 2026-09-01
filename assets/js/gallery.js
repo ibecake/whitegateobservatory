@@ -204,14 +204,25 @@
         button.addEventListener("click", function () { openLightbox(item); });
         var kind = mediaKind(item);
         var thumbPath = item.thumb || (kind === "image" ? itemFile(item) : "");
-        if (kind === "image" && thumbPath) {
+        var showThumb = thumbPath && (kind === "image" || kind === "video" || /\.(jpe?g|png|webp|gif)$/i.test(thumbPath));
+        if (showThumb) {
+          var wrap = document.createElement("span");
+          wrap.className = "gallery-thumb-wrap" + (kind === "video" ? " is-video" : "");
           var thumb = document.createElement("img");
           thumb.className = "gallery-thumb";
           thumb.loading = "lazy";
           thumb.decoding = "async";
           thumb.src = resolveUrl(thumbPath, mediaBase);
           thumb.alt = safeText(item.title);
-          button.appendChild(thumb);
+          wrap.appendChild(thumb);
+          if (kind === "video") {
+            var play = document.createElement("span");
+            play.className = "gallery-play";
+            play.textContent = "▶";
+            play.setAttribute("aria-hidden", "true");
+            wrap.appendChild(play);
+          }
+          button.appendChild(wrap);
         } else {
           var fallback = document.createElement("div");
           fallback.className = "gallery-thumb-fallback";

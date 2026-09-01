@@ -50,15 +50,6 @@
         line-height: 1.6;
         margin-bottom: 1rem;
       }
-      .outlook-frame {
-        width: 100%;
-        min-height: 520px;
-        border: none;
-        border-radius: 8px;
-        overflow: hidden;
-        display: block;
-        margin-top: 1.5rem;
-      }
       .outlook-data {
         margin-top: 1.5rem;
       }
@@ -67,7 +58,7 @@
         color: #e2e8f0;
         border: 1px solid #334155;
         border-radius: 10px;
-        padding: 1rem;
+        padding: 1rem 1.1rem 1.1rem;
         min-width: 0;
         overflow: hidden;
       }
@@ -77,7 +68,7 @@
         gap: 1rem;
         flex-wrap: wrap;
         align-items: baseline;
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.85rem;
       }
       .outlook-title h2 {
         margin: 0;
@@ -88,29 +79,30 @@
         font-size: 0.9rem;
         color: #cbd5e1;
       }
-      .outlook-table {
-        width: 100%;
-        min-width: 760px;
-        border-collapse: collapse;
-        font-size: 0.92rem;
+      .outlook-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+        gap: 0.65rem;
       }
-      .outlook-table-wrap {
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+      .outlook-kpi {
+        background: #111827;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 0.7rem 0.55rem 0.8rem;
+        text-align: center;
       }
-      .outlook-table th,
-      .outlook-table td {
-        border-top: 1px solid #334155;
-        padding: 0.55rem 0.45rem;
-        text-align: left;
-        vertical-align: top;
+      .outlook-kpi-date {
+        font-size: 0.82rem;
+        color: #cbd5e1;
+        margin-bottom: 0.4rem;
       }
-      .outlook-table th {
-        color: #bfdbfe;
-        font-weight: 600;
+      .outlook-kpi .score-pill {
+        font-size: 1.05rem;
+        min-width: 2.4rem;
+      }
+      .outlook-kpi-best {
+        border-color: #4a9eff;
+        box-shadow: 0 0 0 1px rgba(74, 158, 255, 0.35);
       }
       .score-pill {
         display: inline-block;
@@ -317,9 +309,6 @@
           font-size: 0.92rem;
           padding: 0.45rem 0.65rem;
         }
-        .outlook-frame {
-          min-height: 460px;
-        }
         .gallery-controls {
           width: 100%;
         }
@@ -347,14 +336,8 @@
     </div>
     <div class="content">
       <h1>Astro Photography</h1>
-      <p>Astrophotography outlook for Whitegate Observatory — nightly scoring based on cloud cover, sky darkness (SQM), dew spread, wind, precipitation, and moon brightness.</p>
+      <p>Nightly observing score for Whitegate Observatory.</p>
       <div id="astroOutlookData" class="outlook-data"></div>
-      <iframe
-        id="astroOutlookFrame"
-        class="outlook-frame"
-        title="Astrophotography Outlook"
-        scrolling="no"
-      ></iframe>
       <div id="astroOutlookError" class="outlook-error"></div>
 
       <section class="gallery-section" aria-labelledby="galleryTitle">
@@ -402,7 +385,6 @@
     <script>
       (function () {
         const dataRoot = document.getElementById('astroOutlookData');
-        const frame = document.getElementById('astroOutlookFrame');
         const errorBox = document.getElementById('astroOutlookError');
         const galleryStatus = document.getElementById('galleryStatus');
         const galleryGrid = document.getElementById('galleryGrid');
@@ -413,22 +395,13 @@
         const lightboxClose = document.getElementById('lightboxClose');
         const lightboxMedia = document.getElementById('lightboxMedia');
         const lightboxPanel = document.getElementById('lightboxPanel');
-        const htmlSources = ['astro/astro.html', 'dist/astro/astro.html'];
         const jsonSources = ['astro/astro.json', 'dist/astro/astro.json'];
         const galleryManifestSources = [
           'astrophoto/manifest.json',
           './astrophoto/manifest.json',
           'dist/astrophoto/manifest.json'
         ];
-        // Astrophotography images are hosted in the public Google Cloud Storage
-        // bucket `whitegate-astrophotography` (keeps the binaries out of the git
-        // repo). Manifest `thumb`/`full` values are object paths within this
-        // bucket, unless they are already absolute URLs (which pass through
-        // untouched). The bucket grants public read (allUsers -> Storage Object
-        // Viewer) so these URLs load directly in the browser.
         const GALLERY_IMAGE_BASE = 'https://storage.googleapis.com/whitegate-astrophotography/';
-
-        let sourceIndex = 0;
 
         function scoreClass(score) {
           if (score >= 80) return 'score-best';
@@ -446,39 +419,51 @@
             .replaceAll("'", '&#39;');
         }
 
-        function renderFromJson(payload, sourcePath) {
-          const nights = Array.isArray(payload.nights) ? payload.nights : [];
-          const mode = payload.darkness_mode ? (' | Mode: ' + payload.darkness_mode) : '';
-          const rows = nights.length ? nights.map(function (n) {
-            const score = Number(n.score || 0);
+        function nightDate(n) {
+          if (n.start) return String(n.start).slice(0, 10);
+          var label = n.label || '';
+          var match = label.match(/\d{4}-\d{2}-\d{2}/);
+          return match ? match[0] : label.replace(/\s*night\s*/i, '').trim() || 'Night';
+        }
+
+        function nightWeekday(n) {
+          if (!n.start) return '';
+          try {
+            return new Date(n.start).toLocaleDateString('en-IE', { weekday: 'short' });
+          } catch (err) {
+            return '';
+          }
+        }
+
+        function renderFromJson(payload) {
+          const nights = (Array.isArray(payload.nights) ? payload.nights.slice() : []).sort(function (a, b) {
+            return String(a.start || a.label || '').localeCompare(String(b.start || b.label || ''));
+          });
+          var best = nights.reduce(function (acc, n) {
+            var s = Number(n.score || 0);
+            return s > acc ? s : acc;
+          }, -1);
+          const kpis = nights.length ? nights.map(function (n) {
+            const score = Math.round(Number(n.score || 0));
             const cls = scoreClass(score);
-            return '<tr>' +
-              '<td>' + escapeHtml(n.label || 'Night') + '<br><small>' + escapeHtml((n.start_local || '') + ' -> ' + (n.end_local || '')) + '</small></td>' +
-              '<td><span class="score-pill ' + cls + '">' + escapeHtml(score.toString()) + '</span></td>' +
-              '<td>' + escapeHtml(n.clouds || '—') + '</td>' +
-              '<td>' + escapeHtml(n.dewspread || '—') + '</td>' +
-              '<td>' + escapeHtml(n.precip || '—') + '</td>' +
-              '<td>' + escapeHtml(n.worst || '—') + '</td>' +
-              '<td>' + escapeHtml(n.best2h || '—') + '</td>' +
-              '</tr>';
+            const date = nightDate(n);
+            const weekday = nightWeekday(n);
+            const bestCls = Number(n.score || 0) === best && best >= 0 ? ' outlook-kpi-best' : '';
+            return '<div class="outlook-kpi' + bestCls + '">' +
+              '<div class="outlook-kpi-date">' + (weekday ? escapeHtml(weekday) + ' ' : '') + escapeHtml(date) + '</div>' +
+              '<span class="score-pill ' + cls + '">' + escapeHtml(String(score)) + '</span>' +
+              '</div>';
           }).join('') :
-            '<tr><td colspan="7">Generated data loaded from ' + escapeHtml(sourcePath) + '. No qualifying night windows were present in this dataset (this is common near late spring and summer at this latitude).</td></tr>';
+            '<p class="outlook-meta">No qualifying night windows in this forecast.</p>';
 
           dataRoot.innerHTML =
             '<div class="outlook-card">' +
               '<div class="outlook-title">' +
                 '<h2>Astrophotography Outlook</h2>' +
-                '<div class="outlook-meta">Updated: ' + escapeHtml(payload.generated_at_local || payload.generated_at || 'Unknown') + ' | Source: ' + escapeHtml(sourcePath) + escapeHtml(mode) + '</div>' +
+                '<div class="outlook-meta">Updated ' + escapeHtml(payload.generated_at_local || payload.generated_at || 'Unknown') + '</div>' +
               '</div>' +
-              '<div class="outlook-table-wrap">' +
-                '<table class="outlook-table">' +
-                  '<thead><tr><th>Night</th><th>Score</th><th>Cloud</th><th>Dew Spread</th><th>Precip</th><th>Worst Metric</th><th>Best 2h Window</th></tr></thead>' +
-                  '<tbody>' + rows + '</tbody>' +
-                '</table>' +
-              '</div>' +
+              '<div class="outlook-kpis">' + kpis + '</div>' +
             '</div>';
-
-          frame.style.display = 'none';
           errorBox.style.display = 'none';
           return true;
         }
@@ -497,55 +482,10 @@
           }
         }
 
-        function setFrameHeight() {
-          try {
-            const doc = frame.contentWindow && frame.contentWindow.document;
-            if (!doc || !doc.documentElement) return;
-            frame.style.height = (doc.documentElement.scrollHeight + 32) + 'px';
-          } catch (err) {
-            // Ignore cross-origin or transient access errors.
-          }
-        }
-
-        function looksLikeMissingPage() {
-          try {
-            const doc = frame.contentWindow && frame.contentWindow.document;
-            if (!doc) return false;
-            const title = (doc.title || '').toLowerCase();
-            const text = (doc.body && doc.body.textContent ? doc.body.textContent : '').toLowerCase();
-            return title.includes('404') || text.includes('not found');
-          } catch (err) {
-            return false;
-          }
-        }
-
-        function trySource(index) {
-          sourceIndex = index;
-          if (sourceIndex >= htmlSources.length) {
-            frame.style.display = 'none';
-            errorBox.style.display = 'block';
-            errorBox.textContent = 'Astrophotography outlook was not found. Expected existing build files: astro/astro.json or astro/astro.html (or dist/astro variants).';
-            return;
-          }
-          frame.src = htmlSources[sourceIndex];
-        }
-
-        frame.addEventListener('load', function () {
-          if (looksLikeMissingPage()) {
-            trySource(sourceIndex + 1);
-            return;
-          }
-          setFrameHeight();
-        });
-
-        frame.addEventListener('error', function () {
-          trySource(sourceIndex + 1);
-        });
-
-        window.addEventListener('resize', setFrameHeight);
         tryJson(0).then(function (loaded) {
           if (!loaded) {
-            trySource(0);
+            errorBox.style.display = 'block';
+            errorBox.textContent = 'Astrophotography outlook was not found. Expected astro/astro.json (or dist/astro/astro.json).';
           }
         });
 
