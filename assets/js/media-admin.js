@@ -117,10 +117,14 @@
     name = name.replace(/[^\w.\-()+ ]+/g, "_").replace(/\s+/g, "_");
     return name || ("upload_" + Date.now());
   }
-  function uniqueObjectName(name) {
+  function uniqueObjectName(name, exceptEntry) {
     var base = sanitizeObjectName(name);
     var used = {};
-    state.entries.forEach(function (e) { if (e.file) used[e.file] = true; });
+    state.entries.forEach(function (e) {
+      if (e.file) used[e.file] = true;
+      if (e.capturedThumbName) used[e.capturedThumbName] = true;
+      if (e.thumb && e !== exceptEntry) used[e.thumb] = true;
+    });
     (state.bucketItems || []).forEach(function (it) { if (it.name) used[it.name] = true; });
     if (!used[base]) return base;
     var dot = base.lastIndexOf(".");
@@ -149,7 +153,13 @@
       exif: seed.exif || null,
       pendingUpload: !!seed.pendingUpload,
       selected: false,
-      fileMeta: seed.fileMeta || null
+      fileMeta: seed.fileMeta || null,
+      thumbLocalFile: seed.thumbLocalFile || null,
+      thumbObjectUrl: seed.thumbObjectUrl || "",
+      pendingThumbUpload: !!seed.pendingThumbUpload,
+      capturedThumbName: seed.capturedThumbName || "",
+      videoObjectUrl: seed.videoObjectUrl || "",
+      autoThumbDone: !!seed.autoThumbDone
     };
   }
 
@@ -191,7 +201,7 @@
   }
 
   function resetCollectionState() {
-    state.entries.forEach(function (e) { if (e.objectUrl) URL.revokeObjectURL(e.objectUrl); });
+    state.entries.forEach(revokeMediaUrls);
     state.entries = [];
     state.tagCatalog = [];
     state.targetCatalog = [];
@@ -542,7 +552,7 @@
     if (index < 0) return;
     var entry = state.entries[index];
     if (!confirm("Remove “" + (entry.file || name) + "” from the gallery list? The file stays in the bucket. Save to publish this removal.")) return;
-    if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+    revokeMediaUrls(entry);
     var k = entryKey(entry);
     if (k) state.removedFiles[k] = true;
     state.entries.splice(index, 1);
@@ -651,6 +661,10 @@
     if (type === "image") {
       try { objectUrl = URL.createObjectURL(file); } catch (e) { objectUrl = ""; }
     }
+    var videoObjectUrl = "";
+    if (type === "video") {
+      try { videoObjectUrl = URL.createObjectURL(file); } catch (e) { videoObjectUrl = ""; }
+    }
     var seed = {
       type: type,
       file: objectName,
@@ -658,6 +672,7 @@
       title: file.name.replace(/\.[a-z0-9]+$/i, "").replace(/[_\-]+/g, " "),
       localFile: file,
       objectUrl: objectUrl,
+      videoObjectUrl: videoObjectUrl,
       pendingUpload: true,
       fileMeta: { contentType: file.type || "", size: file.size || 0 }
     };
@@ -758,6 +773,147 @@
     });
   }
 
+  function revokeMediaUrls(entry) {
+    if (!entry) return;
+    if (entry.objectUrl) { URL.revokeObjectURL(entry.objectUrl); entry.objectUrl = ""; }
+    if (entry.thumbObjectUrl) { URL.revokeObjectURL(entry.thumbObjectUrl); entry.thumbObjectUrl = ""; }
+    if (entry.videoObjectUrl) { URL.revokeObjectURL(entry.videoObjectUrl); entry.videoObjectUrl = ""; }
+  }
+
+  function thumbNameFor(entry) {
+    if (entry.capturedThumbName) return entry.capturedThumbName;
+    var stem = String(entry.file || "video").replace(/\.[^.]+$/, "") || "video";
+    var name = uniqueObjectName(stem + "-thumb.jpg", entry);
+    entry.capturedThumbName = name;
+    return name;
+  }
+
+  function captureVideoFrame(videoEl) {
+    return new Promise(function (resolve, reject) {
+      try {
+        var w = videoEl.videoWidth || 0;
+        var h = videoEl.videoHeight || 0;
+        if (!w || !h) {
+          reject(new Error("The movie has not loaded a visible frame yet."));
+          return;
+        }
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        var ctx = canvas.getContext("2d");
+        ctx.drawImage(videoEl, 0, 0, w, h);
+        canvas.toBlob(function (blob) {
+          if (!blob) reject(new Error("Could not capture this frame."));
+          else resolve(blob);
+        }, "image/jpeg", 0.85);
+      } catch (err) {
+        reject(err || new Error("Could not capture this frame (the movie may be blocked by CORS)."));
+      }
+    });
+  }
+
+  function applyThumbBlob(entry, blob, refreshThumb) {
+    if (entry.thumbObjectUrl) URL.revokeObjectURL(entry.thumbObjectUrl);
+    var name = thumbNameFor(entry);
+    var file = new File([blob], name, { type: "image/jpeg" });
+    entry.thumb = name;
+    entry.thumbLocalFile = file;
+    entry.thumbObjectUrl = URL.createObjectURL(blob);
+    entry.pendingThumbUpload = true;
+    entry.capturedThumbName = name;
+    entry.autoThumbDone = true;
+    if (typeof refreshThumb === "function") refreshThumb();
+    markDirty();
+    return name;
+  }
+
+  function buildFrameGrabber(entry, refreshThumb) {
+    var wrap = document.createElement("div");
+    wrap.className = "frame-grab";
+    var label = document.createElement("label");
+    label.textContent = "Movie thumbnail";
+    wrap.appendChild(label);
+    var hint = document.createElement("p");
+    hint.className = "hint";
+    hint.style.marginTop = "0";
+    hint.textContent = "Play or scrub to the frame you want, then grab it. The still lives in this browser until you upload it or download the JPEG (needed if you use the gcloud copy commands).";
+    wrap.appendChild(hint);
+    var video = document.createElement("video");
+    video.className = "frame-grab-video";
+    video.controls = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.setAttribute("playsinline", "");
+    if (entry.videoObjectUrl || entry.localFile) {
+      if (!entry.videoObjectUrl && entry.localFile) {
+        try { entry.videoObjectUrl = URL.createObjectURL(entry.localFile); } catch (e) {}
+      }
+      video.src = entry.videoObjectUrl || "";
+    } else if (entry.file) {
+      video.src = resolveUrl(entry.file, baseUrl());
+    }
+    wrap.appendChild(video);
+    var status = document.createElement("div");
+    status.className = "hint";
+    wrap.appendChild(status);
+    var bar = document.createElement("div");
+    bar.className = "btn-bar";
+    var grabBtn = mkBtn("Grab this frame as thumbnail", "small primary", function () {
+      grabBtn.disabled = true;
+      status.textContent = "Capturing frame…";
+      captureVideoFrame(video).then(function (blob) {
+        var name = applyThumbBlob(entry, blob, refreshThumb);
+        status.textContent = "Thumbnail set to " + name + ". Upload to the bucket (if needed), then Save to the website.";
+        grabBtn.disabled = false;
+      }).catch(function (err) {
+        status.textContent = (err && err.message) || "Could not capture this frame. If the movie is already in the bucket, CORS may block grabbing — upload the movie from this computer, or set a JPEG in Thumbnail.";
+        grabBtn.disabled = false;
+      });
+    });
+    bar.appendChild(grabBtn);
+    var dlBtn = mkBtn("Download thumbnail JPEG", "small", function () {
+      if (!entry.thumbLocalFile) {
+        status.textContent = "Grab a frame first.";
+        return;
+      }
+      downloadNamedFile(entry.thumbLocalFile, entry.thumb);
+    });
+    bar.appendChild(dlBtn);
+    wrap.appendChild(bar);
+    video.addEventListener("error", function () {
+      status.textContent = "This browser cannot play this movie here (common with some .MOV files). Export MP4, or type a JPEG filename in Thumbnail.";
+    });
+    function autoGrab() {
+      if (entry.autoThumbDone || entry.thumb) return;
+      captureVideoFrame(video).then(function (blob) {
+        if (entry.thumb && !entry.pendingThumbUpload) return;
+        var name = applyThumbBlob(entry, blob, refreshThumb);
+        status.textContent = "Grabbed a first frame as " + name + ". Scrub and grab again to pick a better still.";
+      }).catch(function () { /* wait for a user grab */ });
+    }
+    video.addEventListener("loadeddata", function () {
+      if (entry.autoThumbDone || entry.thumb) return;
+      if (!(entry.localFile || entry.videoObjectUrl)) return;
+      try {
+        var dur = video.duration;
+        var t = 1;
+        if (isFinite(dur) && dur > 0) t = Math.min(1, Math.max(0.1, dur * 0.08));
+        video.currentTime = t;
+      } catch (e) {
+        autoGrab();
+      }
+    });
+    video.addEventListener("seeked", function onSeeked() {
+      if (entry.autoThumbDone || (entry.thumb && !entry.pendingThumbUpload)) {
+        video.removeEventListener("seeked", onSeeked);
+        return;
+      }
+      autoGrab();
+      video.removeEventListener("seeked", onSeeked);
+    });
+    return wrap;
+  }
+
   function buildEntryCard(entry, index) {
     var card = document.createElement("div");
     card.className = "entry" + (entry.selected ? " selected" : "");
@@ -790,6 +946,12 @@
       listed.textContent = "listed on gallery";
       head.appendChild(listed);
     }
+    if (entry.pendingThumbUpload) {
+      var pthumb = document.createElement("span");
+      pthumb.className = "badge pending";
+      pthumb.textContent = "thumbnail not in bucket yet";
+      head.appendChild(pthumb);
+    }
     if (entry.exif && entry.exif.source) {
       var ex = document.createElement("span");
       ex.className = "badge ok";
@@ -813,7 +975,7 @@
     });
     var del = mkBtn("Remove from gallery", "small danger", function () {
       if (!confirm("Remove “" + (entry.file || entry.title || "this item") + "” from the gallery list? The file stays in the bucket. Save to the website to publish this removal.")) return;
-      if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+      revokeMediaUrls(entry);
       var k = entryKey(entry);
       if (k) state.removedFiles[k] = true;
       state.entries.splice(index, 1);
@@ -835,10 +997,17 @@
     var fields = document.createElement("div");
     fields.className = "entry-fields";
 
+    var thumbField = null;
     function refreshThumb() {
-      var src = entry.objectUrl || resolveUrl(entry.thumb || entry.file, baseUrl());
-      if (entry.type === "image" && src) {
-        thumb.src = src;
+      if (thumbField) {
+        var inp = thumbField.querySelector("input");
+        if (inp && inp.value !== (entry.thumb || "")) inp.value = entry.thumb || "";
+      }
+      var still = entry.thumbObjectUrl ||
+        (entry.thumb ? resolveUrl(entry.thumb, baseUrl()) : "") ||
+        (entry.type === "image" ? (entry.objectUrl || resolveUrl(entry.file, baseUrl())) : "");
+      if (still) {
+        thumb.src = still;
         thumb.className = "entry-thumb";
         thumb.alt = entry.title || entry.file;
       } else {
@@ -880,10 +1049,15 @@
     r3.appendChild(fieldText("File (object path or URL)", entry.file, "IMG_1959.jpg", function (v) {
       entry.file = v.trim(); refreshThumb(); markDirty();
     }, 2));
-    r3.appendChild(fieldText("Thumbnail (optional)", entry.thumb, "same as file if blank", function (v) {
+    thumbField = fieldText("Thumbnail (optional)", entry.thumb, "same as file if blank, or a grabbed movie frame", function (v) {
       entry.thumb = v.trim(); refreshThumb(); markDirty();
-    }, 2));
+    }, 2);
+    r3.appendChild(thumbField);
     fields.appendChild(r3);
+
+    if (entry.type === "video") {
+      fields.appendChild(buildFrameGrabber(entry, refreshThumb));
+    }
 
     if (entry.exif && (entry.exif.camera || entry.exif.dateTime || entry.exif.gps)) {
       var box = document.createElement("div");
@@ -1345,14 +1519,13 @@
     return meta;
   }
 
-  function uploadFileToGcs(entry) {
-    var file = entry.localFile;
-    if (!file) return Promise.reject(new Error("No local file for " + entry.file));
+  function uploadNamedFileToGcs(objectName, file, metadata) {
+    if (!file) return Promise.reject(new Error("No local file for " + objectName));
     var boundary = "whitegate_" + Date.now() + "_" + Math.random().toString(16).slice(2);
     var resource = {
-      name: entry.file,
+      name: objectName,
       contentType: file.type || "application/octet-stream",
-      metadata: gcsMetadataFor(entry)
+      metadata: metadata || {}
     };
     return file.arrayBuffer().then(function (buf) {
       var encoder = new TextEncoder();
@@ -1381,9 +1554,24 @@
         if (!r.ok) {
           return r.text().then(function (t) { throw new Error("GCS HTTP " + r.status + " " + t.slice(0, 200)); });
         }
-        entry.pendingUpload = false;
         return r.json();
       });
+    });
+  }
+
+  function uploadFileToGcs(entry) {
+    return uploadNamedFileToGcs(entry.file, entry.localFile, gcsMetadataFor(entry)).then(function (json) {
+      entry.pendingUpload = false;
+      return json;
+    });
+  }
+
+  function uploadThumbToGcs(entry) {
+    var meta = gcsMetadataFor(entry);
+    meta.role = "thumbnail";
+    return uploadNamedFileToGcs(entry.thumb, entry.thumbLocalFile, meta).then(function (json) {
+      entry.pendingThumbUpload = false;
+      return json;
     });
   }
 
@@ -1392,42 +1580,63 @@
       setStatus(el.publishStatus, "Paste a GCS access token in Settings first (<code>gcloud auth print-access-token</code>).", "warn");
       return;
     }
-    var pending = state.entries.filter(function (e) { return e.pendingUpload && e.localFile; });
-    if (!pending.length) {
-      setStatus(el.publishStatus, "Nothing to upload — add files with the drop zone first.", "warn");
+    var jobs = [];
+    state.entries.forEach(function (e) {
+      if (e.pendingUpload && e.localFile) jobs.push({ entry: e, kind: "file", name: e.file, run: function () { return uploadFileToGcs(e); } });
+      if (e.pendingThumbUpload && e.thumbLocalFile) jobs.push({ entry: e, kind: "thumb", name: e.thumb, run: function () { return uploadThumbToGcs(e); } });
+    });
+    if (!jobs.length) {
+      setStatus(el.publishStatus, "Nothing to upload — add files or grab a movie frame first.", "warn");
       return;
     }
     el.uploadGcsBtn.disabled = true;
-    setStatus(el.publishStatus, "Uploading " + pending.length + " file(s) to <code>" + escapeHtml(currentBucket()) + "</code>…", "");
+    setStatus(el.publishStatus, "Uploading " + jobs.length + " file(s) to <code>" + escapeHtml(currentBucket()) + "</code>…", "");
     var i = 0;
     function next() {
-      if (i >= pending.length) {
+      if (i >= jobs.length) {
         el.uploadGcsBtn.disabled = false;
         renderEntries();
         updateOutput();
-        var names = pending.map(function (e) { return "<code>" + escapeHtml(e.file) + "</code>"; }).join(", ");
-        var msg = "Uploaded " + pending.length + " file(s) to the bucket: " + names +
-          ". They are stored, but <strong>not on the public gallery yet</strong>. Click <strong>Save to the website</strong> to list them.";
+        var names = jobs.map(function (j) { return "<code>" + escapeHtml(j.name) + "</code>"; }).join(", ");
+        var msg = "Uploaded " + jobs.length + " file(s) to the bucket: " + names +
+          ". They are stored, but <strong>not on the public gallery yet</strong> until you Save to the website.";
         setStatus(el.publishStatus, msg, "ok");
         if (el.uploadStatus) setStatus(el.uploadStatus, msg, "ok");
         return Promise.resolve();
       }
-      var entry = pending[i++];
-      setStatus(el.publishStatus, "Uploading " + escapeHtml(entry.file) + " (" + i + "/" + pending.length + ")…", "");
-      return uploadFileToGcs(entry).then(next, function (err) {
+      var job = jobs[i++];
+      setStatus(el.publishStatus, "Uploading " + escapeHtml(job.name) + " (" + i + "/" + jobs.length + ")…", "");
+      return job.run().then(next, function (err) {
         el.uploadGcsBtn.disabled = false;
-        setStatus(el.publishStatus, "Upload failed on " + escapeHtml(entry.file) + ": " + escapeHtml(err.message || String(err)) +
+        setStatus(el.publishStatus, "Upload failed on " + escapeHtml(job.name) + ": " + escapeHtml(err.message || String(err)) +
           ". If this is a CORS error, apply the example CORS config to the bucket (see help below).", "err");
       });
     }
     next();
   }
 
+  function downloadNamedFile(file, name) {
+    if (!file) return;
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(file);
+    a.download = name || file.name || "thumbnail.jpg";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+  }
+
   function gsutilSnippet() {
-    var pending = state.entries.filter(function (e) { return e.pendingUpload; });
     var bucket = currentBucket();
-    var lines = pending.map(function (e) {
-      return "gcloud storage cp " + JSON.stringify(e.file) + " gs://" + bucket + "/" + e.file;
+    var lines = [];
+    state.entries.forEach(function (e) {
+      if (e.pendingUpload) lines.push("gcloud storage cp " + JSON.stringify(e.file) + " gs://" + bucket + "/" + e.file);
+      if (e.pendingThumbUpload && e.thumbLocalFile) {
+        downloadNamedFile(e.thumbLocalFile, e.thumb);
+        lines.push("# Thumbnail JPEG downloaded as " + e.thumb + " (check your Downloads folder). Then:");
+        lines.push("gcloud storage cp " + JSON.stringify(e.thumb) + " gs://" + bucket + "/" + e.thumb);
+      } else if (e.pendingThumbUpload) {
+        lines.push("# Thumbnail " + (e.thumb || "") + " exists only in this browser. Use Upload pending files to GCS, or Download thumbnail JPEG on the card.");
+      }
     });
     lines.push("# then commit " + currentCollection().saveTo);
     return lines.join("\n") || "# no pending local files";
@@ -1789,7 +1998,7 @@
     el.clearBtn.addEventListener("click", function () {
       if (state.entries.length && !confirm("Remove all items from this gallery list? Files stay in the bucket. Save to publish the empty list.")) return;
       state.entries.forEach(function (e) {
-        if (e.objectUrl) URL.revokeObjectURL(e.objectUrl);
+        revokeMediaUrls(e);
         var k = entryKey(e);
         if (k) state.removedFiles[k] = true;
       });

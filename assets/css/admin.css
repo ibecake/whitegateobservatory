@@ -344,6 +344,21 @@ code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospac
   text-align: center;
   padding: 0.3rem;
 }
+.frame-grab {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.7rem 0.75rem 0.8rem;
+  background: #0b0d11;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.frame-grab-video {
+  width: 100%;
+  max-height: 240px;
+  background: #000;
+  border-radius: 6px;
+  margin: 0.35rem 0 0.5rem;
+  display: block;
+}
 .entry-fields { flex: 1 1 auto; min-width: 0; }
 .exif-box {
   font-size: 0.8rem;
