@@ -997,7 +997,12 @@
     var fields = document.createElement("div");
     fields.className = "entry-fields";
 
+    var thumbField = null;
     function refreshThumb() {
+      if (thumbField) {
+        var inp = thumbField.querySelector("input");
+        if (inp && inp.value !== (entry.thumb || "")) inp.value = entry.thumb || "";
+      }
       var still = entry.thumbObjectUrl ||
         (entry.thumb ? resolveUrl(entry.thumb, baseUrl()) : "") ||
         (entry.type === "image" ? (entry.objectUrl || resolveUrl(entry.file, baseUrl())) : "");
@@ -1044,9 +1049,10 @@
     r3.appendChild(fieldText("File (object path or URL)", entry.file, "IMG_1959.jpg", function (v) {
       entry.file = v.trim(); refreshThumb(); markDirty();
     }, 2));
-    r3.appendChild(fieldText("Thumbnail (optional)", entry.thumb, "same as file if blank, or a grabbed movie frame", function (v) {
+    thumbField = fieldText("Thumbnail (optional)", entry.thumb, "same as file if blank, or a grabbed movie frame", function (v) {
       entry.thumb = v.trim(); refreshThumb(); markDirty();
-    }, 2));
+    }, 2);
+    r3.appendChild(thumbField);
     fields.appendChild(r3);
 
     if (entry.type === "video") {
