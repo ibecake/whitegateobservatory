@@ -553,6 +553,9 @@ def _render_tide_graph(tide_chart: dict) -> str:
     return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
   }});
 
+  var chartInk = "#cbd5e1";
+  if (typeof Chart !== "undefined") Chart.defaults.color = chartInk;
+
   new Chart(document.getElementById("tideChart"), {{
     type: "line",
     data: {{
@@ -600,7 +603,7 @@ def _render_tide_graph(tide_chart: dict) -> str:
       maintainAspectRatio: false,
       interaction: {{ mode: "index", intersect: false }},
       plugins: {{
-        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }}, color: chartInk }} }},
         tooltip: {{
           callbacks: {{
             title: function(items) {{ return items[0].label; }},
@@ -618,14 +621,15 @@ def _render_tide_graph(tide_chart: dict) -> str:
             callback: function(val, idx) {{ return tickLabels[idx]; }},
             maxRotation: 0,
             autoSkip: false,
-            font: {{ size: 11 }}
+            font: {{ size: 11 }},
+            color: chartInk
           }},
-          grid: {{ color: "rgba(0,0,0,0.05)" }}
+          grid: {{ color: "rgba(148,163,184,0.15)" }}
         }},
         y: {{
-          title: {{ display: true, text: "Height (m)", font: {{ size: 11 }} }},
-          ticks: {{ font: {{ size: 11 }} }},
-          grid: {{ color: "rgba(0,0,0,0.05)" }}
+          title: {{ display: true, text: "Height (m)", color: chartInk, font: {{ size: 11 }} }},
+          ticks: {{ color: chartInk, font: {{ size: 11 }} }},
+          grid: {{ color: "rgba(148,163,184,0.15)" }}
         }}
       }}
     }}

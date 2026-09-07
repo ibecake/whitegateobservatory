@@ -415,10 +415,14 @@ def _render_wave_chart(chart_data: dict) -> str:
     return lbl.endsWith("00:00") ? lbl.slice(0, 9) : "";
   }});
 
+  var chartInk = "#cbd5e1";
+  if (typeof Chart !== "undefined") Chart.defaults.color = chartInk;
+
   var commonScaleX = {{
     ticks: {{
       callback: function(val, idx) {{ return tickLabels[idx]; }},
-      maxRotation: 0, autoSkip: false, font: {{ size: 11 }}
+      maxRotation: 0, autoSkip: false, font: {{ size: 11 }},
+      color: chartInk
     }},
     grid: {{ color: "rgba(148,163,184,0.15)" }}
   }};
@@ -461,7 +465,7 @@ def _render_wave_chart(chart_data: dict) -> str:
       maintainAspectRatio: false,
       interaction: {{ mode: "index", intersect: false }},
       plugins: {{
-        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }}, color: chartInk }} }},
         tooltip: {{
           callbacks: {{
             title: function(items) {{ return items[0].label; }},
@@ -478,15 +482,15 @@ def _render_wave_chart(chart_data: dict) -> str:
         x: commonScaleX,
         yH: {{
           type: "linear", position: "left",
-          title: {{ display: true, text: "Wave Height (m)", font: {{ size: 11 }} }},
-          ticks: {{ font: {{ size: 11 }} }},
+          title: {{ display: true, text: "Wave Height (m)", color: chartInk, font: {{ size: 11 }} }},
+          ticks: {{ color: chartInk, font: {{ size: 11 }} }},
           min: 0,
           grid: {{ color: "rgba(148,163,184,0.15)" }}
         }},
         yT: {{
           type: "linear", position: "right",
-          title: {{ display: true, text: "Sea Temp (°C)", font: {{ size: 11 }} }},
-          ticks: {{ font: {{ size: 11 }} }},
+          title: {{ display: true, text: "Sea Temp (°C)", color: chartInk, font: {{ size: 11 }} }},
+          ticks: {{ color: chartInk, font: {{ size: 11 }} }},
           grid: {{ drawOnChartArea: false }}
         }}
       }}
@@ -517,7 +521,7 @@ def _render_wave_chart(chart_data: dict) -> str:
       maintainAspectRatio: false,
       interaction: {{ mode: "index", intersect: false }},
       plugins: {{
-        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }} }} }},
+        legend: {{ position: "bottom", labels: {{ boxWidth: 12, font: {{ size: 11 }}, color: chartInk }} }},
         tooltip: {{
           callbacks: {{
             title: function(items) {{ return items[0].label; }},
@@ -532,8 +536,8 @@ def _render_wave_chart(chart_data: dict) -> str:
       scales: {{
         x: commonScaleX,
         y: {{
-          title: {{ display: true, text: "Period (s)", font: {{ size: 11 }} }},
-          ticks: {{ font: {{ size: 11 }} }},
+          title: {{ display: true, text: "Period (s)", color: chartInk, font: {{ size: 11 }} }},
+          ticks: {{ color: chartInk, font: {{ size: 11 }} }},
           min: 0,
           grid: {{ color: "rgba(148,163,184,0.15)" }}
         }}
