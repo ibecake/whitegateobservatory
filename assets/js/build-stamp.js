@@ -23,9 +23,9 @@
     footer.style.cssText = [
       "margin-top:2rem",
       "padding:0.9rem 1rem",
-      "border-top:1px solid #e5e7eb",
-      "background:#f8f9fb",
-      "color:#6b7280",
+      "border-top:1px solid #2a3240",
+      "background:#0f1115",
+      "color:#9aa4b2",
       "font:500 0.82rem/1.4 system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",
       "text-align:center"
     ].join(";");
@@ -44,7 +44,7 @@
 
       var sha = document.createElement("code");
       sha.textContent = build.commit;
-      sha.style.cssText = "background:rgba(0,0,0,0.06);padding:0.05rem 0.35rem;border-radius:4px;font-size:0.78rem;";
+      sha.style.cssText = "background:rgba(255,255,255,0.08);padding:0.05rem 0.35rem;border-radius:4px;font-size:0.78rem;";
 
       if (build.repo_url) {
         var link = document.createElement("a");
