@@ -386,7 +386,7 @@ def _render_wave_chart(chart_data: dict) -> str:
     Chart.js is loaded from CDN — the same CDN used by the tide chart in fish_build.py.
     """
     chart_json = json.dumps(chart_data)
-    return f"""<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+    return f"""<div style="margin:1rem 0 1.5rem;background:#171a21;border:1px solid #2a3240;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.35);overflow:hidden;">
   <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
     <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Wave &amp; Swell Forecast</h2>
     <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour entrance &mdash; Open-Meteo Marine data &mdash; today and tomorrow hourly forecast</p>
@@ -420,7 +420,7 @@ def _render_wave_chart(chart_data: dict) -> str:
       callback: function(val, idx) {{ return tickLabels[idx]; }},
       maxRotation: 0, autoSkip: false, font: {{ size: 11 }}
     }},
-    grid: {{ color: "rgba(0,0,0,0.05)" }}
+    grid: {{ color: "rgba(148,163,184,0.15)" }}
   }};
 
   // ── Chart 1: Wave Height + Sea Surface Temperature ──────────────────────────
@@ -481,7 +481,7 @@ def _render_wave_chart(chart_data: dict) -> str:
           title: {{ display: true, text: "Wave Height (m)", font: {{ size: 11 }} }},
           ticks: {{ font: {{ size: 11 }} }},
           min: 0,
-          grid: {{ color: "rgba(0,0,0,0.05)" }}
+          grid: {{ color: "rgba(148,163,184,0.15)" }}
         }},
         yT: {{
           type: "linear", position: "right",
@@ -535,7 +535,7 @@ def _render_wave_chart(chart_data: dict) -> str:
           title: {{ display: true, text: "Period (s)", font: {{ size: 11 }} }},
           ticks: {{ font: {{ size: 11 }} }},
           min: 0,
-          grid: {{ color: "rgba(0,0,0,0.05)" }}
+          grid: {{ color: "rgba(148,163,184,0.15)" }}
         }}
       }}
     }}
@@ -786,15 +786,15 @@ def main():
 <!-- ═══════════════════════════════════════════════════════════════════════
      SAILING WEATHER MAP
      ═══════════════════════════════════════════════════════════════════════ -->
-<div style="margin:1rem 0 1.5rem;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);overflow:hidden;">
+<div style="margin:1rem 0 1.5rem;background:#171a21;border:1px solid #2a3240;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.35);overflow:hidden;">
   <div style="padding:1.5rem;background:#0d3d6b;border-bottom:1px solid #1a5c9e;">
     <h2 style="margin:0 0 0.4rem;color:#fff;font-size:1.5rem;">Sailing Weather Map</h2>
     <p style="margin:0;color:#a8c8e8;font-size:0.92rem;">Cork Harbour &amp; Coast &mdash; select a layer and step through the forecast</p>
   </div>
 
   <!-- Layer selector -->
-  <div id="wx-layer-bar" style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#f0f4f8;border-bottom:1px solid #dce4ec;">
-    <label for="wx-layer-select" style="font-size:0.85rem;font-weight:600;color:#374151;">Map layer:</label>
+  <div id="wx-layer-bar" style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:#1a2030;border-bottom:1px solid #2a3240;">
+    <label for="wx-layer-select" style="font-size:0.85rem;font-weight:600;color:#e5e7eb;">Map layer:</label>
     <select id="wx-layer-select" class="wx-layer-select" aria-label="Select weather layer">
       <option value="wind_speed">Wind Speed</option>
       <option value="wind_gust">Wind Gusts</option>
@@ -816,11 +816,11 @@ def main():
   </div>
 
   <!-- Time slider -->
-  <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;">
-    <span style="font-size:0.85rem;color:#374151;white-space:nowrap;font-weight:600;">Forecast time:</span>
+  <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:#12151c;border-bottom:1px solid #2a3240;">
+    <span style="font-size:0.85rem;color:#e5e7eb;white-space:nowrap;font-weight:600;">Forecast time:</span>
     <input id="wx-time-slider" type="range" min="0" max="48" step="1" value="0"
            style="flex:1;accent-color:#0d6efd;cursor:pointer;" />
-    <span id="wx-time-label" style="font-size:0.85rem;color:#374151;white-space:nowrap;min-width:60px;text-align:right;">Now</span>
+    <span id="wx-time-label" style="font-size:0.85rem;color:#e5e7eb;white-space:nowrap;min-width:60px;text-align:right;">Now</span>
     <div style="display:flex;gap:4px;">
       <button id="wx-play-btn" title="Play animation"
               style="padding:3px 10px;font-size:0.8rem;border:1px solid #0d6efd;border-radius:4px;background:#0d6efd;color:#fff;cursor:pointer;">▶ Play</button>
@@ -842,9 +842,9 @@ def main():
 
     <!-- Colour legend (bottom-left over map) -->
     <div id="wx-legend"
-         style="position:absolute;bottom:30px;left:10px;z-index:900;background:rgba(255,255,255,0.93);
-                border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.18);padding:8px 12px;min-width:160px;font-size:0.78rem;">
-      <div id="wx-legend-title" style="font-weight:700;margin-bottom:6px;color:#0d3d6b;">Wind Speed</div>
+         style="position:absolute;bottom:30px;left:10px;z-index:900;background:rgba(15,17,21,0.92);
+                border:1px solid #2a3240;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.35);padding:8px 12px;min-width:160px;font-size:0.78rem;color:#e5e7eb;">
+      <div id="wx-legend-title" style="font-weight:700;margin-bottom:6px;color:#93c5fd;">Wind Speed</div>
       <div id="wx-legend-body"></div>
     </div>
 
@@ -865,7 +865,7 @@ def main():
     </div>
   </div>
 
-  <div style="padding:8px 16px;background:#f8fafc;border-top:1px solid #e5e7eb;font-size:0.78rem;color:#6b7280;">
+  <div style="padding:8px 16px;background:#12151c;border-top:1px solid #2a3240;font-size:0.78rem;color:#9aa4b2;">
     Weather map tiles &copy; <a href="https://www.meteosource.com" target="_blank" rel="noopener" style="color:#0d6efd;">Meteosource</a>
     &nbsp;|&nbsp; Base map &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style="color:#0d6efd;">OpenStreetMap</a> contributors
   </div>
@@ -876,10 +876,10 @@ def main():
   min-width: 220px;
   max-width: 100%;
   padding: 6px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #2a3240;
   border-radius: 6px;
-  background: #fff;
-  color: #0f172a;
+  background: #111827;
+  color: #e5e7eb;
   font-size: 0.84rem;
 }}
 .wx-legend-row {{ display:flex;align-items:center;gap:6px;margin-bottom:3px; }}

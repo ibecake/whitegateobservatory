@@ -395,6 +395,60 @@ details.help pre {
   font-size: 0.82rem;
 }
 
+html.admin-locked .login-gate { display: flex; }
+html.admin-authed .login-gate { display: none; }
+#adminApp { display: none; }
+html.admin-authed #adminApp { display: block; }
+
+.login-gate {
+  display: none;
+  min-height: calc(100vh - 5.5rem);
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+}
+
+.login-card {
+  width: min(28rem, 100%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem 1.35rem 1.5rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.login-card h1 {
+  margin: 0 0 0.45rem;
+  color: var(--accent);
+  font-size: 1.45rem;
+}
+
+.login-card button[type="submit"] {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.login-error {
+  color: #fca5a5;
+  min-height: 1.25em;
+  margin: 0.7rem 0 0;
+  font-size: 0.9rem;
+}
+
+.logout-btn {
+  display: none;
+  margin-left: 0.25rem;
+  background: #1f2530;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+html.admin-authed .logout-btn { display: inline-flex; }
+.logout-btn:hover { background: #333; border-color: var(--accent); }
+
 @media (max-width: 640px) {
   .admin-body .top-menu { padding: 0.75rem 1rem; }
   .admin-body .top-menu nav {

@@ -2106,12 +2106,20 @@
     bindSave(el.saveBarBtn2);
   }
 
-  bind();
-  renderSectionTabs();
-  refreshBase();
-  renderTagLibrary();
-  renderTargetLibrary();
-  renderEntries();
-  updateOutput();
-  loadManifestFromRepo().then(function () { listObjects(); });
+  function bootAdmin() {
+    bind();
+    renderSectionTabs();
+    refreshBase();
+    renderTagLibrary();
+    renderTargetLibrary();
+    renderEntries();
+    updateOutput();
+    loadManifestFromRepo().then(function () { listObjects(); });
+  }
+
+  if (window.WhitegateAdminAuth && !window.WhitegateAdminAuth.isAuthed()) {
+    window.WhitegateAdminAuth.onReady(bootAdmin);
+  } else {
+    bootAdmin();
+  }
 })();

@@ -7,6 +7,16 @@
     <title>Media Admin - Whitegate Observatory</title>
     <link rel="stylesheet" href="assets/css/dashboard.css" />
     <link rel="stylesheet" href="assets/css/admin.css" />
+    <script>
+      (function () {
+        try {
+          var on = sessionStorage.getItem("wg_admin_ok") === "1";
+          document.documentElement.classList.add(on ? "admin-authed" : "admin-locked");
+        } catch (err) {
+          document.documentElement.classList.add("admin-locked");
+        }
+      })();
+    </script>
   </head>
   <body class="admin-body">
     <div class="top-menu">
@@ -16,9 +26,28 @@
         <a href="radio-astronomy.html">Radio Astronomy</a>
         <a href="astro-photography.html">Astro Photography</a>
         <a href="admin.html" class="active">Admin</a>
+        <button type="button" id="adminLogout" class="logout-btn">Sign out</button>
       </nav>
     </div>
 
+    <div id="loginGate" class="login-gate" role="dialog" aria-labelledby="loginTitle" aria-modal="true">
+      <form id="loginForm" class="login-card">
+        <h1 id="loginTitle">Admin sign in</h1>
+        <p class="hint">Enter the site username and password to open the media tools. Publishing still uses your GitHub token after you sign in.</p>
+        <div class="field">
+          <label for="adminUser">Username</label>
+          <input type="text" id="adminUser" name="username" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="adminPassword">Password</label>
+          <input type="password" id="adminPassword" name="password" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="primary">Sign in</button>
+        <p id="loginError" class="login-error" role="alert"></p>
+      </form>
+    </div>
+
+    <div id="adminApp">
     <div class="save-bar" id="saveBar">
       <span id="saveBarStatus" class="save-bar-status">No unsaved changes</span>
       <span class="spacer"></span>
@@ -200,7 +229,9 @@
         <textarea class="output" id="output" readonly spellcheck="false"></textarea>
       </details>
     </div>
+    </div>
 
+    <script src="assets/js/admin-auth.js"></script>
     <script src="assets/js/exif-reader.js"></script>
     <script src="assets/js/media-admin.js"></script>
     <script defer src="assets/js/build-stamp.js"></script>
